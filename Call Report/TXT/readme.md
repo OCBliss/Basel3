@@ -1,0 +1,1 @@
+The raw bulk data download from https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx stores each schedule in a separate txt file stored in within folders named for their respective quarters. The Folder are automatically labeled 'FFIEC CDR Call Bulk All Schedules + [MM:DD:YYYY]'.
