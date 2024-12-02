@@ -1,6 +1,6 @@
 # Basel III Analysis Repository
 
-This repository contains all data, scripts, and instructions for reproducing the results presented in "A Critical Examination of Basel III: Material Events, Duration Risk, and a Novel Methodology for Dynamic Stability." It is structured to ensure transparency and facilitate reproducibility for researchers and practitioners.
+This repository contains all data, scripts, and instructions for reproducing the results presented in "XXX" It is structured to ensure transparency and facilitate reproducibility for researchers and practitioners.
 
 ---
 
