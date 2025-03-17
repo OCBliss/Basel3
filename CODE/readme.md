@@ -21,17 +21,17 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
 - **Modular Design:** Add or modify steps by updating the YAML configuration.
 - **Concurrency:** Executes independent tasks in parallel using `ThreadPoolExecutor`.
   - ** concurrency_branches
-    - basel_iii - runs all analysis for the Basel III period as specificed in paper
-    - post_gfc -  runs all analysis for the post-GFC as specificed in paper
-    - t1 - `T+1` creates a branch of each ``concurrency_branches`` for a T+1 look ahead.
-    - t2 - `T+2` creates a branch of each ``concurrency_branches`` for a T+2 look ahead.
-    - t3 - `T+3` creates a branch of each ``concurrency_branches`` for a T+3 look ahead.
-    - t4 - `T+4` creates a branch of each ``concurrency_branches`` for a T+4 look ahead.
+    - `basel_iii` - runs all analysis for the Basel III period as specificed in paper
+    - `post_gfc` -  runs all analysis for the post-GFC as specificed in paper
+    - `t1` - T+1 creates a branch of each ``concurrency_branches`` for a T+1 look ahead.
+    - `t2` - T+2 creates a branch of each ``concurrency_branches`` for a T+2 look ahead.
+    - `t3` - T+3 creates a branch of each ``concurrency_branches`` for a T+3 look ahead.
+    - `t4` - T+4 creates a branch of each ``concurrency_branches`` for a T+4 look ahead.
   - ``concurrency_group`` - is a specific concurrency that occurs only inside a ``concurrency_branches`` instance
     - `jsd` - for instance JSD analysis is only applied once per ``concurrent_branches`` instance.
       - `bins20` - binning forms the probability mass function for Jensen Shannon Divergence among peers, i.e. (20 bins,...,50 bins)
       - `bins30`
-      - 1bins501
+      - `bins50`
     - `peers`: `mergers`, `failures`, `survivors` and `de novo` flags are applied for JSD analysis.
     - `filters` - we then filter by `peers` and binning.
     
