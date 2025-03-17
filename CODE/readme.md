@@ -122,7 +122,7 @@ execution:
                   bins50: ["8.2.2.4.3"]
     rcb_schedule:
       sequential: ["3.0.2"] # RC-B analysis
-
+```
 ## Prerequisites
 
 - Python 3.6+
