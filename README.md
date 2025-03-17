@@ -1,71 +1,246 @@
-# Basel III Analysis Repository
+## Basel III Pipeline for BIS Paper
 
-This repository contains all data, scripts, and instructions for reproducing the results presented in "XXX" It is structured to ensure transparency and facilitate reproducibility for researchers and practitioners.
+This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules (RC, RC-B, RC-D, RC-E). It’s designed for investment bank research, built by a finance grad (you—insert your name if you want), and runs via a Python script (`pipeline.py`) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
 
----
+### Purpose
+- Clean and convert raw Call Report data.
+- Perform vertical analysis on the full dataset, then split by schedule (RC, RC-B, etc.).
+- Filter peer groups by time periods (Basel III, Post-GFC, GFC).
+- Compute JSD with varying time horizons (T+1, T+2, etc.) and bin sizes (20, 30, 50).
+- Output regulatory metrics for BIS scrutiny.
 
-## Repository Structure
+### Directory Structure
+- `CODE/`: Root directory containing all scripts.
+  - `pipeline.py`: Main pipeline script—executes the workflow.
+  - `pipeline_config.yaml`: Config file defining steps, dependencies, and execution flow.
+  - `STEP 01/`: Cleaning scripts (e.g., `call_reports_mkdir_txt_csvs_global.py`).
+  - `STEP 02/`: Conversion scripts (e.g., `Call_Report_Merged_Cleaned_Global.py`, `numeric_only6.py`).
+  - `STEP 03/`: Vertical analysis scripts (e.g., `Call_Reports_retrospective_Vertical3c.py`, `Vertical_Analysis_RC.py`).
+  - `STEP 04/`: Ratio distribution scripts (e.g., `Call_Reports_Distributed_Ratios2.py`).
+  - `STEP 05/`: Dynamic ratio scripts (e.g., `Call_Reports_Dynamic_Ratios2.py`).
+  - `STEP 06/`: Material event processing (e.g., `Material_events_cleaned2.py`, `Material_events_de_novo_flag4.py`).
+  - `STEP 07/`: Peer group filtering (e.g., `Material_events_peer_group_basel3_t1.py`).
+  - `STEP 08/`: JSD computation (e.g., `RC_JSD_Basel_T1_Bin20.py`).
+  - `Logs_V3/`: Auto-generated log directory for step outputs and status.
 
-### **1. Call Report**
-This folder contains financial data derived from FFIEC call reports, organized into raw, processed, and analyzed datasets.
-- **PDF/**: Visual versions of the FFIEC call reports for manual inspection.  
-- **TXT/**: Raw data files in native text format as provided by the FFIEC, organized by financial quarter (e.g., `20240630/`).  
-- **CSV/**: Processed data files with the following subfolders:
-  - **Cleaned/**: Merged datasets derived from original call report schedules using Schedule ENT as the primary key.
-  - **Schedules/**: Original call report schedules formatted by the FFIEC, retaining MDRM codes as headers and appending FDIC Certificate Numbers.
-  - **Interleaved/**: Vertical analyses performed on the Cleaned datasets, capturing temporal trends and peer group comparisons.
+### Top-Level-Structure
+Basel3/
+├── Call Reports/
+├── Material Events/
+├── RWA/
+└── CODE/
 
-### **2. Material Events**
-This folder contains data on significant structural and non-financial events affecting banking institutions. Subfolders categorize events by type and organize data by financial quarter:
-- **DE NOVO/**: Data on new bank formations.
-- **Business Combinations/**: Data on mergers, acquisitions, and reorganizations.
-- **Failures/**: Detailed records of failed banking institutions.
-- **Survivors/**: Data on banks not involved in mergers or failures, categorized as survivors.
+## Call Reports
+Basel3/Call Reports/
+├── CSV/
+│   ├── Cleaned/               # Cleaned CSV files
+│   ├── Interleaved/           # Interleaved schedules
+│   ├── Schedules/             # Individual schedules
+│   ├── Distributed Lag/
+│   │   ├── Cleaned/           # Cleaned distributed lag files
+│   │   └── RAW/               # Raw distributed lag files
+│   ├── Dynamic Lag/
+│   │   ├── Cleaned/           # Cleaned dynamic lag files
+│   │   └── RAW/               # Raw dynamic lag files
+│   └── RAW/                   # Unprocessed CSV files
+├── PDF/                       # Original Call Report PDFs
+└── TXT/                       # Original Call Report TXTs
 
----
+## Material Events
+Basel3/Material Events/
+├── De Novo/
+│   ├── Cleaned/               # Cleaned De Novo entries
+│   └── RAW/                   # Raw De Novo entries
+├── Failures/
+│   ├── Cleaned/               # Cleaned bank failure records
+│   └── RAW/                   # Raw failure records
+├── Mergers/
+│   ├── Cleaned/               # Cleaned merger records
+│   └── RAW/                   # Raw merger records
+└── JSD/
+    ├── Basel III/
+    │   ├── Mergers T+1/
+    │   ├── Mergers T+2/
+    │   ├── Mergers T+3/
+    │   ├── Mergers T+4/
+    │   ├── Failures T+1/
+    │   ├── Failures T+2/
+    │   ├── Failures T+3/
+    │   └── Failures T+4/
+    └── Post-GFC/
+        ├── Mergers T+1/
+        ├── Mergers T+2/
+        ├── Mergers T+3/
+        ├── Mergers T+4/
+        ├── Failures T+1/
+        ├── Failures T+2/
+        ├── Failures T+3/
+        └── Failures T+4/
 
-## Data Sources
-1. **Call Report Data:**
-   - Sourced from the FFIEC Central Data Repository (CDR).
-   - Raw data files can be found in the `Call Report/TXT` folder, with processed versions in `Call Report/CSV`.
+## RWA (Risk-Weighted Assets)
+Basel3/RWA/
+├── Constant Maturity Treasury/
+│   ├── FRED/
+│   │   ├── MLE YIELD/         # Maximum likelihood yield estimates
+│   │   ├── MLE VOL/           # Maximum likelihood volatilities
+│   │   ├── MLE CORR/          # Correlation matrices
+│   └── FRED HESTON/           # Heston model calibration outputs
+├── Expected Coupon/           # Expected coupon data
+├── Expected Loss/             # Expected loss data
+└── Novel Risk Weights/        # Custom Basel risk weights
 
-2. **Material Events Data:**
-   - Downloaded from the BankFind Suite at [FDIC BankFind Suite](https://banks.data.fdic.gov/bankfind-suite/oscr).
-   - Includes structural event details and failure records.
+## CODE Directory
+Basel3/CODE/
+├── Logs_V3/                   # Logs per step execution
+├── STEP 01/
+│   └── call_reports_mkdir_txt_csvs_global.py
+├── STEP 02/
+│   ├── STEP 02.0/
+│   │   └── Call_Report_Merged_Cleaned_Global.py
+│   └── STEP 02.1/
+│       └── numeric_only6.py
+├── STEP 03/
+│   └── Call_Reports_retrospective_Vertical3c.py
+├── STEP 04/
+│   ├── STEP 04.0/
+│   │   └── Call_Reports_Distributed_Ratios2.py
+│   └── STEP 04.1/
+│       └── Clean_Distributed_Ratios2.py
+├── STEP 05/
+│   ├── STEP 05.0/
+│   │   └── Call_Reports_Dynamic_Ratios2.py
+│   └── STEP 05.2/
+│       └── Clean_dynamic_ratios.py
+├── STEP 06/
+│   ├── STEP 06.1/
+│   │   └── Material_events_cleaned2.py
+│   ├── STEP 06.2/
+│   ├── STEP 06.3/
+│   └── STEP 06.4/
+├── STEP 07/
+│   ├── STEP 07.0 PG/
+│   │   ├── STEP 07.0.0 BASEL III/
+│   │   │   └── STEP 07.0.0.1/ to STEP 07.0.0.4/
+│   │   └── STEP 07.0.1 POST-GFC/
+│   │       └── STEP 07.0.1.1/ to STEP 07.0.1.4/
+│   └── STEP 07.1 PG FILTER/
+│       └── STEP 07.1.0 BASEL III/ and POST-GFC/
+├── STEP 08/
+│   ├── STEP 08.0 BINNING/
+│   │   └── BINS50, BINS100/
+│   ├── STEP 08.1 PROB/
+│   └── STEP 08.2 JSD/
+│       └── BASEL III and POST-GFC
+├── pipeline_config.yaml       # Controls dependencies and execution order
+└── Task_manager_global.py     # Main pipeline controller
 
----
 
-## How to Use This Repository
+### Requirements
+- Python 3.x: With standard libraries (`os`, `sys`, `subprocess`, `hashlib`, `time`, `yaml`, `concurrent.futures`).
+  - `pyyaml`
+  - `pandas`
+  - `numpy`
+  - `re`
+  - `importlib.util`
 
-### For Call Report Data:
-1. Start with **TXT/** for raw files or **PDF/** for manual validation.
-2. Use **Cleaned/** for horizontally merged datasets ready for analysis.
-3. Refer to **Schedules/** for the original call report schedules in a standardized format.
-4. Use **Interleaved/** for temporal and vertical analyses.
+### OS Compatibility Note
+- This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
 
-### For Material Events:
-1. Choose a relevant subfolder (e.g., `DE NOVO`, `Failures`) for the event type of interest.
-2. Cross-reference event data with financial metrics from the Call Report folder.
+### How It Works
+1. `pipeline.py`:
+   - Finds the `CODE/` directory dynamically from its own location.
+   - Loads `pipeline_config.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
+   - Executes steps based on the `execution` section:
+     - `sequential`: Runs steps in order, one after another.
+     - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
+     - `concurrent_groups`: Runs multiple step lists in parallel within a branch.
+   - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
+   - Uses input hashing (`compute_hash`) to skip steps if their inputs haven’t changed, logging results in `Logs_V3/`.
 
-### Scripts:
-- All data preprocessing, cleaning, merging, and analysis scripts are available in the `Scripts` folder.
-- Scripts include detailed comments and are designed to reproduce all results presented in the associated research paper.
+2. `pipeline_config.yaml`:
+   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `CODE/`.
+   - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
+   - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
 
----
+### Current Workflow
+Below is the full `pipeline_config.yaml` as of now—every step, dependency, and execution detail included.
 
-## Key Features
-- **Comprehensive Documentation:** Each subfolder includes a `README.md` detailing its contents and use.
-- **Transparent Workflow:** The repository provides raw data, intermediate stages, and final datasets for full reproducibility.
-- **Temporal and Peer Group Analysis:** Data is organized to support detailed time-series and peer group comparisons.
+### Execution Flow
+1. Sequential (1.0–3.0):
+   - "1.0": Cleans raw Call Report data into a usable format (e.g., creates directories, converts text to CSVs).
+   - "2.0": Merges and further cleans the data into a unified dataset.
+   - "2.1": Converts data to numeric-only format for analysis.
+   - "3.0": Performs vertical analysis on the full Call Report dataset, preparing it for schedule-specific splits.
 
----
+2. Schedule Split:
+   - Four concurrent branches launch after 3.0:
+     - `rc_schedule`: Processes RC schedule data.
+     - `rc_b_schedule`: Starts RC-B analysis (currently stops at 3.2—extend as needed).
+     - `rc_d_schedule`: Starts RC-D analysis (stops at 3.3).
+     - `rc_e_schedule`: Starts RC-E analysis (stops at 3.4).
 
-## Notes
-- Ensure all dependencies are installed before running scripts (see `Scripts/README.md` for details).
-- If additional clarification is required, refer to the `README.md` files within each folder.
-- For licensing and usage terms, consult the `LICENSE.md` file.
+3. Time Period Split (RC Only):
+   - Inside `rc_schedule`, two branches run in parallel:
+     - `basel_iii`: Processes RC data for Basel III period.
+     - `post_gfc`: Processes RC data for Post-GFC period.
+   - Both execute steps 4.0.1–6.4.1 sequentially:
+     - "4.0.1": Computes distributed ratios for RC data.
+     - "4.1.1": Cleans those distributed ratios.
+     - "5.0.1": Computes dynamic ratios for RC.
+     - "5.1.1": Cleans the dynamic ratios.
+     - "6.1.1": Cleans RC material event data.
+     - "6.2.1": Flags de novo events in RC data.
+     - "6.3.1": Flags failures in RC data.
+     - "6.4.1": Flags mergers in RC data.
 
----
+4. Peer Group Filtering:
+   - For `basel_iii`:
+     - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
+     - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
+   - For `post_gfc`:
+     - `peers`: Runs 7.0.1.1–7.0.1.4 in parallel, filtering peer groups for Post-GFC across T+1 to T+4.
+     - `filters`: Runs 7.1.1.1–7.1.1.4 in parallel, applying filters to Post-GFC peer groups.
 
-## License
-This repository is distributed under [license type]. Please refer to the `LICENSE.md` file for more details.
+5. JSD Analysis:
+   - For `basel_iii`:
+     - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
+     - "8.1.1": Computes JSD probabilities for Basel III.
+     - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
+     - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
+     - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
+     - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
+   - For `post_gfc`:
+     - "8.0.2": Performs binning on Post-GFC data (default 50 bins).
+     - "8.1.2": Computes JSD probabilities for Post-GFC.
+     - `t1`: Runs single JSD step "8.2.1.1" for T+1 horizon.
+     - `t2`: Runs single JSD step "8.2.1.2" for T+2 horizon.
+     - `t3`: Runs single JSD step "8.2.1.3" for T+3 horizon.
+     - `t4`: Runs single JSD step "8.2.1.4" for T+4 horizon.
+
+### Notes on Placeholders
+- `rc_b_schedule`, `rc_d_schedule`, `rc_e_schedule` currently stop at 3.2, 3.3, and 3.4 respectively. To extend them:
+  - Add steps to `scripts` (e.g., "4.0.2": { path: "STEP 04/STEP 04.0.2/RC_B_Distributed_Ratios.py" }).
+  - Update `dependencies` (e.g., "3.2": ["4.0.2"]).
+  - Expand `execution` with similar `concurrent_branches` structures as `rc_schedule`.
+- `t1` binning (20, 30, 50) is implemented for RC Basel III only. Other horizons (t2–t4) and Post-GFC use single steps but can be extended with binning.
+
+### Running the Pipeline
+1. Setup:
+   - Place all scripts in their respective `STEP XX/` subdirectories under `CODE/`.
+   - Ensure `pipeline_config.yaml` is in `CODE/`.
+2. Command:
+   - Run from the command line: `python CODE/pipeline.py`
+3. Output:
+   - Logs are generated in `CODE/Logs_V3/` (e.g., `1.0_log.txt`, `8.2.0.1.1_log.txt`).
+   - Each log includes timestamps, step start/completion, and input hashes (SHA-256) if hashing is enabled.
+
+### Dynamic Features
+- Input Hashing: If a script prints "Input from: /path/to/dir", `pipeline.py` hashes the directory’s files (using SHA-256) and skips the step if unchanged, logging the hash with `INPUT_HASH`.
+- Concurrency: Uses Python’s `ThreadPoolExecutor`—automatically scales to the number of branches or groups (e.g., 4 schedules, 2 periods, 3 bins in t1).
+- Flexibility: Add new schedules, time periods, or bin sizes by editing `pipeline_config.yaml`—no changes to `pipeline.py` required.
+
+### Usage Tips
+- Extend a Branch: Add a new schedule (e.g., `rc_f_schedule`) under `concurrent_branches` with its own steps, dependencies, and execution flow.
+- Debugging: Check `Logs_V3/`—each step logs `STARTED`, `COMPLETED`, or `ERROR` with timestamps and details.
+- Skip Steps: If a step’s inputs haven’t changed (via hash), it skips execution and logs `✅ Step X input unchanged`.
+
