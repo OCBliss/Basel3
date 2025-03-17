@@ -77,52 +77,53 @@ This project automates the processing of Call Report data and material events in
   - `Expected Loss/`: Expected loss estimates for RWA.
   - `Novel Risk Weights/`: Novel risk weight computations.
 
-## CODE Directory
+#### CODE Directory
+
 Basel3/CODE/
-├── Logs_V3/                   # Logs per step execution
-├── STEP 01/
-│   └── call_reports_mkdir_txt_csvs_global.py
-├── STEP 02/
-│   ├── STEP 02.0/
-│   │   └── Call_Report_Merged_Cleaned_Global.py
-│   └── STEP 02.1/
-│       └── numeric_only6.py
-├── STEP 03/
-│   └── Call_Reports_retrospective_Vertical3c.py
-├── STEP 04/
-│   ├── STEP 04.0/
-│   │   └── Call_Reports_Distributed_Ratios2.py
-│   └── STEP 04.1/
-│       └── Clean_Distributed_Ratios2.py
-├── STEP 05/
-│   ├── STEP 05.0/
-│   │   └── Call_Reports_Dynamic_Ratios2.py
-│   └── STEP 05.2/
-│       └── Clean_dynamic_ratios.py
-├── STEP 06/
-│   ├── STEP 06.1/
-│   │   └── Material_events_cleaned2.py
-│   ├── STEP 06.2/
-│   ├── STEP 06.3/
-│   └── STEP 06.4/
-├── STEP 07/
-│   ├── STEP 07.0 PG/
-│   │   ├── STEP 07.0.0 BASEL III/
-│   │   │   └── STEP 07.0.0.1/ to STEP 07.0.0.4/
-│   │   └── STEP 07.0.1 POST-GFC/
-│   │       └── STEP 07.0.1.1/ to STEP 07.0.1.4/
-│   └── STEP 07.1 PG FILTER/
-│       └── STEP 07.1.0 BASEL III/ and POST-GFC/
-├── STEP 08/
-│   ├── STEP 08.0 BINNING/
-│   │   └── BINS50, BINS100/
-│   ├── STEP 08.1 PROB/
-│   └── STEP 08.2 JSD/
-│       └── BASEL III and POST-GFC
-├── pipeline_config.yaml       # Controls dependencies and execution order
-└── Task_manager_global.py     # Main pipeline controller
+- Logs_V3/
+- STEP 01/
+  - call_reports_mkdir_txt_csvs_global.py
+- STEP 02/
+  - STEP 02.0/
+    - Call_Report_Merged_Cleaned_Global.py
+  - STEP 02.1/
+    - numeric_only6.py
+- STEP 03/
+  - Call_Reports_retrospective_Vertical3c.py
+- STEP 04/
+  - STEP 04.0/
+    - Call_Reports_Distributed_Ratios2.py
+  - STEP 04.1/
+    - Clean_Distributed_Ratios2.py
+- STEP 05/
+  - STEP 05.0/
+    - Call_Reports_Dynamic_Ratios2.py
+  - STEP 05.2/
+    - Clean_dynamic_ratios.py
+- STEP 06/
+  - STEP 06.1/
+    - Material_events_cleaned2.py
+  - STEP 06.2/
+  - STEP 06.3/
+  - STEP 06.4/
+- STEP 07/
+  - STEP 07.0 PG/
+    - STEP 07.0.0 BASEL III/
+      - STEP 07.0.0.1/ to STEP 07.0.0.4/
+    - STEP 07.0.1 POST-GFC/
+      - STEP 07.0.1.1/ to STEP 07.0.1.4/
+  - STEP 07.1 PG FILTER/
+    - STEP 07.1.0 BASEL III/ and POST-GFC/
+- STEP 08/
+  - STEP 08.0 BINNING/
+    - BINS50, BINS100/
+  - STEP 08.1 PROB/
+  - STEP 08.2 JSD/
+    - BASEL III and POST-GFC
+- pipeline_config.yaml
+- Task_manager_global.py
 
-
+  
 ### Requirements
 - Python 3.x: With standard libraries (`os`, `sys`, `subprocess`, `hashlib`, `time`, `yaml`, `concurrent.futures`).
   - `pyyaml`
