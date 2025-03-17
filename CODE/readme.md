@@ -27,17 +27,16 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
     - t2 - `T+2` creates a branch of each ``concurrency_branches`` for a T+2 look ahead.
     - t3 - `T+3` creates a branch of each ``concurrency_branches`` for a T+3 look ahead.
     - t4 - `T+4` creates a branch of each ``concurrency_branches`` for a T+4 look ahead.
-  - ** concurrency_group - is a specific concurrency that occurs only inside a ``concurrency_branches`` instance
-    - jsd - for instance JSD analysis is only applied once per ``concurrency_branches`` instance.
-      - bins20 - binning forms the probability mass function for Jensen Shannon Divergence among peers, i.e. (20 bins,...,50 bins)
-      - bins30
-      - bins40
-      - bins50
-    - peers: `mergers`, `failures`, `survivors` and `de novo` flags are applied for JSD analysis.
-    - filters - we then filter by `peers` and binning.
+  - ``concurrency_group`` - is a specific concurrency that occurs only inside a ``concurrency_branches`` instance
+    - `jsd` - for instance JSD analysis is only applied once per ``concurrent_branches`` instance.
+      - `bins20` - binning forms the probability mass function for Jensen Shannon Divergence among peers, i.e. (20 bins,...,50 bins)
+      - `bins30`
+      - 1bins501
+    - `peers`: `mergers`, `failures`, `survivors` and `de novo` flags are applied for JSD analysis.
+    - `filters` - we then filter by `peers` and binning.
     
-  - ** intermediate_steps
-  - ** sequential - some steps cannot be run without the preceding step eliminating the possibility for concurrency at that step
+  - ``intermediate_steps``
+  - ``sequential`` - some steps cannot be run without the preceding step eliminating the possibility for concurrency at that step
 - **Efficiency:** Skips steps with unchanged inputs via SHA-256 hashing.
 - **Logging:** Outputs detailed logs to `Logs_V3/` for each step.
   - ** This creates to ability to restart the entire analysis mid-stream if errors occurs, preventing CPU runtime waste. see ``run_task``
