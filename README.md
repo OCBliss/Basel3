@@ -23,71 +23,59 @@ This project automates the processing of Call Report data and material events in
   - `STEP 08/`: JSD computation (e.g., `RC_JSD_Basel_T1_Bin20.py`).
   - `Logs_V3/`: Auto-generated log directory for step outputs and status.
 
-### Top-Level-Structure
-Basel3/
-├── Call Reports/
-├── Material Events/
-├── RWA/
-└── CODE/
-
-## Call Reports
-Basel3/Call Reports/
-├── CSV/
-│   ├── Cleaned/               # Cleaned CSV files
-│   ├── Interleaved/           # Interleaved schedules
-│   ├── Schedules/             # Individual schedules
-│   ├── Distributed Lag/
-│   │   ├── Cleaned/           # Cleaned distributed lag files
-│   │   └── RAW/               # Raw distributed lag files
-│   ├── Dynamic Lag/
-│   │   ├── Cleaned/           # Cleaned dynamic lag files
-│   │   └── RAW/               # Raw dynamic lag files
-│   └── RAW/                   # Unprocessed CSV files
-├── PDF/                       # Original Call Report PDFs
-└── TXT/                       # Original Call Report TXTs
-
-## Material Events
-Basel3/Material Events/
-├── De Novo/
-│   ├── Cleaned/               # Cleaned De Novo entries
-│   └── RAW/                   # Raw De Novo entries
-├── Failures/
-│   ├── Cleaned/               # Cleaned bank failure records
-│   └── RAW/                   # Raw failure records
-├── Mergers/
-│   ├── Cleaned/               # Cleaned merger records
-│   └── RAW/                   # Raw merger records
-└── JSD/
-    ├── Basel III/
-    │   ├── Mergers T+1/
-    │   ├── Mergers T+2/
-    │   ├── Mergers T+3/
-    │   ├── Mergers T+4/
-    │   ├── Failures T+1/
-    │   ├── Failures T+2/
-    │   ├── Failures T+3/
-    │   └── Failures T+4/
-    └── Post-GFC/
-        ├── Mergers T+1/
-        ├── Mergers T+2/
-        ├── Mergers T+3/
-        ├── Mergers T+4/
-        ├── Failures T+1/
-        ├── Failures T+2/
-        ├── Failures T+3/
-        └── Failures T+4/
-
-## RWA (Risk-Weighted Assets)
-Basel3/RWA/
-├── Constant Maturity Treasury/
-│   ├── FRED/
-│   │   ├── MLE YIELD/         # Maximum likelihood yield estimates
-│   │   ├── MLE VOL/           # Maximum likelihood volatilities
-│   │   ├── MLE CORR/          # Correlation matrices
-│   └── FRED HESTON/           # Heston model calibration outputs
-├── Expected Coupon/           # Expected coupon data
-├── Expected Loss/             # Expected loss data
-└── Novel Risk Weights/        # Custom Basel risk weights
+### Basel3 Directory Structure
+- `Basel3/Call Reports/`
+  - `CSV/`
+    - `Cleaned/`: Cleaned CSV outputs from Call Report processing.
+    - `Interleaved/`: Interleaved CSV data from multiple schedules.
+    - `Schedules/`: CSV data split by Call Report schedules (e.g., RC, RC-B).
+    - `Distributed Lag/`
+      - `Cleaned/`: Cleaned distributed lag ratio outputs.
+      - `RAW/`: Raw distributed lag ratio data.
+    - `Dynamic Lag/`
+      - `Cleaned/`: Cleaned dynamic lag ratio outputs.
+      - `RAW/`: Raw dynamic lag ratio data.
+  - `PDF/`: Original Call Report PDFs.
+  - `TXT/`: Text files extracted from Call Report PDFs.
+- `Basel3/Material Events/`
+  - `De Novo/`
+    - `Cleaned/`: Cleaned de novo event data.
+    - `RAW/`: Raw de novo event data.
+  - `Failures/`
+    - `Cleaned/`: Cleaned failure event data.
+    - `RAW/`: Raw failure event data.
+  - `Mergers/`
+    - `Cleaned/`: Cleaned merger event data.
+    - `RAW/`: Raw merger event data.
+  - `JSD/`
+    - `Basel III/`
+      - `Mergers T+1/`: JSD outputs for Basel III mergers, T+1 horizon.
+      - `Mergers T+2/`: JSD outputs for Basel III mergers, T+2 horizon.
+      - `Mergers T+3/`: JSD outputs for Basel III mergers, T+3 horizon.
+      - `Mergers T+4/`: JSD outputs for Basel III mergers, T+4 horizon.
+      - `Failures T+1/`: JSD outputs for Basel III failures, T+1 horizon.
+      - `Failures T+2/`: JSD outputs for Basel III failures, T+2 horizon.
+      - `Failures T+3/`: JSD outputs for Basel III failures, T+3 horizon.
+      - `Failures T+4/`: JSD outputs for Basel III failures, T+4 horizon.
+    - `Post-GFC/`
+      - `Mergers T+1/`: JSD outputs for Post-GFC mergers, T+1 horizon.
+      - `Mergers T+2/`: JSD outputs for Post-GFC mergers, T+2 horizon.
+      - `Mergers T+3/`: JSD outputs for Post-GFC mergers, T+3 horizon.
+      - `Mergers T+4/`: JSD outputs for Post-GFC mergers, T+4 horizon.
+      - `Failures T+1/`: JSD outputs for Post-GFC failures, T+1 horizon.
+      - `Failures T+2/`: JSD outputs for Post-GFC failures, T+2 horizon.
+      - `Failures T+3/`: JSD outputs for Post-GFC failures, T+3 horizon.
+      - `Failures T+4/`: JSD outputs for Post-GFC failures, T+4 horizon.
+- `Basel3/RWA/`
+  - `Constant Maturity Treasury/`
+    - `FRED/`: FRED data for Constant Maturity Treasury.
+      - `FRED MLE YIELD/`: Maximum likelihood estimate yield data.
+      - `FRED MLE VOL/`: Maximum likelihood estimate volatility data.
+      - `FRED MLE CORR/`: Maximum likelihood estimate correlation data.
+      - `FRED HESTON/`: Heston model outputs for FRED data.
+  - `Expected Coupon/`: Expected coupon calculations for RWA.
+  - `Expected Loss/`: Expected loss estimates for RWA.
+  - `Novel Risk Weights/`: Novel risk weight computations.
 
 ## CODE Directory
 Basel3/CODE/
