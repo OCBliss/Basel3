@@ -1,4 +1,9 @@
-## Basel III Pipeline for BIS Paper
+## Basel III Pipeline for Central Bank Conference
+
+**Author:** Johnny Waller  
+**GitHub:** github.com/OCBLISS  
+**Contact:** johnny.waller.nb@gmail.com  
+**Affiliation:** Independent Researcher  
 
 This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules (RC, RC-B, RC-D, RC-E). It’s designed for investment bank research, built by a finance grad (you—insert your name if you want), and runs via a Python script (`pipeline.py`) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
 
