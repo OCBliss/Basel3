@@ -1,4 +1,4 @@
-# Basel III Pipeline for BIS Paper
+# Basel III Pipeline for Central Bank Paper
 
 This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on a configurable `pipeline_config.yaml`.
 
