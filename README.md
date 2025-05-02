@@ -1,6 +1,6 @@
 ## Basel III Pipeline for Central Bank Conference
 
-**Author:** Johnny Waller  
+**Author:** Jonathan Waller  
 **GitHub:** github.com/OCBLISS  
 **Contact:** johnny.waller.nb@gmail.com  
 **Affiliation:** Independent Researcher  
