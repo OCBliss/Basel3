@@ -42,7 +42,7 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
   - ** This creates to ability to restart the entire analysis mid-stream if errors occurs, preventing CPU runtime waste. see ``run_task``
 - **Error Handling:** Graceful failure with exit codes and logs for debugging.
 
-## Customization - Example
+## Future Customization - Example
 
 - **Schedules** specific can be segregated and run à la carte decreasing computational runtime by specifying each schedule as a ``concurrency_branches``
 `pipeline_config.yaml`
