@@ -77,6 +77,8 @@ This project automates the processing of Call Report data and material events in
       - `Failures T+2/`: JSD outputs for Post-GFC failures, T+2 horizon.
       - `Failures T+3/`: JSD outputs for Post-GFC failures, T+3 horizon.
       - `Failures T+4/`: JSD outputs for Post-GFC failures, T+4 horizon.
+
+### Future Work: RWA and Expected Loss Modeling
 - `Basel3/RWA/`
   - `Constant Maturity Treasury/`
     - `FRED/`: FRED data for Constant Maturity Treasury.
