@@ -7,6 +7,20 @@
 
 This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script (`Task_manager_Global_Yaml.py`) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
 
+---
+
+### 📄 Licensing
+
+This project is dual-licensed:
+
+- 🆓 **Apache License 2.0** — for non-commercial, academic, and personal use.
+- 💼 **Commercial use requires a separate license.**  
+  See [`Commercial_License.txt`](./Commercial_License.txt) for full terms.
+
+To obtain a commercial license, contact:  
+📧 [johnny.waller.nb@gmail.com](mailto:johnny.waller.nb@gmail.com)
+
+
 ### Purpose
 - Clean and convert raw Call Report data.
 - Perform vertical analysis on the full dataset, then split by schedule (RC, RC-B, etc.).
