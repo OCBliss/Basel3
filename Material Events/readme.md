@@ -4,9 +4,9 @@ This folder contains data on significant structural and non-financial banking ev
 
 ## Event Types
 The events and changes included in this folder cover the following types:
-- **New Institutions:** Records of newly established banks.
-- **Business Combinations:** Includes mergers, acquisitions, and reorganizations.
-- **Business Combinations - Failures:** Mergers resulting from bank failures.
+- **New Institutions:** Records of newly established banks. -> **De Novo**
+- **Business Combinations:** Includes mergers, acquisitions, and reorganizations. -> **Mergers**
+- **Business Combinations - Failures:** Mergers resulting from bank failures. -> **Failures**
 - **Interim Mergers & Reorganizations:** Short-term transactions for structural changes.
 - **Conversions:** Bank charter changes or ownership transformations.
 - **Title Changes:** Updates to institution names or legal titles.
@@ -16,9 +16,20 @@ The events and changes included in this folder cover the following types:
 
 ## Peer Groups
 For analysis, the data has been divided into three peer groups:
-1. **Survivors:** All institutions excluding those involved in mergers or failures.
-2. **Mergers:** Institutions involved in mergers, acquisitions, or reorganizations.
-3. **Failures:** Institutions that failed, with failure data sourced directly from the FDIC at [this link](https://banks.data.fdic.gov/bankfind-suite/failures).
+1. **DE NOVO:**
+2. **Survivors:** All institutions excluding those involved in mergers or failures.
+3. **Mergers:** Institutions involved in mergers, acquisitions, or reorganizations.
+4. **Failures:** Institutions that failed, with failure data sourced directly from the FDIC at [this link](https://banks.data.fdic.gov/bankfind-suite/failures).
+5. **JSD:**
+6. **IG:**
+7. **JSD-INTRA:**
+
+## Filtration-adapative Ratios
+The `Material Events/` folder also contains four csvs beginning with "quarters" to aid in the ``{t,t}``, ``{t,t-1}``, ``{t,t-2}`` and ``{t,t-3}`` calculation
+- **quarters_basel3**
+- **quarters_de_novo**
+- **quarters_failures**
+- **quarters**
 
 ## Folder Structure
 This folder is further divided into subfolders based on event types and peer groups. Each subfolder is organized by financial quarter:
