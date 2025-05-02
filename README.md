@@ -5,13 +5,13 @@
 **Contact:** johnny.waller.nb@gmail.com  
 **Affiliation:** Independent Researcher  
 
-This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules (RC, RC-B, RC-D, RC-E). It’s designed for investment bank research, built by a finance grad (you—insert your name if you want), and runs via a Python script (`pipeline.py`) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
+This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script (`Task_manager_Global_Yaml.py`) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
 
 ### Purpose
 - Clean and convert raw Call Report data.
 - Perform vertical analysis on the full dataset, then split by schedule (RC, RC-B, etc.).
 - Filter peer groups by time periods (Basel III, Post-GFC, GFC).
-- Compute JSD with varying time horizons (T+1, T+2, etc.) and bin sizes (20, 30, 50).
+- Compute JSD with varying time horizons (T+1, T+2, T+3, T+4) and bin sizes (20, 30, 50, 100).
 - Output regulatory metrics for BIS scrutiny.
 
 ### Directory Structure
@@ -20,7 +20,7 @@ This project automates the processing of Call Report data and material events in
   - `pipeline_config.yaml`: Config file defining steps, dependencies, and execution flow.
   - `STEP 01/`: Cleaning scripts (e.g., `call_reports_mkdir_txt_csvs_global.py`).
   - `STEP 02/`: Conversion scripts (e.g., `Call_Report_Merged_Cleaned_Global.py`, `numeric_only6.py`).
-  - `STEP 03/`: Vertical analysis scripts (e.g., `Call_Reports_retrospective_Vertical3c.py`, `Vertical_Analysis_RC.py`).
+  - `STEP 03/`: Vertical analysis scripts (e.g., `Call_Reports_retrospective_Vertical3c.py`).
   - `STEP 04/`: Ratio distribution scripts (e.g., `Call_Reports_Distributed_Ratios2.py`).
   - `STEP 05/`: Dynamic ratio scripts (e.g., `Call_Reports_Dynamic_Ratios2.py`).
   - `STEP 06/`: Material event processing (e.g., `Material_events_cleaned2.py`, `Material_events_de_novo_flag4.py`).
@@ -42,16 +42,22 @@ This project automates the processing of Call Report data and material events in
       - `RAW/`: Raw dynamic lag ratio data.
   - `PDF/`: Original Call Report PDFs.
   - `TXT/`: Text files extracted from Call Report PDFs.
+    - `FFIEC CDR Call Bulk All Schedules 20240630/`
+    - `FFIEC CDR Call Bulk All Schedules 20240330/`
+    - etc.
 - `Basel3/Material Events/`
   - `De Novo/`
-    - `Cleaned/`: Cleaned de novo event data.
+    - `Cleaned/`: Cleaned de novo event data structured for labeling.
     - `RAW/`: Raw de novo event data.
+    - `Call Reports`: Call Reports labeled with De Novo flags.
   - `Failures/`
     - `Cleaned/`: Cleaned failure event data.
     - `RAW/`: Raw failure event data.
+    - `Call Reports`: Call Reports labeled with De Novo + Failure flags.
   - `Mergers/`
     - `Cleaned/`: Cleaned merger event data.
     - `RAW/`: Raw merger event data.
+    - `Call Reports`: Call Reports labeled with De Novo + Failure + Merger flags.
   - `JSD/`
     - `Basel III/`
       - `Mergers T+1/`: JSD outputs for Basel III mergers, T+1 horizon.
@@ -95,15 +101,17 @@ This project automates the processing of Call Report data and material events in
 - This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
 
 ### How It Works
-1. `pipeline.py`:
-   - Finds the `CODE/` directory dynamically from its own location.
+1. `Basel3_Global_Filepath.py`:
+   - Finds the `Basel3/` root directory dynamically from its own location, then;
+   - Finds the `CODE/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
+2. `Task_Manager_Global_Yaml.py`: 
    - Loads `pipeline_config.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
    - Executes steps based on the `execution` section:
      - `sequential`: Runs steps in order, one after another.
      - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
      - `concurrent_groups`: Runs multiple step lists in parallel within a branch.
    - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
-   - Uses input hashing (`compute_hash`) to skip steps if their inputs haven’t changed, logging results in `Logs_V3/`.
+   - Logs results in `Logs_V3/` for each step in the chain.
 
 2. `pipeline_config.yaml`:
    - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `CODE/`.
@@ -120,56 +128,30 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
    - "2.1": Converts data to numeric-only format for analysis.
    - "3.0": Performs vertical analysis on the full Call Report dataset, preparing it for schedule-specific splits.
 
-2. Schedule Split:
-   - Four concurrent branches launch after 3.0:
-     - `rc_schedule`: Processes RC schedule data.
-     - `rc_b_schedule`: Starts RC-B analysis (currently stops at 3.2—extend as needed).
-     - `rc_d_schedule`: Starts RC-D analysis (stops at 3.3).
-     - `rc_e_schedule`: Starts RC-E analysis (stops at 3.4).
-
-3. Time Period Split (RC Only):
-   - Inside `rc_schedule`, two branches run in parallel:
-     - `basel_iii`: Processes RC data for Basel III period.
-     - `post_gfc`: Processes RC data for Post-GFC period.
-   - Both execute steps 4.0.1–6.4.1 sequentially:
-     - "4.0.1": Computes distributed ratios for RC data.
-     - "4.1.1": Cleans those distributed ratios.
-     - "5.0.1": Computes dynamic ratios for RC.
-     - "5.1.1": Cleans the dynamic ratios.
-     - "6.1.1": Cleans RC material event data.
-     - "6.2.1": Flags de novo events in RC data.
-     - "6.3.1": Flags failures in RC data.
-     - "6.4.1": Flags mergers in RC data.
+2. Time Period Split:
+   - execute steps 4.0.1–6.4.1 sequentially:
+     - "4.0": Computes distributed ratios for RC, RC-B, etc., data.
+     - "4.1": Cleans those distributed ratios.
+     - "5.0": Computes dynamic ratios.
+     - "5.1": Cleans the dynamic ratios.
+     - "6.1": Cleans material event data.
+     - "6.2": Flags de novo events in RC data.
+     - "6.3": Flags failures in RC data.
+     - "6.4": Flags mergers in RC data.
 
 4. Peer Group Filtering:
-   - For `basel_iii`:
-     - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
-     - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
-   - For `post_gfc`:
-     - `peers`: Runs 7.0.1.1–7.0.1.4 in parallel, filtering peer groups for Post-GFC across T+1 to T+4.
-     - `filters`: Runs 7.1.1.1–7.1.1.4 in parallel, applying filters to Post-GFC peer groups.
+   - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
+   - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
 
 5. JSD Analysis:
-   - For `basel_iii`:
-     - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
-     - "8.1.1": Computes JSD probabilities for Basel III.
-     - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
-     - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
-     - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
-     - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
-   - For `post_gfc`:
-     - "8.0.2": Performs binning on Post-GFC data (default 50 bins).
-     - "8.1.2": Computes JSD probabilities for Post-GFC.
-     - `t1`: Runs single JSD step "8.2.1.1" for T+1 horizon.
-     - `t2`: Runs single JSD step "8.2.1.2" for T+2 horizon.
-     - `t3`: Runs single JSD step "8.2.1.3" for T+3 horizon.
-     - `t4`: Runs single JSD step "8.2.1.4" for T+4 horizon.
+   - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
+   - "8.1.1": Computes JSD probabilities for Basel III.
+   - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
+   - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
+   - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
+   - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
 
 ### Notes on Placeholders
-- `rc_b_schedule`, `rc_d_schedule`, `rc_e_schedule` currently stop at 3.2, 3.3, and 3.4 respectively. To extend them:
-  - Add steps to `scripts` (e.g., "4.0.2": { path: "STEP 04/STEP 04.0.2/RC_B_Distributed_Ratios.py" }).
-  - Update `dependencies` (e.g., "3.2": ["4.0.2"]).
-  - Expand `execution` with similar `concurrent_branches` structures as `rc_schedule`.
 - `t1` binning (20, 30, 50) is implemented for RC Basel III only. Other horizons (t2–t4) and Post-GFC use single steps but can be extended with binning.
 
 ### Running the Pipeline
@@ -183,7 +165,6 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
    - Each log includes timestamps, step start/completion, and input hashes (SHA-256) if hashing is enabled.
 
 ### Dynamic Features
-- Input Hashing: If a script prints "Input from: /path/to/dir", `pipeline.py` hashes the directory’s files (using SHA-256) and skips the step if unchanged, logging the hash with `INPUT_HASH`.
 - Concurrency: Uses Python’s `ThreadPoolExecutor`—automatically scales to the number of branches or groups (e.g., 4 schedules, 2 periods, 3 bins in t1).
 - Flexibility: Add new schedules, time periods, or bin sizes by editing `pipeline_config.yaml`—no changes to `pipeline.py` required.
 
