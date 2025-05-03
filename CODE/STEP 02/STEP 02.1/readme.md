@@ -16,3 +16,17 @@ This preprocessing is necessary to enforce uniform temporal identifiers across a
 
 This script expects files from **Step 02**, located in:
 - <ROOT_DIR>`/Call Report/CSV/Cleaned/`
+
+
+Each output file has:
+- `RCON9999` overwritten with integer date `YYYYMMDD` (for temporal joins).
+- `RCON9224` column removed (legacy call report artifact).
+- No column reordering or data loss aside from these edits.
+
+---
+
+## Usage
+
+1. Ensure that `Basel3_Global_Filepath.py` in your `CODE/` directory defines:
+   ```python
+   BASEL3_ROOT = "/path/to/project"
