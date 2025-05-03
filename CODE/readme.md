@@ -54,7 +54,7 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
     - `peers`: `mergers`, `failures`, `survivors` and `de novo` flags are applied for JSD analysis.
     - `filters` - we then filter by `peers` and binning.
     
-  - ``intermediate_steps``
+  - ``intermediate_steps`` - used to insert required sequential stages (e.g., binning, PMF creation) between concurrent groups.
   - ``sequential`` - some steps cannot be run without the preceding step eliminating the possibility for concurrency at that step
 - **Efficiency:** Skips steps with unchanged inputs via SHA-256 hashing.
 - **Logging:** Outputs detailed logs to `Logs_V3/` for each step.
@@ -67,6 +67,7 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
 `pipeline_config.yaml`
 ```yaml
 # pipline_config.yaml
+```
 
 # Be sure to have ``dependencies`` match ``execution``
 
