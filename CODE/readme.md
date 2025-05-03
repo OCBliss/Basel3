@@ -16,6 +16,20 @@ The pipeline processes financial data through a series of modular Python scripts
 
 The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any number of processing branches or steps.
 
+### Directory Structure
+- `CODE/`: Root directory containing all scripts.
+  - `pipeline.py`: Main pipeline script—executes the workflow.
+  - `pipeline_config.yaml`: Config file defining steps, dependencies, and execution flow.
+  - `STEP 01/`: Cleaning scripts (e.g., `call_reports_mkdir_txt_csvs_global.py`).
+  - `STEP 02/`: Conversion scripts (e.g., `Call_Report_Merged_Cleaned_Global.py`, `numeric_only6.py`).
+  - `STEP 03/`: Vertical analysis scripts (e.g., `Call_Reports_retrospective_Vertical3c.py`).
+  - `STEP 04/`: Ratio distribution scripts (e.g., `Call_Reports_Distributed_Ratios2.py`).
+  - `STEP 05/`: Dynamic ratio scripts (e.g., `Call_Reports_Dynamic_Ratios2.py`).
+  - `STEP 06/`: Material event processing (e.g., `Material_events_cleaned2.py`, `Material_events_de_novo_flag4.py`).
+  - `STEP 07/`: Peer group filtering (e.g., `Material_events_peer_group_basel3_t1.py`).
+  - `STEP 08/`: JSD computation (e.g., `RC_JSD_Basel_T1_Bin20.py`).
+  - `Logs_V3/`: Auto-generated log directory for step outputs and status.
+
 ## Features
 
 - **Modular Design:** Add or modify steps by updating the YAML configuration.
