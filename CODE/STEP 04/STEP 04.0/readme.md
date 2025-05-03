@@ -57,6 +57,6 @@ These horizontally stacked, multi-quarter records allow:
 - **Alignment of financial distress trajectories**
 
 They feed directly into:
-- Step 04.1: ``Clean_Distributed_Ratios2.py`
+- Step 04.1: ``Clean_Distributed_Ratios2.py``
 
 
