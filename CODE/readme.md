@@ -67,7 +67,6 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
 `pipeline_config.yaml`
 ```yaml
 # pipline_config.yaml
-```
 
 # Be sure to have ``dependencies`` match ``execution``
 
