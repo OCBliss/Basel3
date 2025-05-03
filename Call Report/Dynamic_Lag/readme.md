@@ -95,9 +95,4 @@ change = \begin{cases}
    |--------|----------|------------|--------------|----------------|
    | 12345  | 95       | 0.0556     | 50           | 0.1111         |
 
-## Error Handling
-- **Quarter Not Found:** If the current quarter is missing in `quarters.csv`, an error will be raised.
-- **Insufficient Quarters:** If there are fewer than three previous quarters for a file, an error will be raised.
-
-## Contact
-For issues or questions, please contact the script developer or the data team managing the Basel III Call Report datasets.
+##
