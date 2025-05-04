@@ -116,6 +116,10 @@ To obtain a commercial license, contact:
   - `numpy`
   - `re`
   - `importlib.util`
+ 
+```python
+[ -f requirements.txt ] && pip install -r requirements.txt
+```
 
 ### OS Compatibility Note
 - This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
