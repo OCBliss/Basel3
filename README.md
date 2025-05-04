@@ -13,9 +13,9 @@ This project automates the processing of Call Report data and material events in
 
 ---
 
-# Change Log – Basel III Risk Analytics Toolkit
+### Change Log – Basel III Risk Analytics Toolkit
 
-## [In Progress]
+**[In Progress]**
 - STEP 08 folder structure under development (ETA May 6)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
 - TXT subdirectories being populated iteratively
