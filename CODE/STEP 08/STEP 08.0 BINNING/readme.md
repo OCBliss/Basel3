@@ -1,0 +1,6 @@
+## Directory ##
+- `STEP 08.0 BINNING`
+  - `STEP 08.0.1 BINS20`
+  - `STEP 08.0.2 BINS30`
+  - `STEP 08.0.3 BINS50`
+  - `STEP 08.0.4 BINS100`
