@@ -5,7 +5,8 @@
 **Contact:** johnny.waller.nb@gmail.com  
 **Affiliation:** Independent Researcher  
 
-[This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script ([Task_manager_Global_Yaml.py])([https://github.com/OCBliss/Basel3/CODE/Task_manager_Global_Yaml.py]) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.]
+This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script [Task_manager_Global_yaml_driven2a.py](https://github.com/OCBliss/Basel3/blob/main/CODE/Task_manager_Global_yaml_driven2a.py) driven by a dynamic YAML config (`pipeline_config.yaml`). The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
+
 
 ---
 
