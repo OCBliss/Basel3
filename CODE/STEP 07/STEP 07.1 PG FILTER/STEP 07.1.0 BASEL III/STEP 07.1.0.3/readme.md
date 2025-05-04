@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This step consolidates T+ peer-group event data (failures, mergers, survivors) across valid quarters defined in `quarters_basel3.csv`. It performs strict date filtering by filename suffix (`YYYYMMDD`) and outputs unified CSVs per event class.
+This step consolidates T+3 peer-group event data (failures, mergers, survivors) across valid quarters defined in `quarters_basel3.csv`. It performs strict date filtering by filename suffix (`YYYYMMDD`) and outputs unified CSVs per event class.
 
 ---
 
