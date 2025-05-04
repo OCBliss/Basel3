@@ -121,7 +121,7 @@ To obtain a commercial license, contact:
 ```python
 [ -f 
 ```
-Drag the `requirements.txt` file into the terminal window (this auto-fills the path). Make you have a space after the `f`, before the `[` and after the `r`
+Drag the `requirements.txt` file into the terminal window (this auto-fills the path). Make you have a space after the `-f`, before the `[` and after the `-r` as well.
 ```python
  ] && pip install -r
 ```
