@@ -121,11 +121,11 @@ To obtain a commercial license, contact:
 ```python
 [ -f 
 ```
-Drag the requirements.txt file into the terminal window (this auto-fills the path). Make you have a space after the f, before the `[` and after the `r`
+Drag the `requirements.txt` file into the terminal window (this auto-fills the path). Make you have a space after the `f`, before the `[` and after the `r`
 ```python
  ] && pip install -r
 ```
-Drag the requirements.txt file into the terminal window again. Press `return`.
+Drag the `requirements.txt` file into the terminal window again. Press `return`.
 
 ### OS Compatibility Note
 - This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
