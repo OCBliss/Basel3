@@ -1,4 +1,4 @@
-# Step 07.0.0.1 — Material Event Classification (T+2 Horizon)
+# Step 07.0.0.2 — Material Event Classification (T+2 Horizon)
 
 ## Purpose
 
