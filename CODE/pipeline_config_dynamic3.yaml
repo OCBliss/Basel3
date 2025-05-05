@@ -34,7 +34,7 @@ scripts:
   "7.0.0.4":
     path: "STEP 07/STEP 07.0 PG/STEP 07.0.0 BASEL III/STEP 07.0.0.4/Material_events_peer_group_basel3_t4.py"
   "7.1.0.1":
-    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.1/Material_events_peer_group_basel3_t1*.py"
+    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.1/Material_events_peer_group_basel3_t1.py"
   "7.1.0.2":
     path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.2/Material_events_peer_group_basel3_t2.py"
   "7.1.0.3":
