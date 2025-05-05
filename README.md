@@ -188,7 +188,7 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
    - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
 
 ### Notes on Placeholders
-- `t1` binning (20, 30, 50) is implemented for RC Basel III only. Other horizons (t2–t4) and Post-GFC use single steps but can be extended with binning.
+- `t1`, `t2`, `t3`, `t4` and binning (20, 30, 50, 100).
 
 ### Running the Pipeline
 1. Setup:
