@@ -1,0 +1,131 @@
+# pipeline_config.yaml
+
+scripts:
+  "1.0":
+    path: "STEP 01/call_reports_mkdir_txt_csvs_global.py"
+  "2.0":
+    path: "STEP 02/STEP 02.0/Call_Report_Merged_Cleaned_Global.py"
+  "2.1":
+    path: "STEP 02/STEP 02.1/numeric_only6.py"
+  "3.0":
+    path: "STEP 03/Call_Reports_retrospective_Vertical3c1.py"
+  "4.0":
+    path: "STEP 04/STEP 04.0/Call_Reports_Distributed_Ratios2.py"
+  "4.1":
+    path: "STEP 04/STEP 04.1/Clean_Distributed_Ratios2.py"
+  "5.0":
+    path: "STEP 05/STEP 05.0/Call_Reports_Dynamic_Ratios2.py"
+  "5.1":
+    path: "STEP 05/STEP 05.2/Clean_dynamic_ratios.py"
+  "6.1":
+    path: "STEP 06/STEP 06.1/Material_events_cleaned2.py"
+  "6.2":
+    path: "STEP 06/STEP 06.2/Material_events_de_novo_flag4.py"
+  "6.3":
+    path: "STEP 06/STEP 06.3/Material_events_failures_flag.py"
+  "6.4":
+    path: "STEP 06/STEP 06.4/Material_events_mergers_flag.py"
+  "7.0.0.1":
+    path: "STEP 07/STEP 07.0 PG/STEP 07.0.0 BASEL III/STEP 07.0.0.1/Material_events_peer_group_basel3_t1.py"
+  "7.0.0.2":
+    path: "STEP 07/STEP 07.0 PG/STEP 07.0.0 BASEL III/STEP 07.0.0.2/Material_events_peer_group_basel3_t2.py"
+  "7.0.0.3":
+    path: "STEP 07/STEP 07.0 PG/STEP 07.0.0 BASEL III/STEP 07.0.0.3/Material_events_peer_group_basel3_t3.py"
+  "7.0.0.4":
+    path: "STEP 07/STEP 07.0 PG/STEP 07.0.0 BASEL III/STEP 07.0.0.4/Material_events_peer_group_basel3_t4.py"
+  "7.1.0.1":
+    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.1/Material_events_peer_group_basel3_t1.py"
+  "7.1.0.2":
+    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.2/Material_events_peer_group_basel3_t2.py"
+  "7.1.0.3":
+    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.3/Material_events_peer_group_basel3_t3.py"
+  "7.1.0.4":
+    path: "STEP 07/STEP 07.1 PG FILTER/STEP 07.1.0 BASEL III/STEP 07.1.0.4/Material_events_peer_group_basel3_t4.py"
+  "8.0.1":
+    path: "STEP 08/STEP 08.0 BINNING/STEP 08.0.1 BINS20/Material_events_JSD_binning_basel3_20.py"
+    # args: "--bin1_count 20 --bin2_count 5"
+  "8.0.2":
+    path: "STEP 08/STEP 08.0 BINNING/STEP 08.0.2 BINS30/Material_events_JSD_binning_basel3_30.py"
+    # args: "--bin1_count 30 --bin2_count 5"
+  "8.0.3":
+    path: "STEP 08/STEP 08.0 BINNING/STEP 08.0.3 BINS50/Material_events_JSD_binning_basel3_50.py"
+    # args: "--bin1_count 50 --bin2_count 5"
+  "8.0.4":
+    path: "STEP 08/STEP 08.0 BINNING/STEP 08.0.4 BINS100/Material_events_JSD_binning_basel3_100.py"
+    # args: "--bin1_count 100 --bin2_count 5"
+  "8.1.1":
+    path: "STEP 08/STEP 08.1 PROB/STEP 08.1.1/Material_events_JSD_probabilities_basel3.py"
+  "8.2.0.1":
+    path: "STEP 08/STEP 08.2 JSD/STEP 08.2.0 BASEL III/STEP 08.2.0.1/Material_events_JSD_basel3_t1.py"
+  "8.2.0.2":
+    path: "STEP 08/STEP 08.2 JSD/STEP 08.2.0 BASEL III/STEP 08.2.0.2/Material_events_JSD_basel3_t2.py"
+  "8.2.0.3":
+    path: "STEP 08/STEP 08.2 JSD/STEP 08.2.0 BASEL III/STEP 08.2.0.3/Material_events_JSD_basel3_t3.py"
+  "8.2.0.4":
+    path: "STEP 08/STEP 08.2 JSD/STEP 08.2.0 BASEL III/STEP 08.2.0.4/Material_events_JSD_basel3_t4.py"
+  "8.3.0.1":
+    path: "STEP 08/STEP 08.3 IG/STEP 08.3.0 BASEL III/STEP 08.3.0.1/JSD_intragroup_filter.py"
+    # args: "--process_dir_t1 'Material Events/JSD/BASEL III T+1' \
+    #     --output_dir_t1 'Material Events/IG/BASEL III T+1' \
+    #     --process_dir_t2 'Material Events/JSD/BASEL III T+2' \
+    #     --output_dir_t2 'Material Events/IG/BASEL III T+2' \
+    #     --process_dir_t3 'Material Events/JSD/BASEL III T+3' \
+    #     --output_dir_t3 'Material Events/IG/BASEL III T+3' \
+    #     --process_dir_t4 'Material Events/JSD/BASEL III T+4' \
+    #     --output_dir_t4 'Material Events/IG/BASEL III T+4'"
+
+
+dependencies:
+  "1.0": ["2.0"]
+  "2.0": ["2.1"]
+  "2.1": ["3.0"]
+  "3.0": ["4.0"]
+  "4.0": ["4.1"]
+  "4.1": ["5.0"]
+  "5.0": ["5.1"]
+  "5.1": ["6.1"]
+  "6.1": ["6.2"]
+  "6.2": ["6.3"]
+  "6.3": ["6.4"]
+  "6.4": ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]
+  "7.0.0.1": ["7.1.0.1"]
+  "7.0.0.2": ["7.1.0.2"]
+  "7.0.0.3": ["7.1.0.3"]
+  "7.0.0.4": ["7.1.0.4"]
+  "7.1.0.1": ["8.0.1"]  # Each filter step only triggers its corresponding binning step
+  "7.1.0.2": ["8.0.2"]
+  "7.1.0.3": ["8.0.3"]
+  "7.1.0.4": ["8.0.4"]
+  "8.0.1": ["8.1.1"]
+  "8.0.2": ["8.1.1"]
+  "8.0.3": ["8.1.1"]
+  "8.0.4": ["8.1.1"]
+  "8.1.1": ["8.2.0.1", "8.2.0.2", "8.2.0.3", "8.2.0.4"]
+  "8.2.0.1": ["8.3.0.1"]
+  "8.2.0.2": ["8.3.0.1"]
+  "8.2.0.3": ["8.3.0.1"]
+  "8.2.0.4": ["8.3.0.1"]
+
+execution:
+  sequential: ["1.0", "2.0", "2.1"]  # Initial data prep
+  concurrent_branches:
+    rcb_schedule:
+      sequential: ["3.0", "4.0", "4.1", "5.0", "5.1"]  # RC-B analysis
+      concurrent_branches:
+        basel_iii:
+          sequential: ["6.1", "6.2", "6.3", "6.4"]  # Material event flagging
+          concurrent_groups:
+            peers: ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]  # Peer group creation in parallel
+            filters: ["7.1.0.1", "7.1.0.2", "7.1.0.3", "7.1.0.4"]  # Peer group filtering in parallel
+            bins: ["8.0.1", "8.0.2", "8.0.3", "8.0.4"]
+          intermediate_steps: ["8.1.1"]  # Generate probability mass functions after binning
+          concurrent_branches:  # Split JSD into separate branches for each horizon
+            t1:
+              sequential: ["8.2.0.1"]  # JSD for T+1
+            t2:
+              sequential: ["8.2.0.2"]  # JSD for T+2
+            t3:
+              sequential: ["8.2.0.3"]  # JSD for T+3
+            t4:
+              sequential: ["8.2.0.4"]  # JSD for T+4
+          intermediate_steps: ["8.3.0.1"]
