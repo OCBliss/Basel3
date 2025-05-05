@@ -118,12 +118,10 @@ To obtain a commercial license, contact:
 
   
 ### Requirements
-- Python 3.x: With standard libraries (`os`, `sys`, `subprocess`, `hashlib`, `time`, `yaml`, `concurrent.futures`).
+- Python 3.6: With standard libraries (`os`, `sys`, `subprocess`, `hashlib`, `time`, `yaml`, `concurrent.futures`).
   - `pyyaml`
   - `pandas`
   - `numpy`
-  - `re`
-  - `importlib.util`
 
  Type or copy and paste into terminal window
 ```python
