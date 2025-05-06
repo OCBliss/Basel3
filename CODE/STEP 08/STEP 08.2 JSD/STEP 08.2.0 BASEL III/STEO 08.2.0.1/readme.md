@@ -1,4 +1,4 @@
-# Step 8.2.0.1 — Jensen-Shannon Divergence Between Peer Groups
+# Step 8.2.0.1 — Jensen-Shannon Divergence Between Peer Groups (T+1 Horizon)
 
 ## Purpose
 
