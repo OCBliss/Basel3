@@ -20,13 +20,13 @@ This project automates the processing of Call Report data and material events in
 - `pipeline_config.yaml` updated --> `pipeline_config_dynamic4a.yaml`
 
 **[In Progress]**
+- ⚠️ CSV Precision Warning:
+Some regulatory data fields (e.g., RCFAH311) are stored as string-encoded percentages ("XX%").
+Even after stripping "%", Excel auto-formatting and pandas dtype inference may cause downstream precision or casting errors. These will be patched via raw float coercion or .csv export handling if needed.
 - STEP 08 future state (ETA TBD)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
   - Finish 8.4.x and 8.5.x
 - TXT subdirectories being populated iteratively need to be moved to Zenodo
-⚠️ CSV Precision Warning:
-Some regulatory data fields (e.g., RCFAH311) are stored as string-encoded percentages ("XX%").
-Even after stripping "%", Excel auto-formatting and pandas dtype inference may cause downstream precision or casting errors. These will be patched via raw float coercion or .csv export handling if needed.
 
 ---
 
