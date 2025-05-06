@@ -46,7 +46,7 @@ For each `(group, time horizon)` combination:
 | Failures  | T+1–T+4       | `Failures/JS Divergence/Basel III T+N/Binned/` |
 | Survivors | T+1–T+4       | `Survivors/JS Divergence/Basel III T+N/Binned/` |
 
-Each output file is named: `<OriginalFileName>_binned_20.csv`
+Each output file is named: `<OriginalFileName>_binned_50.csv`
 
 
 And contains a DataFrame:
