@@ -18,6 +18,7 @@ This project automates the processing of Call Report data and material events in
 - STEP 08 should run successfully to 8.3.0.1.
 - `Task_manager_Global_yaml_driven2a.py` changed --> `Task_manager_Global_yaml_driven5a.py`
 - `pipeline_config.yaml` updated --> `pipeline_config_dynamic4a.yaml`
+
 **[In Progress]**
 - STEP 08 future state (ETA TBD)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
