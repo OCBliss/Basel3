@@ -4,7 +4,7 @@
 
 This step transforms raw financial ratio features for each peer group (Failures, Mergers, Survivors) into **binned histograms**. These are used to compute pairwise Jensen-Shannon divergence (JSD) in subsequent steps.
 
-It discretizes continuous ratio changes into (20+5+2) bins, reflecting both symmetry and tail behavior, to enable robust non-parametric distribution comparisons.
+It discretizes continuous ratio changes into (30+5+1) bins, reflecting both symmetry and tail behavior, to enable robust non-parametric distribution comparisons.
 
 ---
 
@@ -32,7 +32,7 @@ Each numeric column is binned into:
 - **5 bins from (1.0, 2.0]**: `[(1.0, 1.2], (1.2, 1.4], ..., (1.8, 2.0]]`
 - **1 bin for values > 2**
 
-This creates **30 + 5 + 1 = 26** total bins.
+This creates **30 + 5 + 1 = 36** total bins.
 
 ---
 
@@ -46,7 +46,7 @@ For each `(group, time horizon)` combination:
 | Failures  | T+1–T+4       | `Failures/JS Divergence/Basel III T+N/Binned/` |
 | Survivors | T+1–T+4       | `Survivors/JS Divergence/Basel III T+N/Binned/` |
 
-Each output file is named: `<OriginalFileName>_binned_20.csv`
+Each output file is named: `<OriginalFileName>_binned_30.csv`
 
 
 And contains a DataFrame:
