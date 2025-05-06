@@ -20,9 +20,6 @@ For analysis, the data has been divided into three peer groups:
 2. **Survivors:** All institutions excluding those involved in mergers or failures.
 3. **Mergers:** Institutions involved in mergers, acquisitions, or reorganizations.
 4. **Failures:** Institutions that failed, with failure data sourced directly from the FDIC at [this link](https://banks.data.fdic.gov/bankfind-suite/failures).
-5. **JSD:**
-6. **IG:**
-7. **JSD-INTRA:**
 
 ## Filtration-adapative Ratios
 The `Material Events/` folder also contains four csvs beginning with "quarters" to aid in the ``{t,t}``, ``{t,t-1}``, ``{t,t-2}`` and ``{t,t-3}`` calculation
@@ -34,9 +31,40 @@ The `Material Events/` folder also contains four csvs beginning with "quarters" 
 ## Folder Structure
 This folder is further divided into subfolders based on event types and peer groups. Each subfolder is organized by financial quarter:
 - **DE NOVO/**: Data on new institutions, organized quarterly.
-- **Business Combinations/**: Mergers and acquisitions, organized quarterly.
+  - `RAW/`: The raw data from BankFind Suite for new institutions must be placed here.
+  - `CLEANED/`: The cleaned version,restructuring and removing unnecessary columns will be placed here.
+  - `Call Reports/`:
+- **Mergers/**: Mergers and acquisitions, organized quarterly.
+  - `RAW/`: The raw data from BankFind Suite for failures must be placed here.
+  - `CLEANED/`: The cleaned version,restructuring and removing unnecessary columns will be placed here.
+  - `Call Reports/`:
+  - `Peer Group Failures/`:
+    - `BASEL III T+1/`:
+    - `BASEL III T+2/`:
+    - `BASEL III T+3/`:
+    - `BASEL III T+4/`:
+  - `JS Divergence/`:
 - **Failures/**: Detailed records of bank failures, organized quarterly.
+  - `RAW/`: The raw data from BankFind Suite for mergers must be placed here.
+  - `CLEANED/`: The cleaned version,restructuring and removing unnecessary columns will be placed here.
+  - `Call Reports/`:
+  - `Peer Group Failures/`:
+    - `BASEL III T+1/`:
+    - `BASEL III T+2/`:
+    - `BASEL III T+3/`:
+    - `BASEL III T+4/`:
+  - `JS Divergence/`:
 - **Survivors/**: Data on institutions excluded from mergers or failures, organized quarterly.
+  - `Peer Group Failures/`:
+    - `BASEL III T+1/`:
+    - `BASEL III T+2/`:
+    - `BASEL III T+3/`:
+    - `BASEL III T+4/`:
+  - `JS Divergence/`:
+- **JSD:**
+### Future state
+- **IG:**
+- **JSD-INTRA:**
 
 ## How to Use This Folder
 1. **Event Type Analysis:** 
