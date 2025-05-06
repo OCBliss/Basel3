@@ -1,4 +1,4 @@
-# Step 8.0.1 — Variable Binning for JS Divergence Analysis (B_k = 30)
+# Step 8.0.2 — Variable Binning for JS Divergence Analysis (B_k = 30)
 
 ## Purpose
 
