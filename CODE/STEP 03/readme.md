@@ -6,6 +6,28 @@ This script takes bank-specific Call Report CSVs from the `/Cleaned/` directory 
 
 Each bank's quarterly record is processed into two parallel observations (entry1 and entry2) from separate column sets (RCON and RCFD). These are interleaved and deduplicated to produce a final bank-quarter feature vector.
 
+## Retrospective Scripts: CET1 and RWA Notes
+
+This repository includes multiple vertical aggregation scripts for Call Report data, with tradeoffs between stability and coverage:
+
+### `call_reports_vertical_retrospective3c.py`
+- ✅ **Stable** — does **not** produce typecasting or coercion errors
+- ✅ Safely processes historical report structure for aggregation and alignment
+- ❌ **Does not include** CET1 threshold metrics or risk-weighted asset (RWA) duration adjustments
+- ➤ Recommended for structural validation, pre-JSD or filter-stage pipeline runs
+
+### `call_reports_vertical_retrospective4.py`
+- ✅ **Includes** CET1 threshold metrics and RWA duration adjustments for capital calibration
+- ⚠️ **May raise casting errors** due to percentage-formatted cells (e.g., `"34.5%"`) being interpreted as strings
+- ✅ These errors can be manually resolved:
+  - Open the `.csv` in Excel
+  - Change column format from `Percentage` → `Number`
+  - Save and re-run the script
+- ➤ This workaround consistently succeeds and allows full capital reconstruction logic to proceed
+
+> 📌 Note: Automated dtype coercion will be added in a future version. For now, `3c` is best for previewing transformations without encountering Excel-format edge cases.
+
+
 ---
 
 ## Input
