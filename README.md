@@ -18,11 +18,12 @@ This project automates the processing of Call Report data and material events in
 - STEP 08 should run successfully to 8.0.4.
 - `Task_manager_Global_yaml_driven2a.py` changed --> `Task_manager_Global_yaml_driven5a.py`
 - `pipeline_config.yaml` updated --> `pipeline_config_dynamic4a.yaml`
+- STEP 03.0 vertical and retrospective analysis
+  - Casting errors solved for CET1, CCYB
+- STEP 03.1 cleans the vertical analysis
+  - removes `RCRI-CET1-THRES` column (RCFAH311)   
 
 **[In Progress]**
-- ⚠️ CSV Precision Warning:
-Some regulatory data fields (e.g., RCFAH311) are stored as string-encoded percentages ("XX%").
-Even after stripping "%", Excel auto-formatting and pandas dtype inference may cause downstream precision or casting errors. These will be patched via raw float coercion or .csv export handling if needed.
 - STEP 08 future state (ETA TBD)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
   - Finish 8.1.x to 8.5.x
