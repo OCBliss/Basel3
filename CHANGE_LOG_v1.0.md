@@ -1,6 +1,6 @@
 ## 🚧 Intragroup JSD (Bank-Level Differentiation) – Future Implementation
 
-The current pipeline completes the full intergroup JSD computation across temporal windows and asset pairings as described in the paper. As of this release, the **intragroup JSD scoring** — which measures bank-level idiosyncratic divergence relative to peer PMFs — is **mathematically formulated** and structurally anticipated in the pipeline, but **not yet implemented in code**.
+The current pipeline completes the full intergroup JSD computation across temporal windows and asset pairings as described in the paper. As of this release, the **intragroup JSD scoring** — (which measures bank-level idiosyncratic divergence relative to peer PMFs) — is **mathematically formulated** and structurally anticipated in the pipeline, but **not yet implemented in code**.
 
 This final step involves:
 
