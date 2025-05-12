@@ -102,44 +102,45 @@ To obtain a commercial license, contact:
     - `RAW/`: Rådata för De Novo-händelser.
     - `Call Reports`: Call Reports märkta med De Novo-flaggor.
   - `Failures/`
-    - `Cleaned/`: Rensade data för bankhaverier.
-    - `RAW/`: Rådata för bankhaverier.
-    - `Call Reports`: Call Reports märkta med De Novo + haveri-flaggor.
+    - `Cleaned/`: Rensade data för bankfallissemang.
+    - `RAW/`: Rådata för bankfallissemang.
+    - `Call Reports`: Call Reports märkta med De Novo + fallissemang-flaggor.
   - `Mergers/`
     - `Cleaned/`: Rensade data för sammanslagningar.
     - `RAW/`: Rådata för sammanslagningar.
-    - `Call Reports`: Call Reports märkta med De Novo + haveri + sammanslagningsflaggor.
+    - `Call Reports`: Call Reports märkta med De Novo + fallissemang + sammanslagningsflaggor.
   - `JSD/`
     - `Basel III/`
-      - `Mergers T+1/`: JSD-resultat för Basel III-sammanslagningar, horisont T+1.
-      - `Mergers T+2/`: JSD-resultat för Basel III-sammanslagningar, horisont T+2.
-      - `Mergers T+3/`: JSD-resultat för Basel III-sammanslagningar, horisont T+3.
-      - `Mergers T+4/`: JSD-resultat för Basel III-sammanslagningar, horisont T+4.
-      - `Failures T+1/`: JSD-resultat för Basel III-haverier, horisont T+1.
-      - `Failures T+2/`: JSD-resultat för Basel III-haverier, horisont T+2.
-      - `Failures T+3/`: JSD-resultat för Basel III-haverier, horisont T+3.
-      - `Failures T+4/`: JSD-resultat för Basel III-haverier, horisont T+4.
+      - `Mergers T+1/`: JSD-resultat för banksammanslagningar under Basel III, med prognoshorisont T+1.
+      - `Mergers T+2/`: JSD-resultat för banksammanslagningar under Basel III, med prognoshorisont T+2.
+      - `Mergers T+3/`: JSD-resultat för banksammanslagningar under Basel III, med prognoshorisont T+3.
+      - `Mergers T+4/`: JSD-resultat för banksammanslagningar under Basel III, med prognoshorisont T+4
+      - `Failures T+1/`: JSD-resultat för Basel III-bankfallissemang, med prognoshorisont T+1.
+      - `Failures T+2/`: JSD-resultat för Basel III-bankfallissemamg, med prognoshorisont T+2.
+      - `Failures T+3/`: JSD-resultat för Basel III-bankfallissemang, med prognoshorisont T+3.
+      - `Failures T+4/`: JSD-resultat för Basel III-bankfallissemamg, med prognoshorisont T+4.
     - `Post-GFC/`
-      - `Mergers T+1/`: JSD-resultat för sammanslagningar efter finanskrisen, horisont T+1.
-      - `Mergers T+2/`: JSD-resultat för sammanslagningar efter finanskrisen, horisont T+2.
-      - `Mergers T+3/`: JSD-resultat för sammanslagningar efter finanskrisen, horisont T+3.
-      - `Mergers T+4/`: JSD-resultat för sammanslagningar efter finanskrisen, horisont T+4.
-      - `Failures T+1/`: JSD-resultat för haverier efter finanskrisen, horisont T+1.
-      - `Failures T+2/`: JSD-resultat för haverier efter finanskrisen, horisont T+2.
-      - `Failures T+3/`: JSD-resultat för haverier efter finanskrisen, horisont T+3.
-      - `Failures T+4/`: JSD-resultat för haverier efter finanskrisen, horisont T+4.
+      - `Mergers T+1/`: JSD-resultat för banksammanslagningar efter finanskrisen, med prognoshorisont T+1.
+      - `Mergers T+2/`: JSD-resultat för banksammanslagningar efter finanskrisen, med prognoshorisont T+2.
+      - `Mergers T+3/`: JSD-resultat för banksammanslagningar efter finanskrisen, med prognoshorisont T+3.
+      - `Mergers T+4/`: JSD-resultat för banksammanslagningar efter finanskrisen, med prognoshorisont T+4.
+      - `Failures T+1/`: JSD-resultat för bankfallissemang efter finanskrisen, med prognoshorisont T+1.
+      - `Failures T+2/`: JSD-resultat för bankfallissemang efter finanskrisen, med prognoshorisont T+2.
+      - `Failures T+3/`: JSD-resultat för bankfallissemang efter finanskrisen, med prognoshorisont T+3.
+      - `Failures T+4/`: JSD-resultat för bankfallissemang efter finanskrisen, med prognoshorisont T+4.
 
 ### Framtida arbete: RWA och modellering av förväntad förlust
-- `Basel3/RWA/`
-  - `Constant Maturity Treasury/`
-    - `FRED/`: FRED-data för statsobligationer med konstant löptid.
-      - `FRED MLE YIELD/`: Avkastningsdata enligt maximum likelihood-estimat.
-      - `FRED MLE VOL/`: Volatilitetsdata enligt maximum likelihood-estimat.
-      - `FRED MLE CORR/`: Korrealtionsdata enligt maximum likelihood-estimat.
-      - `FRED HESTON/`: Utdatan från Heston-modellen för FRED-data.
-  - `Expected Coupon/`: Beräkningar av förväntad kupong för RWA.
-  - `Expected Loss/`: Uppskattning av förväntad förlust för RWA.
-  - `Novel Risk Weights/`: Nya beräkningar av riskvikter.
+Basel3/RWA/
+  - Constant Maturity Treasury/
+    - FRED/: FRED-data för statsobligationer med konstant löptid.
+      - FRED MLE YIELD/: Avkastningsdata enligt maximum likelihood-estimat.
+      - FRED MLE VOL/: Volatilitetsdata enligt maximum likelihood-estimat.
+      - FRED MLE CORR/: Korrelationsdata enligt maximum likelihood-estimat.
+      - FRED HESTON/: Utdata från Heston-modellen för FRED-data.
+  - Expected Coupon/: Beräkning av förväntad kupongränta för RWA.
+  - Expected Loss/: Uppskattning av förväntad förlust för RWA.
+  - Novel Risk Weights/: Nya beräkningar av riskvikter.
+
 
 ---
 
@@ -201,21 +202,21 @@ Nedan visas hela `pipeline_config.yaml` i dess nuvarande form – alla steg, ber
      - "5.0": Beräknar dynamiska nyckeltal.  
      - "5.1": Rensar de dynamiska nyckeltalen.  
      - "6.1": Rensar data om materiella händelser.  
-     - "6.2": Flaggar De Novo-händelser i RC-data.  
-     - "6.3": Flaggar bankhaverier i RC-data.  
-     - "6.4": Flaggar sammanslagningar i RC-data.
+     - "6.2": Flaggar De Novo-händelser.  
+     - "6.3": Flaggar bankfallissemang.  
+     - "6.4": Flaggar banksammanslagningar.
 
 3. Filtrering av Peer-grupper:  
-   - `peers`: Kör 7.0.0.1–7.0.0.4 parallellt – filtrerar peer-grupper för Basel III över horisonterna T+1 till T+4.  
-   - `filters`: Kör 7.1.0.1–7.1.0.4 parallellt – tillämpar ytterligare filter på Basel III peer-grupper.
+   - `peers`: Kör 7.0.0.1–7.0.0.4 parallellt – filtrerar peer-grupper enligt Basel III över proghorisonterna T+1 till T+4.  
+   - `filters`: Kör 7.1.0.1–7.1.0.4 parallellt – tillämpar ytterligare filter på Basel III-peer-grupper.
 
 4. JSD-analys:  
    - "8.0.1": Utför binning på Basel III-data (standard: 50 bins – konfigurerbart i skriptet).  
    - "8.1.1": Beräknar JSD-sannolikheter för Basel III.  
    - `t1`: Delas upp i tre samtidiga JSD-körningar med binsstorlekar 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).  
-   - `t2`: Kör enskilt JSD-steg "8.2.0.2" för T+2-horisonten.  
-   - `t3`: Kör enskilt JSD-steg "8.2.0.3" för T+3-horisonten.  
-   - `t4`: Kör enskilt JSD-steg "8.2.0.4" för T+4-horisonten.
+   - `t2`: Kör enskilt JSD-steg "8.2.0.2" för T+2-proghorisonten.  
+   - `t3`: Kör enskilt JSD-steg "8.2.0.3" för T+3-proghorisonten.  
+   - `t4`: Kör enskilt JSD-steg "8.2.0.4" för T+4-proghorisonten.
 
 ### Kommentarer om Platshållare
 - `t1`, `t2`, `t3`, `t4` samt binning (20, 30, 50, 100).
@@ -233,7 +234,7 @@ Nedan visas hela `pipeline_config.yaml` i dess nuvarande form – alla steg, ber
    - Varje logg innehåller tidsstämplar, start/slut för steget och indatahashar (SHA-256) om hashning är aktiverad.
 
 ### Dynamiska Funktioner
-- Samtidighet: Använder Pythons `ThreadPoolExecutor` – skalar automatiskt till antal grenar eller grupper (t.ex. 4 scheman, 2 perioder, 3 bins i t1).  
+- Samtidighet: Använder Pythons `ThreadPoolExecutor` – skalar automatiskt beroende till antal grenar eller grupper (t.ex. 4 scheman, 2 perioder, 3 bins i t1).  
 - Flexibilitet: Lägg till nya scheman, tidsperioder eller binsstorlekar genom att redigera `pipeline_config.yaml` – inga ändringar krävs i `pipeline.py`.
 
 ### Tips för Användning
