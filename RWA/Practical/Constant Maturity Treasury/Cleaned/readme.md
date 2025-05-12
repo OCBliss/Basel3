@@ -4,6 +4,8 @@
 
 This step consolidates multiple **Constant Maturity Treasury (CMT)** series from the FRED database into a single unified time series file. It ensures all rates are aligned by date, missing values are forward-filled, and the result is ready for use in duration-sensitive Basel III modeling.
 
+- Use `Constant_Maturity_Treasury_Cleaned2a.py` first
+
 ---
 
 ## Input
@@ -21,7 +23,7 @@ Daily Treasury yield data (downloaded from FRED):
 
 These files are expected in:
 
-`/RWA/Constant Maturity Treasury/FRED/`
+`/RWA/FRED/`
 
 ### `observation_date` currently not formatted correctly
 Each file must contain:
@@ -34,7 +36,7 @@ Each file must contain:
 
 The script produces:
 
-`/RWA/Constant Maturity Treasury/Cleaned/combined_fred_treasury_data.csv`
+`/RWA/Practical/Constant Maturity Treasury/Cleaned/combined_fred_treasury_data.csv`
 
 
 This output:
@@ -78,5 +80,5 @@ This unified Treasury dataset is used for:
 
 ## Next Step
 
-Proceed to **Differencing**: `Constant_Maturity_Treasury_Differenced5.py`
+Proceed to **Differencing**: `Constant_Maturity_Treasury_Differenced5a.py`
 - Currently fixing directory setup
