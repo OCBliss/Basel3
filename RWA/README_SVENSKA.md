@@ -6,6 +6,8 @@ CMT-serier representerar **avkastning på amerikanska statsobligationer interpol
 
 Dessa implicita räntor konstrueras utifrån indikativa bud-sidiga prisnoteringar på de senast auktionerade obligationerna. Räntorna används av det amerikanska finansdepartementet för att skapa en kontinuerlig avkastningskurva – en viktig referens för ränteanalys, durationsexponering och modellering av ränterisk.
 
+---
+
 ### 🔍 Syfte i detta projekt
 
 CMT-data används för att:
@@ -13,6 +15,18 @@ CMT-data används för att:
 - Fånga ränteexponering i HTM-portföljer,
 - Skapa en teoretiskt jämförbar referenskurva för amerikanska bankers balansräkningskänslighet,
 - Stödja stresstester och regulatorisk analys kopplad till Basel III-ramverket.
+
+---
+
+### 📁 Filstruktur för Räntekurvsdata
+
+| Mapp                                      | Innehåll                                                                 |
+|-------------------------------------------|--------------------------------------------------------------------------|
+| `<root dir>/RWA/FRED/`                    | Rådata från FRED (filer: `DGS1`, `DGS3`, `DGS5`, `DGS10`, `DGS20`, `DGS30`) |
+| `<root dir>/RWA/Practical/`               | Modell för icke-parallella räntechocker tillämpade på riskbaserat kapital |
+| `<root dir>/RWA/PDMM/`                    | Teoretisk modell: PDMM-Heston (path-dependent multi-maturity)            |
+
+---
 
 ### 📦 Datakälla
 
@@ -24,6 +38,8 @@ CMT-data används för att:
 - **Senaste åtkomst:** 12 maj 2025
 
 > 💡 **CMT-serierna kan förändras** enligt Treasury's metodologiska uppdateringar, inklusive input-vikter och interpolationsstrategier. För detaljer, se avsnittet *Treasury Yield Curve Methodology* i H.15-dokumentationen.
+
+---
 
 ### 📚 Citat (för akademisk användning)
 
