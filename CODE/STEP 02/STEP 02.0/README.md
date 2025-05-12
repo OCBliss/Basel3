@@ -10,6 +10,8 @@ The result is a series of quarterly "Cleaned Call Report" files placed in:
 
 These cleaned outputs are the direct inputs to **Step 02.1**, where longitudinal transformations, lagged ratios, and dynamic metrics are computed for Jensen-Shannon divergence (JSD), CET1, and liquidity-risk modeling.
 
+📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/CODE/STEP%2002/STEP%2002.0/README_SVENSKA.md)
+
 ---
 
 ### Directory Structure
