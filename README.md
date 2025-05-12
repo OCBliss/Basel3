@@ -11,6 +11,8 @@ This project automates the processing of Call Report data and material events in
 ---
 ⚠️ NOTE TO REVIEWERS: This repository supports the empirical component of the **Sveriges Riksbank** 2025 conference submission titled "***Basel III Under Strain: Interest Rate Exposure, Misclassification Arbitrage, and the Illusion of Compliance***". All code and output structures referenced in the methodology section of the paper are located here. The pipeline is under active development, with new version folders forthcoming to isolate future-state regulatory scenarios. **Uploads still ongoing**.
 
+📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/README_SVENSKA.md)
+
 ---
 
 **[Finished]**
