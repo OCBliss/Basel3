@@ -40,10 +40,10 @@ Arbetsflödet definieras i `pipeline_config.yaml`, vilket möjliggör flexibilit
   - **`concurrency_branches`**
     - `basel_iii` – kör all analys för Basel III-perioden enligt artikelns specifikation.
     - `post_gfc` – kör all analys för perioden efter finanskrisen enligt artikelns specifikation.
-    - `t1` – T+1 skapar en gren för varje `concurrency_branches` med ett T+1-förskjutet analysfönster.
-    - `t2` – T+2 skapar en gren för varje `concurrency_branches` med ett T+2-förskjutet analysfönster.
-    - `t3` – T+3 skapar en gren för varje `concurrency_branches` med ett T+3-förskjutet analysfönster.
-    - `t4` – T+4 skapar en gren för varje `concurrency_branches` med ett T+4-förskjutet analysfönster.
+    - `t1` – T+1 skapar en gren för varje `concurrency_branches` med en T+1 **prognoshorisont**.
+    - `t2` – T+2 skapar en gren för varje `concurrency_branches` med en T+2 **prognoshorisont**.
+    - `t3` – T+3 skapar en gren för varje `concurrency_branches` med en T+3 **prognoshorisont**.
+    - `t4` – T+4 skapar en gren för varje `concurrency_branches` med en T+4 **prognoshorisont**.
   - **`concurrency_group`** – en specifik samtidighet som endast uppstår inom en `concurrency_branches`-instans:
     - `jsd` – t.ex. JSD-analys tillämpas endast en gång per `concurrent_branches`-instans.
       - `bins20` – binning skapar sannolikhetsmassfunktioner för Jensen-Shannon-divergens mellan peer-grupper (t.ex. 20–50 bins).
