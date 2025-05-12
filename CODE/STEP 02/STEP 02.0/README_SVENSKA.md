@@ -7,7 +7,7 @@ Detta skript konsoliderar FFIEC Call Report-scheman från varje kvartal till en 
 Resultatet är en serie kvartalsvisa "Rensade Call Report"-filer som placeras i:
 - <ROOT_DIR>`/Call Report/CSV/Cleaned/Cleaned_Call_Report_<YYYYMMDD>.csv`
 
-Dessa rensade utdatafiler används direkt i **Steg 02.1**, där longitudinella transformationer, fördröjda nyckeltal och dynamiska mått beräknas för Jensen-Shannon-divergens (JSD), CET1 och modeller för likviditetsrisk.
+Dessa rensade utdatafiler används direkt i **STEP 02.1**, där longitudinella transformationer, fördröjda nyckeltal och dynamiska mått beräknas för Jensen-Shannon-divergens (JSD), CET1 och modeller för likviditetsrisk.
 
 ---
 
