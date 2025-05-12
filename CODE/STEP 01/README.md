@@ -6,6 +6,7 @@ This preprocessing script converts FFIEC Call Report `.txt` files into standardi
 
 The resulting files are saved in: <ROOT_DIR>`Call Report/CSV/Schedules/`
 
+📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/CODE/STEP 01/README_SVENSKA.md)
 
 ---
 
