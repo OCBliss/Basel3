@@ -1,5 +1,7 @@
 ## 📘 Methodological Appendix: Description of Treasury Nominal and Inflation-Indexed Constant Maturity Series
 
+📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/RWA/FRED/README_SVENSKA.md)
+
 Yields on nominal U.S. Treasury securities with **constant maturity** (**CMT**) are interpolated by the U.S. Treasury from the daily yield curve of non-inflation-indexed Treasury securities. This curve, which relates a bond’s yield to its remaining time to maturity, is based on closing bid yields for actively traded securities in the over-the-counter (OTC) market. These market yields are derived from compilations of price quotations obtained by the **Federal Reserve Bank of New York**.
 
 Constructed constant maturity yields are read from the curve at fixed maturities—currently:  
