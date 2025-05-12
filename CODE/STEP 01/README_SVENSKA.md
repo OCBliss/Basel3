@@ -1,4 +1,4 @@
-# Steg 01 — Förbehandling: TXT till CSV med FDIC-certifikatskomplettering
+# STEP 01 — Förbehandling: TXT till CSV med FDIC-certifikatskomplettering
 
 ## Översikt
 
