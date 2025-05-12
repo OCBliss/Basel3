@@ -12,17 +12,22 @@ These cleaned outputs are the direct inputs to **Step 02.1**, where longitudinal
 
 ---
 
-## Directory Structure
-
+### Directory Structure
 <ROOT_DIR>/Call Report/
-├── CSV/
-│ ├── Schedules/
-│ │ └── 20240331/
-│ │ ├── FFIEC CDR Call Schedule RC 03312024.csv
-│ │ └── ...
-│ └── Cleaned/
-│ └── Cleaned_Call_Report_20240331.csv
-
+- `CSV/`: sub-root directory containing CSVs.
+  - `Cleaned/`: Contains converted individual schedules as csv before merged into unified quarterly Call Report.
+    - `FFIEC CDR Call Bulk All Schedules 20240630/`: Cleaned schedules for a specific financial quarter.
+      - `FFIEC CDR Call Schedule RC 03312024.csv`: 
+      - `FFIEC CDR Call Schedule RC-B 03312024.csv`:
+      - etc.
+  - `Schedules/`: Contains the merged schedules by financial quarter for vertical and retrospective analysis in `Interleaved/`.
+  - `Interleaved/`: 
+  - `Distributed/`:
+    - `RAW/`: 
+    - `Cleaned/`: 
+  - `Dynamic`: 
+    - `RAW/`: 
+    - `Cleaned/`: 
 
 ---
 
