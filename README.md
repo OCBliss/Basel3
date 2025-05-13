@@ -118,15 +118,20 @@ To obtain a commercial license, contact:
 
 ### Future Work: RWA and Expected Loss Modeling
 - `Basel3/RWA/`
-  - `Constant Maturity Treasury/`
-    - `FRED/`: FRED data for Constant Maturity Treasury.
-      - `FRED MLE YIELD/`: Maximum likelihood estimate yield data.
-      - `FRED MLE VOL/`: Maximum likelihood estimate volatility data.
-      - `FRED MLE CORR/`: Maximum likelihood estimate correlation data.
+  - `FRED/`: FRED data for Constant Maturity Treasury.
+    - `Practical`: Simplified non-parallel yield shock calculation
+      - `Constant Maturity Treasury/`
+        - `Cleaned/`
+        - `Differenced/`: Calculates only the positive yield shocks over a rolling time horizon. Any values below a threshold are filtered out to model only the downside deviation (risk of loss).
+        - `EXP_DRIFT/`: Calculates the independent rate rates for each maturity.
+      - `Expected Coupon/`: Expected coupon calculations for RWA.
+      - `Expected Loss/`: Expected loss estimates for RWA.
+      - `Novel Risk Weights/`: Novel risk weight computations.
+    - `PDMM/`: Path-Dependent (i.e., non-Markovian) Multifactor Heston.
+      - `FRED MLE YIELD/`: Maximum likelihood estimate yield data. This produces `mu_i^Y(t)`, `nu_i^Y(t)`, `theta_i^Y(t)`
+      - `FRED MLE VOL/`: Maximum likelihood estimate volatility data. This produces `mu_i^nu(t)`, `xi_i^nu(t)`, `\theta_i^nu(t)`
+      - `FRED MLE CORR/`: Maximum likelihood estimate correlation data. This produces `rho_i^Y(t)`, `rho_i^nu(t)`
       - `FRED HESTON/`: Heston model outputs for FRED data.
-  - `Expected Coupon/`: Expected coupon calculations for RWA.
-  - `Expected Loss/`: Expected loss estimates for RWA.
-  - `Novel Risk Weights/`: Novel risk weight computations.
 
   
 ### Requirements
