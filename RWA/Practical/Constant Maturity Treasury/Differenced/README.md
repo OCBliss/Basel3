@@ -8,6 +8,8 @@ This step transforms **Constant Maturity Treasury (CMT)** yield data into **year
 - **Scenario analysis**
 - **Shock calibration under Basel III**
 
+📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/RWA/Practical/Constant%20Maturity%20Treasury/Differenced/README_SVENSKA.md)
+
 ---
 
 ## Input
