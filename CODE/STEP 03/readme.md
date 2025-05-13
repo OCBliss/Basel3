@@ -25,7 +25,7 @@ This repository includes multiple vertical aggregation scripts for Call Report d
   - Save and re-run the script
 - ➤ This workaround consistently succeeds and allows full capital reconstruction logic to proceed
 
-> 📌 Note: Automated dtype coercion will be added in a future version. For now, `3c` is best for previewing transformations without encountering Excel-format edge cases.
+> 📌 Note: Automated dtype coercion should now be fixed in v1.0 for `call_reports_vertical_retrospective4.py`
 
 
 ---
@@ -48,7 +48,7 @@ This repository includes multiple vertical aggregation scripts for Call Report d
 
 
 - Each output file contains:
-- One row per `IDRSSD` (bank), interleaving entry1 and entry2
+- One row per `IDRSSD` (bank), interleaving `entry1` and `entry2`
 - Feature columns capturing:
   - AFS-to-HTM ratios
   - Fair value vs amortized cost relationships
@@ -76,12 +76,13 @@ This repository includes multiple vertical aggregation scripts for Call Report d
 
 ## Usage
 
-Ensure the following directory structure exists:
-Call Report/
-├── CSV/
-│ ├── Cleaned/
-│ └── Interleaved/
-└── CODE/
-└── Basel3_Global_Filepath.py # must define BASEL3_ROOT
+Ensures the following directory structure exists:
+
+<ROOT_DIR>/Call Report/:
+
+  - CSV/
+    - Cleaned/
+    - Interleaved/: **Step 03**
+      - Cleaned/: **Step 03.1**
 
 
