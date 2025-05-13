@@ -28,7 +28,7 @@ This project automates the processing of Call Report data and material events in
 **[In Progress]**
 - STEP 08 future state (ETA TBD)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
-  - Finish 8.1.x to 8.5.x
+  - Finish 8.3.x to 8.5.x
 - TXT subdirectories being populated iteratively need to be moved to Zenodo
 
 ---
