@@ -39,7 +39,7 @@ This project is dual-licensed:
 
 - 🆓 **Apache License 2.0** — for non-commercial, academic, and personal use.
 - 💼 **Commercial use requires a separate license.**  
-  See [`Commercial_License.txt`](./Commercial_License.txt) for full terms.
+  See [`Commercial_License.txt`](./Commercial_License.txt) for full terms. **Updated 2025-05-13**
 
 To obtain a commercial license, contact:  
 📧 [johnny.waller.nb@gmail.com](mailto:johnny.waller.nb@gmail.com)
