@@ -5,43 +5,69 @@
 This software is dual-licensed:
 
 -------------------------------------------------------------------------------
-A. Non-Commercial Use (Apache License 2.0)
--------------------------------------------------------------------------------
-You may use this software under the Apache License, Version 2.0 (the "License"),
-for non-commercial purposes including academic research, personal projects,
+## A. Non-Commercial Use (Apache License 2.0)
+
+You may use this software under the Apache License, Version 2.0 (the "License")  
+for **non-commercial purposes** including academic research, personal projects,  
 open-source contributions, or evaluation.
 
-You may obtain a copy of the License at:
-    http://www.apache.org/licenses/LICENSE-2.0
+You may obtain a copy of the License at:  
+http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
-OF ANY KIND, either express or implied. See the License for the specific language
-governing permissions and limitations under the License.
+Unless required by applicable law or agreed to in writing, software distributed  
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR  
+CONDITIONS OF ANY KIND, either express or implied. See the License for the  
+specific language governing permissions and limitations under the License.
 
--------------------------------------------------------------------------------
-B. Commercial Use Restrictions
--------------------------------------------------------------------------------
-Commercial use of any part of this software or its derivatives is not permitted
-under the Apache License and requires a separate commercial license from the author.
+---
+
+## B. Commercial Use Restrictions
+
+**Commercial use** of any part of this software, codebase, or its derivatives  
+is **not permitted** under the Apache License and requires a separate commercial  
+license from the author.
 
 "Commercial use" includes, but is not limited to:
-  - Use in internal bank risk systems, compliance platforms, or regulatory models
-  - Incorporation into consulting workflows, financial services, or investment strategies
-  - Deployment in a hosted service (SaaS or otherwise) that directly or indirectly
-    generates revenue or is used to support a commercial product
 
--------------------------------------------------------------------------------
-C. How to Obtain a Commercial License
--------------------------------------------------------------------------------
+- Use in or by any **regulatory body**, **prudential authority**, **central bank**,  
+  or **supervisory agency** for purposes of crafting, testing, enforcing, or embedding  
+  compliance rules, capital thresholds, or stress testing frameworks
+
+- Any use that leads to **regulatory mandates, policies, or supervisory guidance**  
+  requiring third parties (e.g., banks or financial institutions) to implement  
+  this methodology, directly or by implication, regardless of whether the  
+  original code is used or re-implemented in derivative form
+
+- Internal use within banks, financial institutions, consultants, or third-party  
+  providers for regulatory reporting, capital planning, risk modeling,  
+  stress testing, audit, or supervisory data transformation
+
+- Incorporation into **consulting workflows**, commercial analytics products,  
+  investment strategies, SaaS platforms, or hosted services that provide  
+  Basel III, macroprudential, or compliance-related insights
+
+- Use in training models, financial validation engines, or compliance toolkits  
+  that mirror, replicate, or approximate this methodology or its systemic logic  
+  without explicit written permission
+
+---
+
+## C. How to Obtain a Commercial License
+
 To inquire about commercial licensing terms, contact:
 
-    Name: John W.
-    GitHub: https://github.com/OCBLISS
-    Email: johnny.waller.nb@gmail.com
-    
+**Name:** John W.  
+**GitHub:** [https://github.com/OCBLISS](https://github.com/OCBLISS)  
+**Email:** johnny.waller.nb@gmail.com
 
-Unauthorized commercial use constitutes a violation of copyright law and may be
-subject to enforcement and damages.
+Licensing is required **even if** the implementation is not a literal reuse of this  
+code but is **functionally derived from the described methodology, logic, or  
+analytical design**. This includes cases where regulatory bodies issue mandates  
+that are only materially satisfiable by replicating this framework, or where  
+regulated entities are indirectly compelled to approximate it.
 
--------------------------------------------------------------------------------
+**Unauthorized commercial use constitutes a violation of copyright law** and  
+may be subject to damages, enforcement actions, and publication of violation.
+
+---
+
