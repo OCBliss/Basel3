@@ -71,3 +71,19 @@ may be subject to damages, enforcement actions, and publication of violation.
 
 ---
 
+## D. Indemnification and Limitation of Liability
+
+The user of this software (the "User") agrees to indemnify, defend, and hold harmless the author, John W. (OCBLISS), and any affiliated parties, contributors, or advisors (collectively, the "Indemnitees") from and against any and all losses, claims, damages, liabilities, costs, and expenses (including reasonable attorney's fees and costs of investigation) incurred by the Indemnitees in connection with any claim or legal proceeding arising out of:
+
+- The User’s use of this software, or any derivative works,
+- The User’s reliance on any analytical results, outputs, or predictions derived from this toolkit,
+- The integration of any portion of this toolkit into financial systems, risk models, supervisory tools, or regulatory policies,
+- The deployment of this toolkit within a regulated entity, supervisory agency, or commercial consulting process.
+
+This indemnification shall apply whether the claims arise from breach of contract, tort, negligence, strict liability, or any other legal theory, except in cases of proven willful misconduct or fraud by the Indemnitees.
+
+The Indemnitees provide this software “AS IS,” with no warranties or representations of any kind. The User assumes all responsibility and risk for use or reliance on this software, its methodologies, and any conclusions drawn therefrom.
+
+---
+
+
