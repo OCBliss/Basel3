@@ -35,10 +35,10 @@ This project automates the processing of Call Report data and material events in
 
 ### 📄 Licensing
 
-This project is dual-licensed:
+> ⚠️ **Dual License Notice**
 
 - 🆓 **Apache License 2.0** — for non-commercial, academic, and personal use.
-- 💼 **Commercial use requires a separate license.**  
+- 💼 **Commercial use—including regulatory, banking, or consulting implementations—requires a license**  
   See [`Commercial_License.txt`](./Commercial_License.txt) for full terms. **Updated 2025-05-13**
 
 To obtain a commercial license, contact:  
