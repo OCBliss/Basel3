@@ -2,23 +2,16 @@
         Basel III Bank Failure & Compliance Prediction Toolkit
                        © 2025 John W. (OCBLISS)
 
-This software is dual-licensed:
+This software is licensed under a Custom Non-Commercial + Commercial License (“Comm-License”)
 
 -------------------------------------------------------------------------------
-## 1. Non-Commercial Use (Apache License 2.0)
+## 1. Non-Commercial Distribution (Apache Reference Only)
 
-### 1.1. You may use this software under the Apache License, Version 2.0 (the "License")  
-for **non-commercial purposes** including academic research, personal projects,  
-open-source contributions, or evaluation.
+This software may be used under the terms of the Apache License 2.0 **solely for non-commercial purposes**, including academic, research, or personal use. The Apache License is incorporated by reference to define permissible non-commercial uses.
 
-### 1.2. You may obtain a copy of the License at:  
-http://www.apache.org/licenses/LICENSE-2.0
+**This does not constitute a full release under Apache 2.0.** Any interpretation of Apache that would permit commercial, regulatory, or institutional use is expressly rejected.
 
-### 1.3. Unless required by applicable law or agreed to in writing, software distributed  
-under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR  
-CONDITIONS OF ANY KIND, either express or implied. See the License for the  
-specific language governing permissions and limitations under the License.
-
+Unless otherwise required by applicable law or agreed in writing, this software is provided "AS IS," without warranty or condition of any kind.
 ---
 
 ## 2. Commercial Use Restrictions
@@ -107,6 +100,16 @@ To the fullest extent permitted by law, **service of process** may also be made 
 
 ### 5.4. Parties.
 This provision shall inure to the benefit of, and be binding upon, the parties and their respective heirs, successors, assigns, administrators, and legal representatives.
+
+---
+
+## 6. Constructive Notice and Repository Access
+
+Accessing, viewing, cloning, forking, or downloading this repository constitutes **constructive notice** of the license terms. Use of any part of this codebase or methodology after the effective date of this license shall be considered an act of knowing acceptance.
+
+Institutional or organizational access by any employee, researcher, contractor, or agent shall be imputed to the institution as a whole.
+
+All access events may be logged for audit, enforcement, or legal purposes.
 
 ---
 
