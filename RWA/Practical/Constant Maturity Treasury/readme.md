@@ -11,8 +11,8 @@ This step calculates the **expected return** of a fixed-coupon bond over a defin
 
 This framework supports Basel III RWA modeling by allowing precise loss estimation under simulated yield curve changes.
 
-- From **Step 11** we pull the expected non-parallel shift from [here](https://github.com/OCBliss/Basel3/blob/main/RWA/Practical/Constant%20Maturiry%20Treasury/EXP_DRIFT)
-- From **Step 12** we pull the expected coupons from [here](https://github.com/OCBliss/Basel3/blob/main/RWA/Practical/Constant%20Maturiry%20Treasury/EXP_COUPON)
+- From **Step 11** we pull the expected non-parallel shift from [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/EXP_DRIFT)
+- From **Step 12** we pull the expected coupons from [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/EXP_COUPON)
 
 ---
 
