@@ -23,7 +23,9 @@ This project automates the processing of Call Report data and material events in
 - STEP 03.0 vertical and retrospective analysis
   - Casting errors solved for CET1, CCYB
 - STEP 03.1 cleans the vertical analysis
-  - removes `RCRI-CET1-THRES` column (RCFAH311)   
+  - removes `RCRI-CET1-THRES` column (RCFAH311)
+- `RWA/` subroot STEP 09-13
+  - Practical method finished 2025-05-18
 
 **[In Progress]**
 - STEP 08 future state (ETA TBD)
