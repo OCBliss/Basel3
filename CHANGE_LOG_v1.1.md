@@ -1,0 +1,11 @@
+**[Finished]**
+- STEP 08 folder structure is finished 2025-05-05
+- STEP 08 should run successfully to 8.0.4.
+- `Task_manager_Global_yaml_driven2a.py` changed --> `Task_manager_Global_yaml_driven5a.py`
+- `pipeline_config.yaml` updated --> `pipeline_config_dynamic4a.yaml`
+- STEP 03.0 vertical and retrospective analysis
+  - Casting errors solved for CET1, CCYB
+- STEP 03.1 cleans the vertical analysis
+  - removes `RCRI-CET1-THRES` column (RCFAH311)
+- `RWA/` subroot STEP 09-13
+  - Practical method finished 2025-05-18
