@@ -39,7 +39,7 @@ This project automates the processing of Call Report data and material events in
 
 > ⚠️ 
 - 💼 **Commercial use—including regulatory, banking, or consulting implementations—requires a license**  
-  See [`Commercial_License.md`](./Commercial_License.md) for full terms.
+  See [`Commercial_License.md`](./LICENSE.md) for full terms.
 
 To obtain a commercial license, contact:  
 📧 [johnny.waller.nb@gmail.com](mailto:johnny.waller.nb@gmail.com)
