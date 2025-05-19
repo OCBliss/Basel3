@@ -116,7 +116,7 @@ To obtain a commercial license, contact:
       - `Failures T+3/`: JSD outputs for Post-GFC failures, T+3 horizon.
       - `Failures T+4/`: JSD outputs for Post-GFC failures, T+4 horizon.
 
-### Future Work: RWA and Expected Loss Modeling
+### RWA: Completed Practical 2025-05-18
 - `Basel3/RWA/`
   - `FRED/`: FRED data for Constant Maturity Treasury.
   - `Practical`: Simplified non-parallel yield shock calculation
@@ -124,7 +124,12 @@ To obtain a commercial license, contact:
       - `Cleaned/`
       - `Differenced/`: Calculates only the positive yield shocks over a rolling time horizon. Any values below a threshold are filtered out to model only the downside deviation (risk of loss).
       - `EXP_DRIFT/`: Calculates the independent rate rates for each maturity.
-    - `Expected Coupon/`: Expected coupon calculations for RWA.
+      - `Expected Coupon/`: Expected coupon calculations for RWA.
+
+### Future Work: RWA and Expected Loss Modeling
+- `Basel3/RWA/`
+  - `FRED/`: FRED data for Constant Maturity Treasury.
+  - `Practical`: Simplified non-parallel yield shock calculation
     - `Expected Loss/`: Expected loss estimates for RWA.
     - `Novel Risk Weights/`: Novel risk weight computations.
   - `PDMM/`: Path-Dependent (i.e., non-Markovian) Multifactor Heston.
