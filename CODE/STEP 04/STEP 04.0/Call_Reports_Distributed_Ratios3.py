@@ -27,7 +27,7 @@ spec.loader.exec_module(paths)
 
 # Step 4: Use the Dynamically Determined ROOT_DIR
 ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-interleaved_directory = os.path.join(ROOT_DIR, "Call Report/CSV/Interleaved")
+interleaved_directory = os.path.join(ROOT_DIR, "Call Report/CSV/Interleaved/Cleaned")
 distributed_directory = os.path.join(ROOT_DIR, "Call Report/CSV/Distributed_Lag/RAW")
 quarters_file = os.path.join(ROOT_DIR, "Call Report/CSV/quarters.csv")
 
