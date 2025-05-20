@@ -19,7 +19,7 @@ scripts:
   "5.0":
     path: "STEP 05/STEP 05.0/Call_Reports_Dynamic_Ratios2.py"
   "5.1":
-    path: "STEP 05/STEP 05.2/Clean_dynamic_ratios.py"
+    path: "STEP 05/STEP 05.1/Clean_dynamic_ratios2.py"
   "6.1":
     path: "STEP 06/STEP 06.1/Material_events_cleaned2.py"
   "6.2":
