@@ -22,6 +22,7 @@ This project automates the processing of Call Report data and material events in
 - `pipeline_config.yaml` updated --> `pipeline_config_dynamic4a.yaml`
 - STEP 03.0 vertical and retrospective analysis
   - Casting errors solved for CET1, CCYB
+  - Bank heterogeneity concerns for CET1 adjusted 2025-05-20
 - STEP 03.1 cleans the vertical analysis
   - removes `RCRI-CET1-THRES` column (RCFAH311)
 - `RWA/` subroot STEP 09-13
