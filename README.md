@@ -28,6 +28,14 @@ This project automates the processing of Call Report data and material events in
 - `RWA/` subroot STEP 09-13
   - Practical method finished 2025-05-18
 
+- ✅ **Includes** Depositor behavior using RC-E Part I 2025-05-29
+  - NSFR claims
+  - NML claims
+    - depository heterogeneity
+    - stable transactional deposits
+    - non-Kolmorogovian withdrawal behavior
+    - non-Markovian withdrawal behavior 
+
 **[In Progress]**
 - STEP 08 future state (ETA TBD)
   - Finish `readme`s and upload script with `argparse` injection and separate manual run
