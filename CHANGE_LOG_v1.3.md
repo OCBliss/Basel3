@@ -1,0 +1,7 @@
+- ✅ **Includes** Depositor behavior using RC-E Part I.
+  - NSFR claims
+  - NML claims
+    - depository heterogeneity
+    - stable transactional deposits
+    - non-Kolmorogovian withdrawal behavior
+    - non-Markovian withdrawal behavior
