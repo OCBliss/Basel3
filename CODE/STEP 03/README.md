@@ -18,7 +18,7 @@ This repository includes multiple vertical aggregation scripts for Call Report d
 - ❌ **Does not include** CET1 threshold metrics or risk-weighted asset (RWA) duration adjustments
 - ➤ Recommended for structural validation, pre-JSD or filter-stage pipeline runs
 
-### `call_reports_vertical_retrospective4.py`
+### `call_reports_vertical_retrospective4b.py`
 - ✅ **Includes** CET1 threshold metrics and RWA duration adjustments for capital calibration
 - ⚠️ **May raise casting errors** due to percentage-formatted cells (e.g., `"34.5%"`) being interpreted as strings
 - ✅ These errors can be manually resolved:
@@ -29,7 +29,14 @@ This repository includes multiple vertical aggregation scripts for Call Report d
 
 > 📌 Note: Automated dtype coercion should now be fixed in v1.0 for `call_reports_vertical_retrospective4.py`
 
-
+### `call_reports_vertical_retrospective5.py`
+- ✅ **Includes** Depositor behavior using RC-E Part I.
+  - NSFR claims
+  - NML claims
+    - depository heterogeneity
+    - stable transactional deposits
+    - non-Kolmorogovian withdrawal behavior
+    - non-Markovian withdrawal behavior
 ---
 
 ## Input
