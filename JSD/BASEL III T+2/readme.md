@@ -1,1 +1,1 @@
-## Stub for T+1 Financial Quarters to Material Event
+## Stub for T+2 Financial Quarters to Material Event
