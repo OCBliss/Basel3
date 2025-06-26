@@ -1,8 +1,6 @@
 # Basel III Pipeline for Central Bank Paper
 
 This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on a configurable `pipeline_config.yaml`.
-
-📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/CODE/README_SVENSKA.md)
  
 **Purpose:** yaml-driven task manager for executing the JSD analysis on call reports and RWA analysis on CMT data from FRED.
 
