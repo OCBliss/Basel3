@@ -1,17 +1,13 @@
 ## Basel III Pipeline for Central Bank Conference
 
-**Author:** Jonathan Waller  
 **GitHub:** github.com/OCBLISS  
-**Contact:** johnny.waller.nb@gmail.com  
-**Affiliation:** Independent Researcher  
+
 
 This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script [Task_manager_Global_yaml_driven5a.py](https://github.com/OCBliss/Basel3/blob/main/CODE/) driven by a dynamic YAML config (`pipeline_config_dynamic4a.yaml`). Clone directory with pre-loaded data or ensure `Basel_Global_Filepath.py` is placed in a root directory explicitly named `Basel3/`. The root folder can be wherever you wish and the sub-directories will be dynamically resolved. The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
 
 
 ---
 ⚠️ NOTE TO REVIEWERS: This repository supports the empirical component of the **Sveriges Riksbank** 2025 conference submission titled "***Basel III Under Strain: Interest Rate Exposure, Misclassification Arbitrage, and the Illusion of Compliance***". All code and output structures referenced in the methodology section of the paper are located here. The pipeline is under active development, with new version folders forthcoming to isolate future-state regulatory scenarios. **Uploads still ongoing**.
-
-📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/README_SVENSKA.md)
 
 ---
 
@@ -43,15 +39,6 @@ This project automates the processing of Call Report data and material events in
 - TXT subdirectories being populated iteratively need to be moved to Zenodo
 
 ---
-
-### 📄 Licensing
-
-> ⚠️ 
-- 💼 **Commercial use—including regulatory, banking, or consulting implementations—requires a license**  
-  See [`Commercial_License.md`](./LICENSE.md) for full terms.
-
-To obtain a commercial license, contact:  
-📧 [johnny.waller.nb@gmail.com](mailto:johnny.waller.nb@gmail.com)
 
 
 ### Purpose
