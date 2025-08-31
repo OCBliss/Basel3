@@ -1,6 +1,6 @@
                    Commercial Use License Terms
         Basel III Bank Failure & Compliance Prediction Toolkit
-                       © 2025 John W. (OCBLISS)
+                       © 2025 (OCBLISS)
 
 This software is licensed under a Custom Non-Commercial + Commercial License (“Comm-License”)
 
@@ -49,9 +49,8 @@ license from the author.
 
 To inquire about commercial licensing terms, contact:
 
-**Name:** John W.  
+**Handle:** OCBliss.  
 **GitHub:** [https://github.com/OCBLISS](https://github.com/OCBLISS)  
-**Email:** johnny.waller.nb@gmail.com
 
 Licensing is required **even if** the implementation is not a literal reuse of this  
 code but is **functionally derived from the described methodology, logic, or  
@@ -67,7 +66,7 @@ may be subject to damages, enforcement actions, and publication of violation.
 ## 4. Indemnification and Limitation of Liability
 
 ### 4.1.
-The user of this software (the "User") agrees to indemnify, defend, and hold harmless the author, John W. (OCBLISS), and any affiliated parties, contributors, or advisors (collectively, the "Indemnitees") from and against any and all losses, claims, damages, liabilities, costs, and expenses (including reasonable attorney's fees and costs of investigation) incurred by the Indemnitees in connection with any claim or legal proceeding arising out of:
+The user of this software (the "User") agrees to indemnify, defend, and hold harmless the author, (OCBLISS), and any affiliated parties, contributors, or advisors (collectively, the "Indemnitees") from and against any and all losses, claims, damages, liabilities, costs, and expenses (including reasonable attorney's fees and costs of investigation) incurred by the Indemnitees in connection with any claim or legal proceeding arising out of:
 
 (a) The User’s use of this software, or any derivative works,
 (b) The User’s reliance on any analytical results, outputs, or predictions derived from this toolkit,
