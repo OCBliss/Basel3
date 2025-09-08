@@ -221,3 +221,7 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
 - Debugging: Check `Logs_V3/`—each step logs `STARTED`, `COMPLETED`, or `ERROR` with timestamps and details.
 - Skip Steps: If a step’s inputs haven’t changed (via hash), it skips execution and logs `✅ Step X input unchanged`.
 
+![Basel3](https://basel-iii.pages.dev/Basel3.png)
+
+
+
