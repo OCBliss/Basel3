@@ -222,6 +222,7 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
 - Skip Steps: If a step’s inputs haven’t changed (via hash), it skips execution and logs `✅ Step X input unchanged`.
 
 ![Basel3](https://basel-iii.pages.dev/Basel3.png)
+![pixel](https://basel3-worker.johnny-waller-nb.workers.dev/)
 
 
 
