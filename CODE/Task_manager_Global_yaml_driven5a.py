@@ -28,10 +28,10 @@ sys.path.append(CODE_DIR)
 
 # ---------------------- Load YAML ----------------------
 # CONFIG_FILE = os.path.join(CODE_DIR, "pipeline_config_dynamic4a.yaml")
-CONFIG_FILE = os.path.join(CODE_DIR, "pipeline_config_dynamic4a2.yaml")
+CONFIG_FILE = os.path.join(CODE_DIR, "pipeline_config_dynamic4a3.yaml")
 if not os.path.exists(CONFIG_FILE):
     # print(f"❌ pipeline_config_dynamic4a.yaml not found in {CODE_DIR}")
-    print(f"❌ pipeline_config_dynamic4a2.yaml not found in {CODE_DIR}")
+    print(f"❌ pipeline_config_dynamic4a3.yaml not found in {CODE_DIR}")
     sys.exit(1)
 
 with open(CONFIG_FILE, 'r') as f:
