@@ -26,6 +26,26 @@ For:
 - Survivors vs. Mergers  
 - Mergers vs. Failures
 
+## Inputs
+
+### YAML
+
+**argparse** injection is used `JSD_intragroup_filter3.py`
+
+- place beneath line containing `path`
+```
+args: "--process_dir_t1 'Material Events/JSD/BASEL III T+1' \
+        --output_dir_t1 'Material Events/IG/BASEL III T+1' \
+        --process_dir_t2 'Material Events/JSD/BASEL III T+2' \
+        --output_dir_t2 'Material Events/IG/BASEL III T+2' \
+        --process_dir_t3 'Material Events/JSD/BASEL III T+3' \
+        --output_dir_t3 'Material Events/IG/BASEL III T+3' \
+        --process_dir_t4 'Material Events/JSD/BASEL III T+4' \
+        --output_dir_t4 'Material Events/IG/BASEL III T+4'"
+```
+
+Use `JSD_intragroup_filter.py if argparse throws error is not necessary and comment the above.
+
 ## 📁 Output Directories
 
 Filtered files are written to:
