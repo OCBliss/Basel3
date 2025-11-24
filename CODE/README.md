@@ -29,8 +29,29 @@ The workflow is defined in `pipeline_config.yaml`, allowing flexibility for any 
     - `STEP 04.1/`: `Clean_Distributed_Ratios2.py``Call_Reports_Distributed_Ratios2.py`).
   - `STEP 05/`: Dynamic ratio scripts (e.g., `Call_Reports_Dynamic_Ratios2.py`).
   - `STEP 06/`: Material event processing (e.g., `Material_events_cleaned2.py`, `Material_events_de_novo_flag4.py`).
+    - `STEP 06.0/`:
+    - `STEP 06.1/`:
+      - `STEP 06.1.1/`:
+    - `STEP 06.2/`:
+    - `STEP 06.3/`:
+    - `STEP 06.4/`:
   - `STEP 07/`: Peer group filtering (e.g., `Material_events_peer_group_basel3_t1.py`).
+    - `STEP 07.0 PG/`:
+      - `STEP 07.0.0 BASEL III/`:
+        - `STEP 07.0.0.1/`:
+        - `STEP 07.0.0.2/`:
+        - `STEP 07.0.0.3/`:
+        - `STEP 07.0.0.4/`:
+    - `STEP 07.1 PG FILTER/`:
+      - `STEP 07.1.0 BASEL III/`:
+        - `STEP 07.1.0.1/`:
+        - `STEP 07.1.0.2/`:
+        - `STEP 07.1.0.3/`:
+        - `STEP 07.1.0.4/`: 
   - `STEP 08/`: JSD computation (e.g., `RC_JSD_Basel_T1_Bin20.py`).
+    - `STEP 08.0 BINNING/`:
+    - `STEP 08.1 PROB/`:
+    - `STEP 08.2 JSD/`:
   - `Logs_V3/`: Auto-generated log directory for step outputs and status.
   
 
@@ -74,6 +95,8 @@ execution:
   concurrent_branches: # split by schedule
     rc_schedule:
       sequential: ["3.0.1", "4.0.1", "4.1.1", "5.0.1", "5.1.1"] # RC analysis
+      concurrent_groups:
+        api: ["6.0.1", "6.0.2", "6.0.3"] # FDIC BankFind Suite API
       concurrent_branches: # split by financial/regulatory epoch (GFC, post-GFC, Basel III)
         basel_iii: # Basel III regulatory epoch
           sequential: ["6.1.1", "6.2.1", "6.3.1", "6.4.1"] # performs material event flagging
