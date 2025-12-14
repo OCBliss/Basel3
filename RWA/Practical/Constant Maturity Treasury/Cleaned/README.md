@@ -74,7 +74,7 @@ This unified Treasury dataset is used for:
 - **Interest rate term structure modeling**
 - **Risk-weight calibration**
 - **Yield curve interpolation**
-- **Scenario generation in RWA/PDMM-Heston models**
+- **Scenario generation in `RWA/Theoretical` and `RWA/Practical`**
 
 ---
 
