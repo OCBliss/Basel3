@@ -10,8 +10,6 @@ The rates are based on indicative bid-side quotes for the most recently auctione
 - Duration exposure  
 - Interest rate risk modeling
 
-📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/RWA/README_SVENSKA.md)
-
 ---
 
 ## 🔍 Purpose in This Project
