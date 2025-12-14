@@ -29,7 +29,7 @@ CMT data is used to:
 |------------------------------|--------------------------------------------------------------------------|
 | `<root dir>/RWA/FRED/`       | Raw FRED data (`DGS1`, `DGS3`, `DGS5`, `DGS10`, `DGS20`, `DGS30`)        |
 | `<root dir>/RWA/Practical/`  | Non-parallel interest rate shock models applied to risk-based capital     |
-| `<root dir>/RWA/PDMM/`       | Theoretical model: `PDMM-Heston` (Path-Dependent Multi-Maturity)          |
+| `<root dir>/RWA/Experimental/`       | Experimental model: (three factor MLE)          |
 
 ---
 
