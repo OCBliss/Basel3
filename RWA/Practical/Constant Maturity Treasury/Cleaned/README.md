@@ -5,9 +5,7 @@
 This step consolidates multiple **Constant Maturity Treasury (CMT)** series from the FRED database into a single unified time series file. It ensures all rates are aligned by date, missing values are forward-filled, and the result is ready for use in duration-sensitive Basel III modeling.
 
 - Use `Constant_Maturity_Treasury_Cleaned2a.py` first
-
-📄 README på Svenska → [README_SVENSKA.md](https://github.com/OCBliss/Basel3/blob/main/RWA/Practical/Constant%20Maturity%20Treasury/Cleaned/README_SVENSKA.md)
-
+- 
 ---
 
 ## Input
