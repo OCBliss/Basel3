@@ -1,8 +1,8 @@
 # Basel III Pipeline for Central Bank Paper
 
-This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on a configurable `pipeline_config_dynamic4a5.yaml`.
+This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on a configurable `pipeline_config_dynamic4a4.yaml`.
 
-**NOTE**: Please use --> `Task_manager_Global_yaml_driven5d.py`
+**NOTE**: Please use --> `Task_manager_Global_yaml_driven5d.py`. working on input_dirs injection for self-healing subroot directories. Folders could be renamed or removed in the script at will.
  
 **Purpose:** yaml-driven task manager for executing the JSD analysis on call reports and RWA analysis on CMT data from FRED.
 
@@ -15,7 +15,7 @@ The pipeline processes financial data through a series of modular Python scripts
 - Dynamic input/output detection
 - Detailed logging for debugging and auditing
 
-The workflow is defined in `pipeline_config_dynamic4a5.yaml`, allowing flexibility for any number of processing branches or steps.
+The workflow is defined in `pipeline_config_dynamic4a4.yaml`, allowing flexibility for any number of processing branches or steps.
 
 ### Directory Structure
 - `CODE/`: Root directory containing all scripts.
