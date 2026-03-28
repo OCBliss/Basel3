@@ -1,122 +1,180 @@
-# Step 06.0 — FDIC API Ingestion for De Novo, Mergers, and Failure Events
-
-## Directory
-- `src/`:
-  - material events/:
-    - `FDIC API/`:
-        - Material_events_de_novo_download_v2.py
-        - Material_events_Failures_download_v2.py
-        - Material_events_mergers_download_v2.py
-        - Material_events_delete_api.py
-        - Material_events_cleaned2.py
-    - Material_events_de_novo_flag4.py
-    - Material_events_failures_flag4.py
-    - Material_events_mergers_flag2.py
+# Step 06.2 — Flag De Novo Banks in Panel Data
 
 ## Purpose
 
-This script retrieves **De Novo chartering events** directly from the  
-**FDIC BankFind Suite API**
-
-It provides the foundational *raw ingestion layer* for all downstream  
-material-event processing (Steps 06.1.1 → 06.2 → 06.3 → …).
+This step flags all **de novo banks** in the dynamic lagged panel dataset based on their **establishment date** (ESTDATE) falling within a financial reporting quarter. It integrates structural charter events into time-series panel data by assigning a `DE_NOVO_FLAG = 1` when applicable.
 
 ---
 
-## Key Functionality
+## Input
 
-- **Auto-locates** `Basel3_Global_Filepath.py` to dynamically determine `ROOT_DIR`
-- **Generates FDIC API query strings** using:
-  - `CHANGECODE` filters
-    - (e.g., **110** = De Novo)
-    - (**221,...,224** = Mergers)
-    - (**211** = Failures)
-  - `EFFDATE` date ranges
-- **Fetches** all matching events from the API’s `/history` endpoint
-- **Flattens** nested JSON content into a clean tabular DataFrame
-- **Normalizes columns**, inserting missing ones so schema remains stable
-- **Derives `ESTYEAR`** from ISO `ESTDATE` fields
-- **Outputs** a fully structured CSV named:
-
-
-into the De Novo RAW dataset folder
-
----
-
-## API Query Logic
-
-The FDIC endpoint:
-
-
-is queried using:
-
-- `CHANGECODE:110`  
-- `EFFDATE:[2014-01-01 TO 2024-12-31]`  
-- Full 30-column field list including:
-  - charter details  
-  - organization type  
-  - region metadata  
-  - ACQ/FRM-prefix variables  
-  - de novo flag indicators  
-
-The script gracefully handles:
-- Missing fields  
-- Sparse variables  
-- Unexpected API payloads  
-
----
-
-## Output Structure
-
-Each raw ingestion CSV includes:
-
-| Field | Description |
-|-------|-------------|
-| `CERT` | Institution certificate number |
-| `ESTDATE` | Date the institution was established |
-| `EFFDATE` | Effective date of event |
-| `NEW_CHARTER_DENOVO_FLAG` | Indicates de novo status |
-| `ORGTYPE` / `ORGTYPE_NUM` | Institution organization type |
-| `CHANGECODE_DESC` | Description of event type |
-| `FDICREGION` | Supervisory region |
-| `ESTYEAR` | Derived column (yyyy) |
-
-…and 25+ other FDIC metadata fields.
-
-All fields are **schema-aligned**, ensuring downstream cleaning scripts  
-(Step 06.1.1) operate reliably.
-
----
-
-## File Output
-
-### De Novo
-
-- Material Events/
-  - └── DE NOVO/
-    - └── RAW/
-      - └── BankFind Suite API - de novo.csv
-
-### Mergers
-
-- Material Events/
-  - └── Mergers/
-    - └── RAW/
-      - └── BankFind Suite API - Mergers.csv
-
-### Failures
-
-- Material Events/
-  - └── Failures/
-    - └── RAW/
-      - └── BankFind Suite API - Failures.csv
+- cleaned BankFind Suite data: `/Material Events/DE NOVO/Cleaned/`
+- Quarter reference file mapping quarter identifiers to date ranges: `/Material Events/quarters_de_novo.csv`
+- `/Call Report/CSV/Dynamic_Lag/Cleaned/`
 
 
 ---
 
-## Next Step
+## Output
 
-Proceed to **Step 06.1.1**:
+Processed files are saved in: `/Material Events/DE NOVO/Call Reports/`
+with filenames prefixed as: `DE NOVO_`
 
-- Apply signature-based deletion rules to remove BankFind Suite–labeled  
-  or interim/sparse cleaned files before assigning event outcomes.
+
+---
+
+## Operations
+
+1. **Quarter Matching**  
+   - `RCON9999` in panel data maps to `Quarters` column  
+   - `Quarters` file provides `START_DATE` and `END_DATE` for each quarter
+
+2. **DE NOVO Eligibility**
+   - For each row:
+     - If `CERT` appears in DE NOVO dataset
+     - And its `ESTDATE` falls **within** the current quarter’s start and end dates
+     - Then `DE_NOVO_FLAG = 1`
+
+3. **Export Flagged Dataset**
+   - All original panel columns retained
+   - Appends a new binary column: `DE_NOVO_FLAG` = {0, 1}
+
+---
+
+## Example Output Row
+
+| CERT | RCON9999 | ... | DE_NOVO_FLAG |
+|------|----------|-----|---------------|
+| 12345 | 20190331 | ... | 1             |
+| 67890 | 20190331 | ... | 0             |
+
+---
+
+# Step 06.3 — Flag Bank Failures in Lagged Panel Data
+
+## Purpose
+
+This step appends four **forward-looking failure flags** to each row in the quarterly bank panel. It identifies when a bank failed within T+1 to T+4 quarters **after** the observation date, allowing lag-aware labeling of terminal events for predictive modeling.
+
+---
+
+## Input
+
+- Lagged call report panel with `DE_NOVO_FLAG` already applied: `/Material Events/DE NOVO/Call Reports/`
+- Cleaned failure event data (FDIC EFFDATEs): `/Material Events/Failures/Cleaned/`
+- Quarter lookup with forward-end dates: `/Material Events/quarters_failures.csv`
+
+
+---
+
+## Output
+
+Saved files are stored in: `/Material Events/Failures/Call Reports/`
+- with filenames updated from: `DE NOVO_<original>.csv`
+- to: `Failures_<original>.csv`
+
+
+---
+
+## Features Added
+
+For each bank-quarter (CERT, RCON9999), this step adds:
+- `FAILURE_T1`: 1 if failure occurred within 1 quarter
+- `FAILURE_T2`: 1 if within 2 quarters
+- `FAILURE_T3`: 1 if within 3 quarters
+- `FAILURE_T4`: 1 if within 4 quarters
+
+These are **cumulative flags** — if `FAILURE_T3 = 1`, then `FAILURE_T1` and `T2` will also be 1.
+
+---
+
+## Operations
+
+1. **Match CERT in Failure Dataset**
+   - Compare bank `CERT` to failure records
+
+2. **Convert EFFDATE to Integer**
+   - For temporal comparison with quarter boundaries
+
+3. **Determine if EFFDATE Falls in T+1 to T+4 Windows**
+   - For each row, check if failure date falls within:
+     - `START_DATE` to `END_DATE1` → `FAILURE_T1`
+     - `START_DATE` to `END_DATE2` → `FAILURE_T2`
+     - `...` and so on, up to `END_DATE4`
+
+4. **Export**
+   - Appends the four `FAILURE_T*` columns to the original DE NOVO panel file
+   - Renames file to prefix it with `Failures_`
+
+---
+
+## Example Output Row
+
+| CERT  | RCON9999 | DE_NOVO_FLAG | FAILURE_T1 | FAILURE_T2 | FAILURE_T3 | FAILURE_T4 |
+|-------|----------|--------------|------------|------------|------------|------------|
+| 12345 | 20200630 | 1            | 0          | 1          | 1          | 1          |
+
+---
+
+# Step 06.4 — Flag Bank Mergers in Lagged Panel Data
+
+## Purpose
+
+This step adds forward-looking **MERGER flags** to each observation in the bank-quarter panel. It indicates whether a bank was involved in a merger (absorbed by another institution) in the next 1 to 4 quarters. This supports survival modeling, divergence tracking, or categorical outcome labeling.
+
+---
+
+## Input
+
+- Previously labeled panel with `FAILURE_T*` flags: `/Material Events/Failures/Call Reports/`
+- Cleaned merger records with EFFDATEs: `/Material Events/Mergers/Cleaned/`
+- Quarter-to-date mapping table with multi-horizon end dates: `/Material Events/quarters_failures.csv`
+
+---
+
+## Output
+
+Saved files are written to: `/Material Events/Mergers/Call Reports/`
+
+
+---
+
+## Features Added
+
+Each row is appended with the following indicators:
+
+| Column      | Description                                         |
+|-------------|-----------------------------------------------------|
+| MERGER_T1   | 1 if bank merged in the next quarter                |
+| MERGER_T2   | 1 if merged within two quarters                     |
+| MERGER_T3   | 1 if merged within three quarters                   |
+| MERGER_T4   | 1 if merged within four quarters                    |
+
+Flags are cumulative. For instance, if `MERGER_T3 = 1`, then `MERGER_T1` and `MERGER_T2` will also be 1.
+
+---
+
+## Operations
+
+1. **CERT Matching**  
+   - Match each bank (by `CERT`) in the panel against merger events.
+
+2. **EFFDATE Comparison**  
+   - Compare merger EFFDATE to each quarter's forward time windows using:
+     - `END_DATE1`, `END_DATE2`, `END_DATE3`, `END_DATE4`
+
+3. **Flag Assignment**  
+   - If EFFDATE falls within a given horizon, set the corresponding `MERGER_T*` flag to 1.
+
+4. **Save Output**  
+   - Appends flags to each quarterly file and renames the prefix for clarity.
+
+---
+
+## Example Output Row
+
+| CERT  | RCON9999 | FAILURE_T1 | ... | MERGER_T1 | MERGER_T2 | MERGER_T3 | MERGER_T4 |
+|-------|----------|-------------|-----|------------|------------|------------|------------|
+| 78910 | 20200630 | 0           | ... | 1          | 1          | 1          | 1          |
+
+---
