@@ -5,11 +5,11 @@ This folder contains the original call report schedules formatted by the FFIEC's
 
 ## Source
 - Raw TXT data files from the FFIEC CDR located in the repository:  
-  [Basel3/Call Report/TXT](https://github.com/OCBliss/Basel3/tree/main/Call%20Report/TXT)
+  [Basel3/data/TXT](https://github.com/OCBliss/Basel3/tree/refactor/data/TXT)
 - FDIC Material Events data downloaded from BankFind Suite:  
   [BankFind Suite](https://banks.data.fdic.gov/bankfind-suite/oscr)  
   Also available in the repository:  
-  [Basel3/Material Events](https://github.com/OCBliss/Basel3/tree/main/Material%20Events)
+  [Basel3/Material Events](https://github.com/OCBliss/Basel3/tree/refactor/Material%20Events)
 
 ## Data Formatting
 1. **Headers:**
