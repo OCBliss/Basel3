@@ -195,7 +195,6 @@ execution:
   - `pyyaml` (for YAML parsing)
   - `pandas`
   - `numpy`
-  - `importlib.utils`
   - `re`
 - Directory structure:
   - Project must reside within a `CODE/` directory (auto-detected).
@@ -203,4 +202,10 @@ execution:
 
 Install dependencies:
 ```bash
-pip install pyyaml
+# Ensure correct Python version
+python3 --version
+
+# Install dependencies into that interpreter
+python3 -m pip install --upgrade pip
+python3 -m pip install pyyaml pandas numpy
+```
