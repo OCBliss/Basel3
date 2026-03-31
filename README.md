@@ -23,25 +23,12 @@ The pipeline in this repository produces the empirical outputs supporting these 
 
 ---
 
-**[Finished]**
-- STEP 08 folder structure is finished 2025-05-05
-- STEP 08 should run successfully to 8.0.4.
-- `Task_manager_Global_yaml_driven2a.py` changed --> `Task_manager_Global_yaml_driven5a.py`
-- `pipeline_config_dynamic4a.yaml` updated --> `pipeline_config_dynamic4a3.yaml`
-- STEP 03.0 vertical and retrospective analysis
-  - Casting errors solved for CET1, CCYB
-  - Bank heterogeneity concerns for CET1 adjusted 2025-05-20
-- STEP 03.1 cleans the vertical analysis
-  - removes `RCRI-CET1-THRES` column (RCFAH311)
-- `RWA/` subroot STEP 09-13
-  - Practical method finished 2025-05-18
-
 - ✅ **Includes** Depositor behavior using RC-E Part I 2025-05-29
   - NSFR claims
   - NML claims
     - depository heterogeneity
-    - stable transactional deposits
-    - non-Kolmorogovian withdrawal behavior
+    - sticky deposits failures
+    - non-monotonic rate behavior
     - non-Markovian withdrawal behavior 
 
 ---
@@ -55,68 +42,75 @@ The pipeline in this repository produces the empirical outputs supporting these 
 - Output regulatory metrics for BIS scrutiny.
 
 ### Directory Structure
-- `CODE/`: Root directory containing all scripts.
-  - `pipeline.py`: Main pipeline script—executes the workflow.
-  - `pipeline_config.yaml`: Config file defining steps, dependencies, and execution flow.
-  - `STEP 01/`: Cleaning scripts (e.g., `call_reports_mkdir_txt_csvs_global.py`).
-  - `STEP 02/`: Conversion scripts (e.g., `Call_Report_Merged_Cleaned_Global.py`, `numeric_only6.py`).
-  - `STEP 03/`: Vertical analysis scripts (e.g., `Call_Reports_retrospective_Vertical3c.py`).
-  - `STEP 04/`: Ratio distribution scripts (e.g., `Call_Reports_Distributed_Ratios2.py`).
-  - `STEP 05/`: Dynamic ratio scripts (e.g., `Call_Reports_Dynamic_Ratios2.py`).
-  - `STEP 06/`: Material event processing (e.g., `Material_events_cleaned2.py`, `Material_events_de_novo_flag4.py`).
-  - `STEP 07/`: Peer group filtering (e.g., `Material_events_peer_group_basel3_t1.py`).
-  - `STEP 08/`: JSD computation (e.g., `RC_JSD_Basel_T1_Bin20.py`).
-  - `Logs_V3/`: Auto-generated log directory for step outputs and status.
-
-### Basel3 Directory Structure
-- `Basel3/Call Reports/`
-  - `CSV/`
-    - `Cleaned/`: Cleaned CSV outputs from Call Report processing.
-    - `Interleaved/`: Interleaved CSV data from multiple schedules.
-    - `Schedules/`: CSV data split by Call Report schedules (e.g., RC, RC-B).
-    - `Distributed Lag/`
-      - `Cleaned/`: Cleaned distributed lag ratio outputs.
-      - `RAW/`: Raw distributed lag ratio data.
-    - `Dynamic Lag/`
-      - `Cleaned/`: Cleaned dynamic lag ratio outputs.
-      - `RAW/`: Raw dynamic lag ratio data.
-  - `PDF/`: Original Call Report PDFs.
-  - `TXT/`: Text files extracted from Call Report PDFs.
-    - `FFIEC CDR Call Bulk All Schedules 20240630/`
-    - `FFIEC CDR Call Bulk All Schedules 20240330/`
-    - etc.
-- `Basel3/Material Events/`
-  - `De Novo/`
-    - `Cleaned/`: Cleaned de novo event data structured for labeling.
-    - `RAW/`: Raw de novo event data.
-    - `Call Reports`: Call Reports labeled with De Novo flags.
-  - `Failures/`
-    - `Cleaned/`: Cleaned failure event data.
-    - `RAW/`: Raw failure event data.
-    - `Call Reports`: Call Reports labeled with De Novo + Failure flags.
-  - `Mergers/`
-    - `Cleaned/`: Cleaned merger event data.
-    - `RAW/`: Raw merger event data.
-    - `Call Reports`: Call Reports labeled with De Novo + Failure + Merger flags.
-  - `JSD/`
-    - `Basel III/`
-      - `Mergers T+1/`: JSD outputs for Basel III mergers, T+1 horizon.
-      - `Mergers T+2/`: JSD outputs for Basel III mergers, T+2 horizon.
-      - `Mergers T+3/`: JSD outputs for Basel III mergers, T+3 horizon.
-      - `Mergers T+4/`: JSD outputs for Basel III mergers, T+4 horizon.
-      - `Failures T+1/`: JSD outputs for Basel III failures, T+1 horizon.
-      - `Failures T+2/`: JSD outputs for Basel III failures, T+2 horizon.
-      - `Failures T+3/`: JSD outputs for Basel III failures, T+3 horizon.
-      - `Failures T+4/`: JSD outputs for Basel III failures, T+4 horizon.
-    - `Post-GFC/`
-      - `Mergers T+1/`: JSD outputs for Post-GFC mergers, T+1 horizon.
-      - `Mergers T+2/`: JSD outputs for Post-GFC mergers, T+2 horizon.
-      - `Mergers T+3/`: JSD outputs for Post-GFC mergers, T+3 horizon.
-      - `Mergers T+4/`: JSD outputs for Post-GFC mergers, T+4 horizon.
-      - `Failures T+1/`: JSD outputs for Post-GFC failures, T+1 horizon.
-      - `Failures T+2/`: JSD outputs for Post-GFC failures, T+2 horizon.
-      - `Failures T+3/`: JSD outputs for Post-GFC failures, T+3 horizon.
-      - `Failures T+4/`: JSD outputs for Post-GFC failures, T+4 horizon.
+- `pipeline/`:
+  - `Task_manager_Global_yaml-driven5a.py`
+  - `pipeline_config_dynamic4a4.yaml`
+- `data/`:
+  - `CSV/`:
+    - `Schedules/`:
+      - `20240630/`:
+        - `FFIEC CDR Call Schedule RC 06302024.csv`
+    - `Cleaned/`:
+      - `Cleaned_Call_Report_20240630.csv`
+    - `Interleaved/`:
+      - `Cleaned_Call_Report_20240630.csv`
+    - `Distributed_lag/`:
+      - `RAW/':
+        - `Distributed_Cleaned_Call_Report_20240630.csv`
+      - `Cleaned/`:
+        - `Distributed_Cleaned_Call_Report_20240630.csv`
+    - `Dynamic_Lag/`:
+  - `TXT/`:
+  - `PDF/`:
+- `src/`: subroot directory containing all scripts.
+  - `call reports/`:
+    - `call_reports_mkdir_txt_csvs_global.py`
+    - `Call_Report_Merged_Cleaned_Global.py`
+    - `numeric_only6.py`
+    - `Call_Reports_retrospective_Vertical5.py`
+  - `ratios/`:
+    - `Call_Reports_Distributed_Ratios3.py`
+    - `Clean_Distributed_Ratios2.py`
+    - `Call_Reports_Dynamic_Ratios3.py`
+    - `Clean_dynamic_ratio2.py`
+  - `material events/`:
+    - `FDIC API/`:
+      - `Material_events_de_novo_download_v2.py`
+      - `Material_events_Failures_download_v2.py`
+      - `Material_events_mergers_download_v2.py`
+      - `Material_events_delete_api.py`
+      - `Material_events_cleaned2.py`
+    - `Material_events_de_novo_flag4.py`
+    - `Material_events_failures_flag4.py`
+    - `Material_events_mergers_flag2.py`
+  - `peer groups/`:
+    - `base/`:
+      - `Material_events_peer_group_basel3_t1.py`
+      - `Material_events_peer_group_basel3_t2.py`
+      - `Material_events_peer_group_basel3_t3.py`
+      - `Material_events_peer_group_basel3_t4.py`
+    - `horizons/`:
+      - `Material_events_peer_group_filter_t1.py`
+      - `Material_events_peer_group_filter_t2.py`
+      - `Material_events_peer_group_filter_t3.py`
+      - `Material_events_peer_group_filter_t4.py`
+  - `jsd/`:
+    - `binning/`:
+      - `Material_events_JSD_binning_basel3_20.py`
+      - `Material_events_JSD_binning_basel3_30.py`
+      - `Material_events_JSD_binning_basel3_50.py`
+      - `Material_events_JSD_binning_basel3_100.py`
+    - `pmf/`:
+      - `Material_events_JSD_probabilities_basel3.py`
+    - `horizons/`:
+      - `Material_events_JSD_basel3_t1.py`
+      - `Material_events_JSD_basel3_t2.py`
+      - `Material_events_JSD_basel3_t3.py`
+      - `Material_events_JSD_basel3_t4.py`
+    - `intragroup/`:
+      - `JSD_intragroup_filter3.py`
+    - `intergroup/`:
+      - `JSD_intergroup_call_reports_bins.py`
 
 ### RWA: Completed Practical 2025-05-18
 - `Basel3/RWA/`
@@ -142,20 +136,10 @@ The pipeline in this repository produces the empirical outputs supporting these 
 
   
 ### Requirements
-- Python 3.6: With standard libraries (`os`, `sys`, `subprocess`, `hashlib`, `time`, `yaml`, `concurrent.futures`).
   - `pyyaml`
   - `pandas`
   - `numpy`
 
- Type or copy and paste into terminal window
-```python
-[ -f 
-```
-Drag the `requirements.txt` file into the terminal window (this auto-fills the path). Make you have a space after the `-f`, before the `[` and after the `-r` as well.
-```python
- ] && pip install -r
-```
-Drag the `requirements.txt` file into the terminal window again. Press `return`.
 
 ### OS Compatibility Note
 - This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
@@ -163,9 +147,9 @@ Drag the `requirements.txt` file into the terminal window again. Press `return`.
 ### How It Works
 1. `Basel3_Global_Filepath.py`:
    - Finds the `Basel3/` root directory dynamically from its own location, then;
-   - Finds the `CODE/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
+   - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
 2. `Task_manager_Global_yaml_driven5a.py`: 
-   - Loads `pipeline_config_dynamic4a.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
+   - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
    - Executes steps based on the `execution` section:
      - `sequential`: Runs steps in order, one after another.
      - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
@@ -174,7 +158,7 @@ Drag the `requirements.txt` file into the terminal window again. Press `return`.
    - Logs results in `Logs_V3/` for each step in the chain.
 
 2. `pipeline_config_dynamic4a.yaml`:
-   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `CODE/`.
+   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `src/`.
    - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
    - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
 
