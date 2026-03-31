@@ -205,24 +205,3 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
 
 ### Notes on Placeholders
 - `t1`, `t2`, `t3`, `t4` and binning (20, 30, 50, 100).
-
-### Running the Pipeline
-1. Setup:
-   - Place all scripts in their respective `STEP XX/` subdirectories under `CODE/`.
-   - Ensure `pipeline_config.yaml` is in `CODE/`.
-2. Command:
-   - Run from the command line: `python CODE/pipeline.py`
-3. Output:
-   - Logs are generated in `CODE/Logs_V3/` (e.g., `1.0_log.txt`, `8.2.0.1.1_log.txt`).
-   - Each log includes timestamps, step start/completion, and input hashes (SHA-256) if hashing is enabled.
-
-### Dynamic Features
-- Concurrency: Uses Python’s `ThreadPoolExecutor`—automatically scales to the number of branches or groups (e.g., 4 schedules, 2 periods, 3 bins in t1).
-- Flexibility: Add new schedules, time periods, or bin sizes by editing `pipeline_config.yaml`—no changes to `pipeline.py` required.
-
-### Usage Tips
-- Extend a Branch: Add a new schedule (e.g., `rc_f_schedule`) under `concurrent_branches` with its own steps, dependencies, and execution flow.
-- Debugging: Check `Logs_V3/`—each step logs `STARTED`, `COMPLETED`, or `ERROR` with timestamps and details.
-- Skip Steps: If a step’s inputs haven’t changed (via hash), it skips execution and logs `✅ Step X input unchanged`.
-
-
