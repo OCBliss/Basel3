@@ -50,35 +50,43 @@ The workflow is defined in `pipeline_config_dynamic4a4.yaml`, allowing flexibili
     - `Call_Reports_Dynamic_Ratios3.py`
     - `Clean_dynamic_ratio2.py`
   - `material events/`:
-    - `Material_events_de_novo_download_v2.py`
-    - `Material_events_Failures_download_v2.py`
-    - `Material_events_mergers_download_v2.py`
-    - `Material_events_delete_api.py`
-    - `Material_events_cleaned2.py`
+    - `FDIC API/`:
+      - `Material_events_de_novo_download_v2.py`
+      - `Material_events_Failures_download_v2.py`
+      - `Material_events_mergers_download_v2.py`
+      - `Material_events_delete_api.py`
+      - `Material_events_cleaned2.py`
     - `Material_events_de_novo_flag4.py`
     - `Material_events_failures_flag4.py`
     - `Material_events_mergers_flag2.py`
   - `peer groups/`:
-    - `Material_events_peer_group_basel3_t1.py`
-    - `Material_events_peer_group_basel3_t2.py`
-    - `Material_events_peer_group_basel3_t3.py`
-    - `Material_events_peer_group_basel3_t4.py`
-    - `Material_events_peer_group_filter_t1.py`
-    - `Material_events_peer_group_filter_t2.py`
-    - `Material_events_peer_group_filter_t3.py`
-    - `Material_events_peer_group_filter_t4.py`
+    - `base/`:
+      - `Material_events_peer_group_basel3_t1.py`
+      - `Material_events_peer_group_basel3_t2.py`
+      - `Material_events_peer_group_basel3_t3.py`
+      - `Material_events_peer_group_basel3_t4.py`
+    - `horizons/`:
+      - `Material_events_peer_group_filter_t1.py`
+      - `Material_events_peer_group_filter_t2.py`
+      - `Material_events_peer_group_filter_t3.py`
+      - `Material_events_peer_group_filter_t4.py`
   - `jsd/`:
-    - `Material_events_JSD_binning_basel3_20.py`
-    - `Material_events_JSD_binning_basel3_30.py`
-    - `Material_events_JSD_binning_basel3_50.py`
-    - `Material_events_JSD_binning_basel3_100.py`
-    - `Material_events_JSD_probabilities_basel3.py`
-    - `Material_events_JSD_basel3_t1.py`
-    - `Material_events_JSD_basel3_t2.py`
-    - `Material_events_JSD_basel3_t3.py`
-    - `Material_events_JSD_basel3_t4.py`
-    - `JSD_intragroup_filter3.py`
-    - `JSD_intergroup_call_reports_bins.py`
+    - `binning/`:
+      - `Material_events_JSD_binning_basel3_20.py`
+      - `Material_events_JSD_binning_basel3_30.py`
+      - `Material_events_JSD_binning_basel3_50.py`
+      - `Material_events_JSD_binning_basel3_100.py`
+    - `pmf/`:
+      - `Material_events_JSD_probabilities_basel3.py`
+    - `horizons/`:
+      - `Material_events_JSD_basel3_t1.py`
+      - `Material_events_JSD_basel3_t2.py`
+      - `Material_events_JSD_basel3_t3.py`
+      - `Material_events_JSD_basel3_t4.py`
+    - `intragroup/`:
+      - `JSD_intragroup_filter3.py`
+    - `intergroup/`:
+      - `JSD_intergroup_call_reports_bins.py`
   
 ## Features
 
