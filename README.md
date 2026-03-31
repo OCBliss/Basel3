@@ -41,6 +41,16 @@ The pipeline in this repository produces the empirical outputs supporting these 
 - Compute JSD with varying time horizons (T+1, T+2, T+3, T+4) and bin sizes (20, 30, 50, 100).
 - Output regulatory metrics for BIS scrutiny.
 
+### Conceptual Framework
+
+The pipeline implements a class-conditional transformation approach:
+
+- Failures, Mergers, and Survivors are treated as structurally distinct states, not simple partitions of a common dataset.
+- Each cohort undergoes independent preprocessing to preserve class-specific characteristics.
+- Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation out-of-sample, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
+
+This design ensures that divergence metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
+
 ### Directory Structure
 - `pipeline/`:
   - `Task_manager_Global_yaml-driven5a.py`
