@@ -5,10 +5,18 @@
 **Contact:** johnny.waller.nb@gmail.com  
 **Affiliation:** Independent Researcher  
 
-This project automates the processing of Call Report data and material events into regulatory metrics, focusing on Jensen-Shannon Divergence (JSD) analyses for Basel III, Post-GFC, and other time periods across multiple Call Report schedules. It’s designed for investment/central bank research, and runs via a Python script [Task_manager_Global_yaml_driven5a.py](https://github.com/OCBliss/Basel3/blob/main/CODE/) driven by a dynamic YAML config (`pipeline_config_dynamic4a3.yaml`). Clone directory with pre-loaded data or ensure `Basel_Global_Filepath.py` is placed in a root directory explicitly named `Basel3/`. The root folder can be wherever you wish and the sub-directories will be dynamically resolved. The pipeline supports concurrent branching for independent analyses, dependency management, and input hashing to skip unchanged steps.
+## Basel III Under Strain: Empirical Evidence from Call Report Data
 
----
-Paper can be found here: [Basel III Under Strain: Duration Risk, Classification Arbitrage, and the Illusion of Capital Adequacy](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5800102)
+This project implements a data pipeline used to test key assumptions of the Basel III regulatory framework, specifically the belief that regulatory capital adequacy and liquidity classifications (e.g., HQLA, NML stability) correspond to reduced failure risk.
+
+Using FFIEC Call Report data, the system constructs bank cohorts (Failures, Mergers, Survivors) and evaluates their distributional behavior across multiple horizons (T+1–T+4). Jensen-Shannon Divergence (JSD) is used to measure whether regulatory-compliant institutions exhibit statistically distinct (and safer) profiles relative to failing banks.
+
+Results suggest that:
+- Regulatory classifications fail to preserve monotonic risk ordering
+- Duration risk and classification arbitrage distort capital adequacy signals
+- Depositor behavior deviates from standard NML assumptions (non-Markovian, heterogeneous)
+
+The pipeline in this repository produces the empirical outputs supporting these findings.
 
 ---
 ⚠️ NOTE TO REVIEWERS: This repository supports the empirical component of the **21st Annual FRA** 2025 conference submission titled "***Basel III Under Strain: Duration Risk, Classification Arbitrage, and the Illusion of Capital Adequacy, and the Illusion of Compliance***". All code and output structures referenced in the methodology section of the paper are located here. The pipeline is under active development, with new version folders forthcoming to isolate future-state regulatory scenarios.
