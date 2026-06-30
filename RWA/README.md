@@ -16,9 +16,13 @@ The rates are based on indicative bid-side quotes for the most recently auctione
 
 CMT data is used to:
 
-- Model **duration-adjusted risk weights** under a `PDMM-Heston` (Path-Dependent Multi-Maturity) framework
-- Capture **interest rate exposure** in `HTM` (Held-to-Maturity) portfolios
-- Create a **theoretical benchmark yield curve** for U.S. bank balance sheet sensitivity
+ 1. Estimate yield-process parameters endogenously from each tenor.
+ 2. Use the rolling sigma outputs as observed volatility states.
+ 3. Estimate volatility-process parameters endogenously from those sigma paths.
+ 4. Use those estimated dynamics to stress or reprice maturity buckets.
+ 5. Apply that to government securities exposure instead of assuming zero effective duration risk.
+ 6. Recalculate duration-adjusted RWA
+
 - Support **stress testing** and **Basel III-aligned regulatory analysis**
 
 ---
