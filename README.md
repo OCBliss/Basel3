@@ -155,10 +155,15 @@ This design ensures that divergence metrics reflect underlying economic differen
 - This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
 
 ### How It Works
-1. `Basel3_Global_Filepath.py`:
+1. Download FFIEC CDR data:
+   - `https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx`
+   - Dowload `Call Report - Single Period` for all periods in question
+   - Place unzipped files `\Basel_iii\data\TXT`
+   - Make sure folders are `FFIEC CDR Call Bulk All Schedules YYYYMMDD`
+2. `Basel3_Global_Filepath.py`:
    - Finds the `Basel3/` root directory dynamically from its own location, then;
    - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
-2. `Task_manager_Global_yaml_driven5a.py`: 
+3. `Task_manager_Global_yaml_driven5a.py`: 
    - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
    - Executes steps based on the `execution` section:
      - `sequential`: Runs steps in order, one after another.
@@ -167,7 +172,7 @@ This design ensures that divergence metrics reflect underlying economic differen
    - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
    - Logs results in `Logs_V3/` for each step in the chain.
 
-2. `pipeline_config_dynamic4a.yaml`:
+4. `pipeline_config_dynamic4a.yaml`:
    - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `src/`.
    - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
    - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
