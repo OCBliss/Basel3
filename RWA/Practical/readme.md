@@ -2,6 +2,8 @@
 
 ⚠️ ATTENTION: Start with **Step 09** [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/Cleaned)
 
+This module is intended to estimate duration-driven expected losses across Treasury maturities and allocate those losses to government securities reported in Call Report schedules (RCONA549–RCONA555). The resulting adjustments will be used to derive a duration-adjusted RWA measure for research purposes. Development is ongoing.
+
 ### Directory Structure
 - `Constant Maturity Treasury/`: `autoregressive_fitting_v3a.py`.
   - `Cleaned/`: Cleans CMT data `RWA/FRED/`.
