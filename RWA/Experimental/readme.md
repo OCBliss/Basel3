@@ -7,7 +7,7 @@
 For each Treasury yield tenor (e.g., ```DGS1.csv```, ...):
 
 1. Loads a time series of yields from CMT data from the Federal Reserve
-2. Cleans a forward-fills missing values
+2. Cleans and forward-fills missing values
 3. Runs a rolling 2520-day (~10-year) fixed window
 4. Calculates *MLE* yield (X_t^i) factor parameters:
 
