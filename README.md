@@ -19,9 +19,6 @@ Results suggest that:
 The pipeline in this repository produces the empirical outputs supporting these findings.
 
 ---
-⚠️ NOTE TO REVIEWERS: This repository supports the empirical component of the **21st Annual FRA** 2025 conference submission titled "***Basel III Under Strain: Duration Risk, Classification Arbitrage, and the Illusion of Capital Adequacy, and the Illusion of Compliance***". All code and output structures referenced in the methodology section of the paper are located here. The pipeline is under active development, with new version folders forthcoming to isolate future-state regulatory scenarios.
-
----
 
 - ✅ **Includes** Depositor behavior using RC-E Part I 2025-05-29
   - NSFR claims
@@ -163,12 +160,13 @@ This design ensures that divergence metrics reflect underlying economic differen
 2. `Basel3_Global_Filepath.py`:
    - Finds the `Basel3/` root directory dynamically from its own location, then;
    - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
-3. `Task_manager_Global_yaml_driven5a.py`: 
+3. `Task_manager_Global_yaml_driven.py`: 
    - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
    - Executes steps based on the `execution` section:
      - `sequential`: Runs steps in order, one after another.
      - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
-     - `concurrent_groups`: Runs multiple step lists in parallel within a branch.
+     - `concurrent_groups`: Runs multiple step lists in parallel within a `concurrent_branches` process.
+     -  `intermediate_steps`: Similar to `sequential`, but functions as a synchronization chokepoint for either a `concurrent_groups` or main `concurrent_branches` process.
    - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
    - Logs results in `Logs_V3/` for each step in the chain.
 
