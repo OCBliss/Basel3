@@ -48,6 +48,78 @@ The pipeline implements a class-conditional transformation approach:
 
 This design ensures that divergence metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
 
+### Requirements
+  - `pyyaml`
+  - `pandas`
+  - `numpy`
+
+
+### OS Compatibility Note
+- The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.
+
+### Performance Note
+- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation (28 CPU cores, 1.5 TB RAM). The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
+
+### How It Works
+1. Download FFIEC CDR data:
+   - `https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx`
+   - Dowload `Call Report - Single Period` for all periods in question
+   - Place unzipped files `\Basel_iii\data\TXT`
+   - Make sure folders are `FFIEC CDR Call Bulk All Schedules YYYYMMDD`
+2. `Basel3_Global_Filepath.py`:
+   - Finds the `Basel3/` root directory dynamically from its own location, then;
+   - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
+3. `Task_manager_Global_yaml_driven.py`: 
+   - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
+   - Executes steps based on the `execution` section:
+     - `sequential`: Runs steps in order, one after another.
+     - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
+     - `concurrent_groups`: Runs multiple step lists in parallel within a `concurrent_branches` process.
+     -  `intermediate_steps`: Similar to `sequential`, but functions as a synchronization chokepoint for either a `concurrent_groups` or main `concurrent_branches` process.
+   - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
+   - Logs results in `Logs_V3/` for each step in the chain.
+
+4. `pipeline_config_dynamic4a.yaml`:
+   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `src/`.
+   - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
+   - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
+
+### Current Workflow
+Below is the full `pipeline_config.yaml` as of now—every step, dependency, and execution detail included.
+
+### Execution Flow
+1. Sequential (1.0–3.0):
+   - "1.0": Cleans raw Call Report data into a usable format (e.g., creates directories, converts text to CSVs).
+   - "2.0": Merges and further cleans the data into a unified dataset.
+   - "2.1": Converts data to numeric-only format for analysis.
+   - "3.0": Performs vertical analysis on the full Call Report dataset, preparing it for schedule-specific splits.
+
+2. Time Period Split:
+   - execute steps 4.0.1–6.4.1 sequentially:
+     - "4.0": Computes distributed ratios for RC, RC-B, etc., data.
+     - "4.1": Cleans those distributed ratios.
+     - "5.0": Computes dynamic ratios.
+     - "5.1": Cleans the dynamic ratios.
+     - "6.1": Cleans material event data.
+     - "6.2": Flags de novo events in RC data.
+     - "6.3": Flags failures in RC data.
+     - "6.4": Flags mergers in RC data.
+
+4. Peer Group Filtering:
+   - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
+   - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
+
+5. JSD Analysis:
+   - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
+   - "8.1.1": Computes JSD probabilities for Basel III.
+   - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
+   - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
+   - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
+   - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
+
+### Notes on Placeholders
+- `t1`, `t2`, `t3`, `t4` and binning (20, 30, 50, 100).
+
 ### Directory Structure
 - `pipeline/`:
   - `Task_manager_Global_yaml-driven5a.py`
@@ -142,71 +214,4 @@ This design ensures that divergence metrics reflect underlying economic differen
     - `FRED HESTON/`: Heston model outputs for FRED data.
 
   
-### Requirements
-  - `pyyaml`
-  - `pandas`
-  - `numpy`
 
-
-### OS Compatibility Note
-- This pipeline was developed on macOS, and some scripts may not be fully optimized for Windows. Differences in path handling (e.g., spaces, backslashes vs. forward slashes) or file system behavior might require adjustments for Windows users.
-
-### How It Works
-1. Download FFIEC CDR data:
-   - `https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx`
-   - Dowload `Call Report - Single Period` for all periods in question
-   - Place unzipped files `\Basel_iii\data\TXT`
-   - Make sure folders are `FFIEC CDR Call Bulk All Schedules YYYYMMDD`
-2. `Basel3_Global_Filepath.py`:
-   - Finds the `Basel3/` root directory dynamically from its own location, then;
-   - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
-3. `Task_manager_Global_yaml_driven.py`: 
-   - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
-   - Executes steps based on the `execution` section:
-     - `sequential`: Runs steps in order, one after another.
-     - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
-     - `concurrent_groups`: Runs multiple step lists in parallel within a `concurrent_branches` process.
-     -  `intermediate_steps`: Similar to `sequential`, but functions as a synchronization chokepoint for either a `concurrent_groups` or main `concurrent_branches` process.
-   - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
-   - Logs results in `Logs_V3/` for each step in the chain.
-
-4. `pipeline_config_dynamic4a.yaml`:
-   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `src/`.
-   - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
-   - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
-
-### Current Workflow
-Below is the full `pipeline_config.yaml` as of now—every step, dependency, and execution detail included.
-
-### Execution Flow
-1. Sequential (1.0–3.0):
-   - "1.0": Cleans raw Call Report data into a usable format (e.g., creates directories, converts text to CSVs).
-   - "2.0": Merges and further cleans the data into a unified dataset.
-   - "2.1": Converts data to numeric-only format for analysis.
-   - "3.0": Performs vertical analysis on the full Call Report dataset, preparing it for schedule-specific splits.
-
-2. Time Period Split:
-   - execute steps 4.0.1–6.4.1 sequentially:
-     - "4.0": Computes distributed ratios for RC, RC-B, etc., data.
-     - "4.1": Cleans those distributed ratios.
-     - "5.0": Computes dynamic ratios.
-     - "5.1": Cleans the dynamic ratios.
-     - "6.1": Cleans material event data.
-     - "6.2": Flags de novo events in RC data.
-     - "6.3": Flags failures in RC data.
-     - "6.4": Flags mergers in RC data.
-
-4. Peer Group Filtering:
-   - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
-   - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
-
-5. JSD Analysis:
-   - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
-   - "8.1.1": Computes JSD probabilities for Basel III.
-   - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
-   - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
-   - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
-   - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
-
-### Notes on Placeholders
-- `t1`, `t2`, `t3`, `t4` and binning (20, 30, 50, 100).
