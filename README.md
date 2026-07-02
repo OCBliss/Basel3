@@ -1,4 +1,4 @@
-## Basel III Pipeline for Bank Stress Testing
+## Basel III Regulatory Analytics Pipeline
 
 **Author:** Jonathan Waller  
 **GitHub:** github.com/OCBLISS  
