@@ -1,4 +1,4 @@
-## Basel III Pipeline for Central Bank Conference
+## Basel III Pipeline for Bank Stress Testing
 
 **Author:** Jonathan Waller  
 **GitHub:** github.com/OCBLISS  
@@ -190,16 +190,6 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
       - `JSD_intragroup_filter3.py`
     - `intergroup/`:
       - `JSD_intergroup_call_reports_bins.py`
-
-### RWA: Completed Practical 2025-05-18
-- `Basel3/RWA/`
-  - `FRED/`: FRED data for Constant Maturity Treasury.
-  - `Practical`: Simplified non-parallel yield shock calculation
-    - `Constant Maturity Treasury/`
-      - `Cleaned/`
-      - `Differenced/`: Calculates only the positive yield shocks over a rolling time horizon. Any values below a threshold are filtered out to model only the downside deviation (risk of loss).
-      - `EXP_DRIFT/`: Calculates the independent rate rates for each maturity.
-      - `Expected Coupon/`: Expected coupon calculations for RWA.
 
 ### Future Work: RWA and Expected Loss Modeling
 - `Basel3/RWA/`
