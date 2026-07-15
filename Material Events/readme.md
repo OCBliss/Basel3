@@ -2,6 +2,34 @@
 
 This folder contains data on significant structural and non-financial banking events, sourced primarily from the **BankFind Suite** at the [FDIC website](https://banks.data.fdic.gov/bankfind-suite/oscr). The data reflects transactions by either the processed date or the effective date.
 
+The empirical objective of this repository is to determine whether Basel III
+regulatory classifications provide predictive information regarding future
+institutional outcomes.
+
+To evaluate this question, every observation must ultimately be associated with
+a measurable structural outcome. The Material Events module constructs these
+outcome variables by identifying significant institutional events—including
+failures, mergers, de novo institutions, and surviving banks—from FDIC
+BankFind data.
+
+These event classifications form the dependent variables used throughout the
+research. They enable regulatory metrics observed at quarter **T** to be
+evaluated against structural outcomes occurring at future forecast horizons
+(T+1 through T+4).
+
+## Why Structural Events?
+
+Basel III is fundamentally concerned with the resilience of financial
+institutions.
+
+Consequently, regulatory metrics are evaluated against observable structural
+outcomes rather than contemporaneous accounting values alone.
+
+Failures, mergers, de novo institutions, and surviving banks represent
+economically distinct end states whose behavior can be compared
+distributionally using the subsequent peer-group and Jensen-Shannon
+frameworks.
+
 ## Event Types
 The events and changes included in this folder cover the following types:
 - **New Institutions:** Records of newly established banks. -> **De Novo**
@@ -14,12 +42,33 @@ The events and changes included in this folder cover the following types:
 - **Liquidations:** Voluntary or involuntary closures of banking institutions.
 - **Trust Powers and Branch Purchases & Assumptions:** Transactions involving trust authority or branch-level transfers.
 
-## Peer Groups
+## Why Peer Groups
+
+Comparing all institutions as a single population obscures meaningful
+differences between banks experiencing fundamentally different structural
+outcomes.
+
+The repository therefore constructs separate peer groups before statistical
+analysis.
+
+This approach reduces contamination between cohorts and preserves
+class-specific characteristics that would otherwise be diluted by pooling
+institutions into one aggregate distribution.
+
 For analysis, the data has been divided into three peer groups:
 1. **DE NOVO:**
 2. **Survivors:** All institutions excluding those involved in mergers or failures.
 3. **Mergers:** Institutions involved in mergers, acquisitions, or reorganizations.
 4. **Failures:** Institutions that failed, with failure data sourced directly from the FDIC at [this link](https://banks.data.fdic.gov/bankfind-suite/failures).
+
+## Outcome Label Construction
+
+The Material Events module transforms FDIC event records into analytical
+labels used throughout the research pipeline.
+
+These labels define the dependent variables for subsequent statistical
+analysis and are propagated into peer-group construction, forecast-horizon
+alignment, and Jensen-Shannon divergence calculations.
 
 ## Filtration-adapative Ratios
 The `Material Events/` folder also contains four csvs beginning with "quarters" to aid in the ``{t,t}``, ``{t,t-1}``, ``{t,t-2}`` and ``{t,t-3}`` calculation
