@@ -14,31 +14,30 @@ Using FFIEC Call Report data, the system constructs bank cohorts (Failures, Merg
 Results suggest that:
 - Regulatory classifications fail to preserve monotonic risk ordering
 - Duration risk and classification arbitrage distort capital adequacy signals
-- Depositor behavior deviates from standard NML assumptions (non-Markovian, heterogeneous)
+- Depositor behavior deviates from standard NML assumptions (dynamic, heterogeneous)
 
 The pipeline in this repository produces the empirical outputs supporting these findings.
 
 ---
 
-- ✅ **Includes** Depositor behavior using RC-E Part I 2025-05-29
-  - NSFR claims
-  - NML claims
-    - depository heterogeneity
-    - sticky deposits failures
-    - non-monotonic rate behavior
-    - non-Markovian withdrawal behavior 
+1. Do Basel III capital and liquidity classifications
+retain statistical separation between future failures
+and survivors?
+
+2. Does predictive separation deteriorate as the
+forecast horizon increases?
+
+3. Do depositor behaviors conform to homogeneous,
+memoryless assumptions commonly used in regulatory
+liquidity frameworks?
+
+4. Can duration-sensitive interest-rate modeling
+identify capital impairment not reflected in
+regulatory risk weights?
 
 ---
 
-
-### Purpose
-- Clean and convert raw Call Report data.
-- Perform vertical analysis on the full dataset, then split by schedule (RC, RC-B, etc.).
-- Filter peer groups by time periods (Basel III, Post-GFC, GFC).
-- Compute JSD with varying time horizons (T+1, T+2, T+3, T+4) and bin sizes (20, 30, 50, 100).
-- Output regulatory metrics for BIS scrutiny.
-
-### Conceptual Framework
+## Conceptual Framework
 
 The pipeline implements a class-conditional transformation approach:
 
@@ -47,6 +46,135 @@ The pipeline implements a class-conditional transformation approach:
 - Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation out-of-sample, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
 
 This design ensures that divergence metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
+
+### Forecast Horizons
+
+The repository indexes observations by forecast horizon rather than event time.
+
+For each bank, financial variables are measured at quarter **T**, while the
+associated structural event (failure, merger, etc.) occurs in a future quarter.
+
+- **T+1** — financial variables measured one quarter before the event.
+- **T+2** — financial variables measured two quarters before the event.
+- **T+3** — financial variables measured three quarters before the event.
+- **T+4** — financial variables measured four quarters before the event.
+
+The structural event remains fixed; only the observation quarter changes.
+
+For example, if a bank fails in **2023 Q1**:
+
+| Observation Quarter | Forecast Horizon | Material Event Quarter |
+|---------------------|------------------|------------------|
+| 2022 Q4 | T+1 | 2023 Q1 |
+| 2022 Q3 | T+2 | 2023 Q1 |
+| 2022 Q2 | T+3 | 2023 Q1 |
+| 2022 Q1 | T+4 | 2023 Q1 |
+
+### Why Multiple Horizons?
+
+If Basel III classifications genuinely identify safer institutions, statistical
+separation should persist as the forecast horizon increases.
+
+Evaluating multiple horizons allows the framework to distinguish between:
+
+- variables that separate only immediately before failure,
+- variables that retain predictive information several quarters in advance,
+- variables whose predictive content decays through time.
+
+The evolution of divergence across T+1–T+4 therefore becomes an empirical
+measure of the temporal stability of regulatory classifications.
+
+### Dynamic Divergence
+
+The framework evaluates not only divergence at individual horizons but also
+the evolution of divergence between successive horizons.
+
+Traditional analyses often evaluate regulatory variables independently at each reporting period. This framework instead evaluates the evolution of distributional separation across successive forecast horizons. The objective is to determine whether the trajectory of divergence contains predictive information beyond that available from any single quarterly observation.
+
+Rather than asking only,
+
+"How different are failures from survivors at T+2?"
+
+the framework also asks,
+
+"How rapidly does that difference change between T+2 and T+1?"
+
+These temporal transitions capture changes in depositor behavior and balance
+sheet adjustment immediately preceding structural events.
+
+For example:
+- T+4 → T+3
+- T+3 → T+2
+- T+2 → T+1
+
+### Motivation
+
+Traditional liquidity assumptions often model depositor behavior as relatively
+stable through time.
+
+If divergence changes abruptly between adjacent horizons, this suggests that
+depositor responses may occur in rapid, heterogeneous repricing episodes
+rather than as smooth, memoryless processes.
+
+The multi-horizon framework was therefore designed to evaluate whether the
+timing of distributional changes itself contains economically meaningful
+
+## Pipeline
+
+The Basel III pipeline orchestrates the complete research workflow from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and duration-sensitive RWA modeling.
+
+Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
+
+This design was chosen because:
+
+research modules evolve independently;
+statistical methodologies may be substituted without changing upstream preprocessing;
+different regulatory epochs, schedules, horizons, and parameterizations can be executed independently;
+computationally independent tasks can execute concurrently.
+
+The YAML configuration therefore represents the research workflow itself rather than simply a list of Python scripts.
+
+### Call Reports
+
+The empirical analysis in this repository is built upon FFIEC Call Reports, the
+quarterly regulatory filings submitted by every insured U.S. commercial bank.
+These reports provide standardized disclosures covering capital adequacy,
+balance sheet composition, liquidity, credit quality, income, and regulatory
+ratios.
+
+The objective of this module is not simply to clean regulatory filings, but to
+transform heterogeneous reporting schedules into a longitudinal analytical
+dataset suitable for statistical inference. The pipeline standardizes reporting
+formats across time, performs cross-schedule validation, engineers derived
+variables, and reorganizes the data into structures optimized for temporal,
+cross-sectional, and distributional analysis.
+
+### JSD
+
+Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon divergence was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
+
+### Material Events
+
+The objective of this module is to identify the structural outcomes against
+which regulatory classifications are evaluated.
+
+Rather than treating all institutions as a homogeneous population, banks are
+classified according to subsequent structural events—including failures,
+mergers, de novo institutions, and surviving institutions. These classifications
+form the dependent variables used throughout the empirical analysis.
+
+Separating these cohorts prior to preprocessing preserves class-specific
+characteristics and enables subsequent peer-group construction and
+distributional comparison.
+
+### RWA
+
+Basel III assigns 0% credit risk weights to Level 1 HQLA for regulatory capital purposes, but that treatment does not account for interest-rate duration risk. This module investigates whether large duration losses can materially alter economic capital adequacy despite unchanged regulatory risk weights.
+
+
+---
+
+# How to Run It
 
 ### Requirements
   - `pyyaml`
