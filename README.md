@@ -270,7 +270,7 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
 - The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.
 
 ### Performance Note
-- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation (28 CPU cores, 1.5 TB RAM). The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
+- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation. The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
 
 ### How It Works
 1. Download FFIEC CDR data:
