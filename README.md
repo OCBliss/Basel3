@@ -49,26 +49,66 @@ This design ensures that divergence metrics reflect underlying economic differen
 
 ### Forecast Horizons
 
-The repository indexes observations by forecast horizon rather than event time.
+Observations are indexed relative to the quarter in which a structural event
+occurs.
 
-For each bank, financial variables are measured at quarter **T**, while the
-associated structural event (failure, merger, etc.) occurs in a future quarter.
+If a bank experiences a material event (failure, merger, etc.) during **2023 Q1**:
 
-- **T+1** — financial variables measured one quarter before the event.
-- **T+2** — financial variables measured two quarters before the event.
-- **T+3** — financial variables measured three quarters before the event.
-- **T+4** — financial variables measured four quarters before the event.
-
-The structural event remains fixed; only the observation quarter changes.
-
-For example, if a bank fails in **2023 Q1**:
-
-| Observation Quarter | Forecast Horizon | Material Event Quarter |
-|---------------------|------------------|------------------|
+| Observation Quarter | Horizon | Event Quarter |
+|---------------------|---------|---------------|
 | 2022 Q4 | T+1 | 2023 Q1 |
 | 2022 Q3 | T+2 | 2023 Q1 |
 | 2022 Q2 | T+3 | 2023 Q1 |
 | 2022 Q1 | T+4 | 2023 Q1 |
+
+The structural event remains fixed while the observation quarter moves further
+back in time.
+
+---
+
+### Jensen-Shannon Divergence Matrices
+
+Each matrix reports the Jensen-Shannon divergence for a single regulatory
+variable (for example **RCE-HK07-Saving+**).
+* Item Number HK09
+* * MATURITY AND REPRICING DATA FOR TIME DEPOITS OF 250000 OR LESS, TIME DEPOSITS OF 250000 OR LESS WITH A REMAINING MATURITY OR NEXT REPRICING DATE OF THREE MONTHS OR LESS
+
+* Item Number 2385 (Savings)
+* * TOTAL NONTRANSACTION ACCOUNTS (INCLUDING MMDA'S)
+
+Rows represent the information used to compute the divergence.
+
+| Row | Meaning |
+|------|---------|
+| **q0** | Regulatory ratio measured at the observation quarter |
+| **q0q1** | One-quarter change in the ratio (`q1 → q0`) |
+| **q0q2** | Two-quarter change in the ratio (`q2 → q0`) |
+| **q0q3** | Three-quarter change in the ratio (`q3 → q0`) |
+
+Example:
+
+|                | BASEL III T+1 | BASEL III T+2 | BASEL III T+3 | BASEL III T+4 |
+|----------------|--------------:|--------------:|--------------:|--------------:|
+| **q0**   | 0.42 | 0.326 | 0.311 | 0.287 |
+| **q0q1** | 0.551 | 0.458 | 0.405 | 0.347 |
+| **q0q2** | 0.578 | 0.470 | 0.404 | 0.349 |
+| **q0q3** | 0.573 | 0.482 | 0.439 | 0.386 |
+
+For a bank failing during **2023 Q1**, the temporal alignment is:
+
+| q3 | q2 | q1 | q0 | Horizon | Event |
+|----|----|----|----|---------|-------|
+| 2022 Q1 | 2022 Q2 | 2022 Q3 | 2022 Q4 | T+1 | 2023 Q1 |
+| 2021 Q4 | 2022 Q1 | 2022 Q2 | 2022 Q3 | T+2 | 2023 Q1 |
+| 2021 Q3 | 2021 Q4 | 2022 Q1 | 2022 Q2 | T+3 | 2023 Q1 |
+| 2021 Q2 | 2021 Q3 | 2021 Q4 | 2022 Q1 | T+4 | 2023 Q1 |
+
+Thus, the value in **q0q1 × BASEL III T+1** measures the Jensen-Shannon
+divergence computed from the one-quarter change in the regulatory ratio
+(**2022 Q3 → 2022 Q4**), evaluated one quarter before the structural event.
+
+**Conclusion**
+Across all forecast horizons, the divergence associated with quarter-over-quarter changes exceeds the divergence obtained from contemporaneous observations alone. This suggests that temporal dynamics provide greater discriminatory power than static balance-sheet measurements.
 
 ### Why Multiple Horizons?
 
@@ -121,6 +161,8 @@ timing of distributional changes itself contains economically meaningful
 
 ## Pipeline
 
+[Here](https://github.com/OCBliss/Basel3/tree/refactor/pipeline)
+
 The Basel III pipeline orchestrates the complete research workflow from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and duration-sensitive RWA modeling.
 
 Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
@@ -135,6 +177,8 @@ computationally independent tasks can execute concurrently.
 The YAML configuration therefore represents the research workflow itself rather than simply a list of Python scripts.
 
 ### Call Reports
+
+[Here](https://github.com/OCBliss/Basel3/tree/refactor/call%20reports)
 
 The empirical analysis in this repository is built upon FFIEC Call Reports, the
 quarterly regulatory filings submitted by every insured U.S. commercial bank.
@@ -151,9 +195,13 @@ cross-sectional, and distributional analysis.
 
 ### JSD
 
+[Here](https://github.com/OCBliss/Basel3/tree/refactor/JSD)
+
 Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon divergence was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
 
 ### Material Events
+
+[Here](https://github.com/OCBliss/Basel3/tree/refactor/Material%20Events)
 
 Basel III is ultimately concerned with the ability of regulatory metrics to
 distinguish institutions that subsequently experience materially different
@@ -175,6 +223,10 @@ future forecast horizons (T+1 through T+4).
 The RWA module extends the empirical Basel III analysis by investigating
 duration-sensitive capital impairment arising from interest-rate risk that is
 not reflected in regulatory risk weights.
+
+### PDF
+
+Explanation of the RWA module mathematical foundation [Here](https://github.com/OCBliss/Basel3/tree/refactor/PDF)
 
 ### Current Components
 
