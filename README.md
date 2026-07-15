@@ -155,21 +155,53 @@ Basel III makes claims about classification: that regulatory categories such as 
 
 ### Material Events
 
-The objective of this module is to identify the structural outcomes against
-which regulatory classifications are evaluated.
+Basel III is ultimately concerned with the ability of regulatory metrics to
+distinguish institutions that subsequently experience materially different
+outcomes.
 
-Rather than treating all institutions as a homogeneous population, banks are
-classified according to subsequent structural events—including failures,
-mergers, de novo institutions, and surviving institutions. These classifications
-form the dependent variables used throughout the empirical analysis.
+The Material Events module constructs the dependent variables used throughout
+the empirical framework by identifying future structural banking events—
+including failures, mergers, de novo institutions, and surviving banks—from
+FDIC BankFind data.
 
-Separating these cohorts prior to preprocessing preserves class-specific
-characteristics and enables subsequent peer-group construction and
-distributional comparison.
+Rather than treating all institutions as a homogeneous population, these
+outcomes are preserved as distinct analytical cohorts before preprocessing.
+This enables subsequent peer-group construction and distributional analysis to
+evaluate whether regulatory classifications retain predictive separation across
+future forecast horizons (T+1 through T+4).
 
-### RWA
+## RWA Module (Active Development)
 
-Basel III assigns 0% credit risk weights to Level 1 HQLA for regulatory capital purposes, but that treatment does not account for interest-rate duration risk. This module investigates whether large duration losses can materially alter economic capital adequacy despite unchanged regulatory risk weights.
+The RWA module extends the empirical Basel III analysis by investigating
+duration-sensitive capital impairment arising from interest-rate risk that is
+not reflected in regulatory risk weights.
+
+### Current Components
+
+- `FRED/`
+  - Constant Maturity Treasury yield data.
+
+- `Practical/`
+  - Simplified non-parallel yield-shock framework.
+  - Preliminary expected-loss estimation.
+  - Exploratory risk-weight methodology.
+
+### Research Under Development
+
+  Components include:
+
+  - `FRED MLE YIELD/`
+    - Recursive estimation of yield-process parameters
+      (`μᵧ(t)`, `νᵧ(t)`, `θᵧ(t)`)
+
+  - `FRED MLE VOL/`
+    - Recursive estimation of stochastic volatility
+      (`μᵥ(t)`, `ξᵥ(t)`, `θᵥ(t)`)
+
+  - `FRED MLE CORR/`
+    - Maximum-likelihood estimation of time-varying correlation matrices
+      (`ΣX(t)`, `Σν(t)`, `Σξ(t)`)
+      using recursive Cholesky decomposition.
 
 
 ---
@@ -319,17 +351,7 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
     - `intergroup/`:
       - `JSD_intergroup_call_reports_bins.py`
 
-### Future Work: RWA and Expected Loss Modeling
-- `Basel3/RWA/`
-  - `FRED/`: FRED data for Constant Maturity Treasury.
-  - `Practical`: Simplified non-parallel yield shock calculation
-    - `Expected Loss/`: Expected loss estimates for RWA.
-    - `Novel Risk Weights/`: Novel risk weight computations.
-  - `PDMM/`: Path-Dependent (i.e., non-Markovian) Multifactor Heston.
-    - `FRED MLE YIELD/`: Maximum likelihood estimate yield data. This produces `mu_i^Y(t)`, `nu_i^Y(t)`, `theta_i^Y(t)`
-    - `FRED MLE VOL/`: Maximum likelihood estimate volatility data. This produces `mu_i^nu(t)`, `xi_i^nu(t)`, `\theta_i^nu(t)`
-    - `FRED MLE CORR/`: Maximum likelihood estimate correlation data. This produces `rho_i^Y(t)`, `rho_i^nu(t)`
-    - `FRED HESTON/`: Heston model outputs for FRED data.
+
 
   
 
