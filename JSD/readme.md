@@ -2,9 +2,7 @@
 
 The Jensen-Shannon Divergence (JSD) module measures the statistical separation between bank populations over successive forecast horizons.
 
-The Jensen–Shannon Divergence (JSD) module measures the statistical separation between bank populations over successive forecast horizons.
-
-Rather than fitting a theoretical probability distribution or comparing raw financial ratios through moment-based statistics, the pipeline bins the observed values for each financial variable and converts the resulting frequency counts into empirical probability mass functions (PMFs).
+Rather than fitting a theoretical probability distribution or comparing raw financial ratios through moment-based statistics, the pipeline bins the observed values for each financial variable and converts the resulting frequencies into empirical probability mass functions (PMFs).
 
 The Jensen–Shannon Divergence is then calculated between the empirical PMFs of two class-conditional banking cohorts at a time.
 
@@ -14,14 +12,20 @@ This approach is useful because it does not rely on moment-based descriptions of
 
 ## Purpose
 
-This module evaluates whether financial variables exhibit increasing statistical separation prior to structural banking events.
+Each JSD matrix is computed independently for a forecast horizon.
 
-The analysis is performed independently for each forecast horizon:
+A horizon of T+1 compares bank populations using financial variables measured
+one quarter before the associated structural event.
 
-* T+1
-* T+2
-* T+3
-* T+4
+Likewise:
+
+- T+2 — two quarters before the event
+- T+3 — three quarters before the event
+- T+4 — four quarters before the event
+
+Comparing divergence across horizons allows the framework to evaluate how
+early statistical separation emerges prior to failures, mergers, or other
+material banking events.
 
 and for each comparison:
 
@@ -40,7 +44,7 @@ Raw Financial Variables
 Histogram Binning
            │
            ▼
-Empirical Probability Distributions
+Empirical Probability Mass Distributions
            │
            ▼
 Jensen–Shannon Divergence
@@ -56,7 +60,7 @@ Continuous financial variables are transformed into empirical probability distri
 
 Each variable is independently discretized into histogram bins.
 
-Typical resolutions include
+Typical histogram resolutions include
 
 20 bins
 30 bins
@@ -67,7 +71,7 @@ The current implementation also supports a higher-resolution asymmetric binning 
 
 ### Design Reason
 
-Ratios with veritable distributional separaation should persist across binning resolutions to remove noise.
+Variables exhibiting genuine distributional separation should remain distinguishable across multiple histogram resolutions rather than being artifacts of a particular binning scheme.
 
 ## Probability Mass Function Generation
 
@@ -75,20 +79,22 @@ Histogram counts are normalized into empirical probability mass functions for ea
 
 ### Design Reason
 
+Histogram counts are normalized into PMFs so that divergence depends on the shape of the empirical distribution rather than sample size. This permits meaningful comparisons between peer groups containing different numbers of institutions.
+
 ## JSD Calculation
 
 For every financial variable, the pmf of two bank cohorts are compared using the previous flagged call reports with binary labels.
 
-The resultive value is scaled between a range and higher values indicate greater statistical separability between the populations
+The resulting value is generally scaled between [0, 1] and higher values indicate greater statistical separability between the populations
 
 ### Design Reason
 
 The Kullback-Leibler Divergence is not symmetric and essentially requires a control group forcing the designation of either `failures` or `survivors` or `mergers` as the reference class. In light of this, the JSD solves this problem being strictly symmetric.
 
-Other divergence techniques have hyperparameters creating greater degrees of freedom, leading to greater input assumptions.
+Several alternative divergence measures introduce tuning parameters or kernel choices that increase modeling assumptions. JSD requires no such additional parameterization once the empirical PMFs have been constructed.
 
 Unlike moment comparisons, Jensen-Shannon Divergence measures differences between entire probability distributions. This allows the analysis to detect changes in:
-* location
+* concentration
 * dispersion
 * multimodality
 * tail behavior
@@ -97,6 +103,7 @@ without assuming normality.
 
 As structural banking events approach, variables exhibiting increasing divergence indicate growing statistical distinction between affected institutions and surviving peers.
 
+The objective is not to estimate an underlying probability distribution, but to compare the empirical distributions directly. By operating on observed probability mass functions, the analysis minimizes distributional assumptions while preserving information contained in the full observed sample.
 
 ## Basel III Pipeline Stub Data for JSD
 
