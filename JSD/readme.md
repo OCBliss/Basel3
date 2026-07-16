@@ -97,11 +97,10 @@ without assuming normality.
 
 As structural banking events approach, variables exhibiting increasing divergence indicate growing statistical distinction between affected institutions and surviving peers.
 
-##
 
 ## Basel III Pipeline Stub Data for JSD
 
-# Folders
+### Folders
 
 - `BASEL III T+1`
 - `BASEL III T+2`
@@ -109,7 +108,7 @@ As structural banking events approach, variables exhibiting increasing divergenc
 - `BASEL III T+4`
 - `Matrix Outputs`
 
-# Code
+### Code
 
 `Basel_Matrix_v2.py` would run and accept <`BASEL III T+1`>,...,<`BASEL III T+4`> subdirectories as inputs and output the results in <`Matrix Outputs`>.
 
