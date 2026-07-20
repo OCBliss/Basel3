@@ -1,3 +1,0 @@
-# Raw Uncorrected Parameters
-
-placeholder
