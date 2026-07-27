@@ -19,20 +19,19 @@ def find_code_dir():
 CODE_DIR = find_code_dir()
 sys.path.append(CODE_DIR)
 
-# NOW import
+# Load global filepaths for local root directory finder to aid dynamic folder locations
 import Basel3_Global_Filepath as paths
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
 ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-DYNAMIC_DIR = paths.DYNAMIC_DIR
-MAT_DIR = paths.MAT_DIR
+DYNAMIC_DIR = paths.DYNAMIC_DIR # Dynamic (as in folder name) which is the end stage of preprocessing for the Call Reports lag ratios
+MAT_DIR = paths.MAT_DIR # Material Events subroot folder
 
 # ==============================
 # PROCESSING FOR JSD BINNING
 # ==============================
 
 # -----------------------------
-# (Optional) Load Valid Dates from quarters_basel3.csv
+# Load Valid Dates from quarters_basel3.csv
 # -----------------------------
 quarters_file = os.path.join(MAT_DIR, "quarters_basel3.csv")
 quarters_df   = pd.read_csv(quarters_file)
@@ -46,18 +45,15 @@ def filter_and_concatenate(process_dir, output_dir, output_filename, label):
     """
     Reads CSV files from process_dir (or a single CSV file if process_dir is actually a file),
     bins each numeric column (ignoring the first two columns) into:
-      - 50 bins from -1 to 1   (linspace(-1, 1, 51))
+      - 20 bins from -1 to 1   (linspace(-1, 1, 211))
       - 5  bins for (1, 2]
       - 1  bin for > 2
     Then saves the binned counts for each CSV as a new file, adding "_binned.csv" to the original name.
-
-    If you only want a single output file combining them all, you'd need to adapt 
-    this code further. Currently it produces one binned file per input CSV.
     """
     os.makedirs(output_dir, exist_ok=True)
 
     # --- Define Bin Edges ---
-    # 50 equal bins between -1 and 1 (if you really want 100 bins, change 51 => 101).
+    # 20 equal bins between -1 and 1 (if you really want B_k = 30, 50, or 100 bins, change  B_k => B_k + 1).
     bins1 = np.linspace(-1, 1, 21)
 
     # 5 equal bins between 1 and 2 => edges [1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
@@ -107,7 +103,7 @@ def filter_and_concatenate(process_dir, output_dir, output_filename, label):
         
         df = pd.read_csv(file_path)
         
-        # Ignore the first two columns (e.g., CERT and RCON9999)
+        # Ignore the first two columns (e.g., CERT and RCON9999) they are keys: CERT is the bank-specific ID and RCON9999 is the reporting quarter in YYYYMMDD format
         data = df.iloc[:, 2:]
         
         # Prepare a DataFrame to hold the histogram counts.
@@ -124,14 +120,10 @@ def filter_and_concatenate(process_dir, output_dir, output_filename, label):
             # Add the counts as a column
             hist_df[col] = counts
 
-        # We'll label the index as "Bin" in the output CSV
+        # label the index as "Bin" in the output CSV
         hist_df.rename_axis("Bin", inplace=True)
 
-        # Construct output filename: if user set output_filename, we can either
-        #  (A) always use that single name (overwriting for each CSV), or
-        #  (B) incorporate the original name. Here we do (B) since your code
-        #      does that with "_binned.csv" appended.
-        # If you truly only want one combined file, you'd do something else.
+        # Construct output filename:
         out_name = os.path.splitext(file)[0] + "_binned_20.csv"
         out_path = os.path.join(output_dir, out_name)
 
@@ -143,10 +135,8 @@ def filter_and_concatenate(process_dir, output_dir, output_filename, label):
 # Now we define each input CSV path (or directory) and its output directory.
 # -----------------------------
 # 1) Mergers
-#    Notice we changed output_mergers_t3 => output_mergers_t4 for T+4
-#    Also changed the last function call from process_mergers_t3 => process_mergers_t4
 # -----------------------------
-process_mergers_t1 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t1.csv")
+process_mergers_t1 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t1.csv") # This measures Mergers to occur T+1 or one (1) quarter from measurement period.
 output_mergers_t1  = os.path.join(MAT_DIR, "Mergers", "JS Divergence", "Basel III T+1", "Binned")
 filter_and_concatenate(
     process_dir     = process_mergers_t1,
@@ -155,7 +145,7 @@ filter_and_concatenate(
     label           = "Mergers_t1"
 )
 
-process_mergers_t2 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t2.csv")
+process_mergers_t2 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t2.csv") # This measures Mergers to occur T+2 or two (2) quarters from measurement period.
 output_mergers_t2  = os.path.join(MAT_DIR, "Mergers", "JS Divergence", "Basel III T+2", "Binned")
 filter_and_concatenate(
     process_dir     = process_mergers_t2,
@@ -164,7 +154,7 @@ filter_and_concatenate(
     label           = "Mergers_t2"
 )
 
-process_mergers_t3 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t3.csv")
+process_mergers_t3 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t3.csv") # This measures Mergers to occur T+3 or three (3) quarters from measurement period.
 output_mergers_t3  = os.path.join(MAT_DIR, "Mergers", "JS Divergence", "Basel III T+3", "Binned")
 filter_and_concatenate(
     process_dir     = process_mergers_t3,
@@ -173,7 +163,7 @@ filter_and_concatenate(
     label           = "Mergers_t3"
 )
 
-process_mergers_t4 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t4.csv")
+process_mergers_t4 = os.path.join(MAT_DIR, "Mergers", "Horizons", "Peer_Group_Mergers_Basel3_t4.csv") # This measures Mergers to occur T+4 or four (4) quarters from measurement period.
 output_mergers_t4  = os.path.join(MAT_DIR, "Mergers", "JS Divergence", "Basel III T+4", "Binned")
 filter_and_concatenate(
     process_dir     = process_mergers_t4,
@@ -185,7 +175,7 @@ filter_and_concatenate(
 # -----------------------------
 # 2) Failures
 # -----------------------------
-process_failures_t1 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t1.csv")
+process_failures_t1 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t1.csv") # This measures Failures to occur T+1 or one (1) quarter from measurement period.
 output_failures_t1  = os.path.join(MAT_DIR, "Failures", "JS Divergence", "Basel III T+1", "Binned")
 filter_and_concatenate(
     process_dir     = process_failures_t1,
@@ -194,7 +184,7 @@ filter_and_concatenate(
     label           = "Failures_t1"
 )
 
-process_failures_t2 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t2.csv")
+process_failures_t2 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t2.csv") # This measures Mergers to occur T+2 or two (2) quarters from measurement period.
 output_failures_t2  = os.path.join(MAT_DIR, "Failures", "JS Divergence", "Basel III T+2", "Binned")
 filter_and_concatenate(
     process_dir     = process_failures_t2,
@@ -203,7 +193,7 @@ filter_and_concatenate(
     label           = "Failures_t2"
 )
 
-process_failures_t3 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t3.csv")
+process_failures_t3 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t3.csv") # This measures Mergers to occur T+3 or three (3) quarters from measurement period.
 output_failures_t3  = os.path.join(MAT_DIR, "Failures", "JS Divergence", "Basel III T+3", "Binned")
 filter_and_concatenate(
     process_dir     = process_failures_t3,
@@ -212,7 +202,7 @@ filter_and_concatenate(
     label           = "Failures_t3"
 )
 
-process_failures_t4 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t4.csv")
+process_failures_t4 = os.path.join(MAT_DIR, "Failures", "Horizons", "Peer_Group_Failures_Basel3_t4.csv") # This measures Mergers to occur T+4 or four (4) quarters from measurement period.
 output_failures_t4  = os.path.join(MAT_DIR, "Failures", "JS Divergence", "Basel III T+4", "Binned")
 filter_and_concatenate(
     process_dir     = process_failures_t4,
@@ -222,10 +212,10 @@ filter_and_concatenate(
 )
 
 # -----------------------------
-# 3) Survivors
+# 3) Survivors -- The disjoint set of banks remaining after removing failures and mergers
 # -----------------------------
-process_survivors_t1 = os.path.join(MAT_DIR, "Survivors", "Horizons", "Peer_Group_Survivors_Basel3_t1.csv")
-output_survivors_t1  = os.path.join(MAT_DIR, "Survivors", "JS Divergence", "Basel III T+1", "Binned")
+process_survivors_t1 = os.path.join(MAT_DIR, "Survivors", "Horizons", "Peer_Group_Survivors_Basel3_t1.csv") # This measures Survivors to occur T+1 or one (1) quarters from measurement period.
+output_survivors_t1  = os.path.join(MAT_DIR, "Survivors", "JS Divergence", "Basel III T+1", "Binned") # This is important because a bank that fails at T+1 may still show survival at T+2
 filter_and_concatenate(
     process_dir     = process_survivors_t1,
     output_dir      = output_survivors_t1,
