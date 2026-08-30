@@ -1,120 +1,114 @@
+#!/usr/bin/env python3
+"""Calculate current-to-prior-quarter changes for distributed Call Reports."""
+
+from pathlib import Path
+import re
 import sys
-sys.stdout.reconfigure(line_buffering=True)
-import os
-import sys
+
 import pandas as pd
-import numpy as np
-import csv
-# import importlib.util
 
-# Step 1: Locate CODE directory FIRST
-def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "src":
-        parent_dir = os.path.dirname(current_dir)
-        if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'src' directory.")
-        current_dir = parent_dir
-    return current_dir
 
-CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)
+SRC_DIR = Path(__file__).resolve().parents[1]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
-# NOW import
-import Basel3_Global_Filepath as paths
+import Basel3_Global_Filepath as paths  # noqa: E402
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-CALL_DIR = paths.CALL_DIR
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
-processed_directory = os.path.join(paths.DYNAMIC_DIR, "RAW")
-cleaned_directory = os.path.join(paths.DISTRIBUTED_DIR, "Cleaned")
-quarters_file = os.path.join(paths.CSV_DIR, "quarters.csv")
+REPORT_QUARTER = re.compile(r"(\d{8})$")
 
-os.makedirs(processed_directory, exist_ok=True)
 
-# Load the quarters file as a list of quarters
-quarters_df = pd.read_csv(quarters_file)
-quarters_list = quarters_df['Quarters'].astype(str).tolist()  # Convert to string for consistency
+def load_quarters(quarters_file):
+    quarters = pd.read_csv(quarters_file).iloc[:, 0].astype(str)
+    valid = quarters[quarters.str.fullmatch(r"\d{8}", na=False)]
+    if valid.empty:
+        raise ValueError("No Call Report quarters found in {}".format(quarters_file))
+    return valid.tolist()
 
-# Function to extract relevant quarters based on the current file
-def get_quarters(filename):
-    # Extract the current quarter from the filename
-    current_quarter = filename.split('_')[-1].split('.')[0]
-    if current_quarter not in quarters_list:
-        raise ValueError(f"Quarter {current_quarter} not found in quarters file.")
-    
-    # Find index of the current quarter in the quarters list
-    current_index = quarters_list.index(current_quarter)
-    
-    # Ensure there are three rows below for previous quarters
-    if current_index + 3 >= len(quarters_list):
-        raise ValueError(f"Not enough previous quarters for {current_quarter}.")
-    
-    # Get the three subsequent rows below as the previous quarters
-    prev_quarters = quarters_list[current_index + 1:current_index + 4]
-    return current_quarter, prev_quarters
 
-# Function to process a single file
-def process_file(filepath):
-    filename = os.path.basename(filepath)
-    current_quarter, prev_quarters = get_quarters(filename)
+def previous_quarters(filename, quarters):
+    match = REPORT_QUARTER.search(Path(filename).stem)
+    if match is None:
+        raise ValueError("No quarter in distributed filename: {}".format(filename))
+    current_quarter = match.group(1)
+    if current_quarter not in quarters:
+        raise ValueError("Quarter {} is not configured".format(current_quarter))
+    position = quarters.index(current_quarter)
+    prior = quarters[position + 1 : position + 4]
+    if len(prior) != 3:
+        raise ValueError("Three prior quarters are required for {}".format(current_quarter))
+    return current_quarter, prior
 
-    # Load data from the file
-    df = pd.read_csv(filepath)
-    
-    # Extract columns without date suffixes
-    base_columns = [col for col in df.columns if '_' not in col]
-    
-    # Initialize a dictionary to store calculated columns
-    # output_dict = {'IDRSSD': df['IDRSSD']}
-    output_dict = {'CERT': df['CERT']}
-    
-    # Calculate columns for each variable
-    for col in base_columns:
-        output_dict[f"{col}_q0"] = pd.to_numeric(df[col], errors='coerce')
-        
-        if f"{col}_{prev_quarters[0]}" in df.columns:
-            prev = pd.to_numeric(df[f"{col}_{prev_quarters[0]}"], errors='coerce')
-            curr = output_dict[f"{col}_q0"]
-            output_dict[f"{col}_q0q1"] = np.where(prev != 0, curr / prev - 1, 0)
-        
-        if f"{col}_{prev_quarters[1]}" in df.columns:
-            prev = pd.to_numeric(df[f"{col}_{prev_quarters[1]}"], errors='coerce')
-            curr = output_dict[f"{col}_q0"]
-            output_dict[f"{col}_q0q2"] = np.where(prev != 0, curr / prev - 1, 0)
 
-        if f"{col}_{prev_quarters[2]}" in df.columns:
-            prev = pd.to_numeric(df[f"{col}_{prev_quarters[2]}"], errors='coerce')
-            curr = output_dict[f"{col}_q0"]
-            output_dict[f"{col}_q0q3"] = np.where(prev != 0, curr / prev - 1, 0)
-    
-    # Create a DataFrame in the required order
-    column_order = (
-        [f"{col}_q0" for col in base_columns] +
-        [f"{col}_q0q1" for col in base_columns if f"{col}_q0q1" in output_dict] +
-        [f"{col}_q0q2" for col in base_columns if f"{col}_q0q2" in output_dict] +
-        [f"{col}_q0q3" for col in base_columns if f"{col}_q0q3" in output_dict]
+def relative_change(current, previous):
+    """Return current / previous - 1, with a true zero baseline mapped to zero."""
+
+    change = pd.Series(0.0, index=current.index)
+    nonzero_baseline = previous.ne(0)
+    change.loc[nonzero_baseline] = (
+        current.loc[nonzero_baseline]
+        .div(previous.loc[nonzero_baseline])
+        .sub(1)
     )
-    
-    # Ensure IDRSSD is first
-    # result_df = pd.DataFrame(output_dict)[['IDRSSD'] + column_order]
-    result_df = pd.DataFrame(output_dict)[['CERT'] + column_order]
-    
-    # Save the processed DataFrame
-    if filename.startswith("Distributed_Cleaned_"):
-        clean_name = filename[len("Distributed_Cleaned_"):]
-    else:
-        clean_name = filename
+    return change
 
-    output_filename = f"Dynamic_Raw_{clean_name}"
-    output_path = os.path.join(processed_directory, output_filename)
-    result_df.to_csv(output_path, index=False)
-    print(f"Processed and saved: {output_path}")
 
-# Batch process all files in the directory
-for file in os.listdir(cleaned_directory):
-    if file.endswith('.csv') and file.startswith('Distributed_Cleaned_Call_Report'):
-        file_path = os.path.join(cleaned_directory, file)
-        process_file(file_path)
+def build_dynamic_report(distributed, prior_quarters):
+    base_columns = [column for column in distributed if "_" not in column]
+    calculated = {"CERT": distributed["CERT"]}
+    lag_columns = {1: [], 2: [], 3: []}
+
+    for column in base_columns:
+        current_name = "{}_q0".format(column)
+        current = pd.to_numeric(distributed[column], errors="coerce")
+        calculated[current_name] = current
+
+        for lag, quarter in enumerate(prior_quarters, start=1):
+            source_name = "{}_{}".format(column, quarter)
+            if source_name not in distributed:
+                continue
+            change_name = "{}_q0q{}".format(column, lag)
+            previous = pd.to_numeric(distributed[source_name], errors="coerce")
+            calculated[change_name] = relative_change(current, previous)
+            lag_columns[lag].append(change_name)
+
+    current_columns = ["{}_q0".format(column) for column in base_columns]
+    ordered = current_columns + lag_columns[1] + lag_columns[2] + lag_columns[3]
+    return pd.DataFrame(calculated)[["CERT"] + ordered]
+
+
+def build_dynamic_reports(cleaned_dir, output_dir, quarters_file):
+    cleaned_dir = Path(cleaned_dir)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    quarters = load_quarters(quarters_file)
+    written = []
+
+    for source_path in sorted(
+        cleaned_dir.glob("Distributed_Cleaned_Call_Report_*.csv")
+    ):
+        _, prior = previous_quarters(source_path.name, quarters)
+        dynamic = build_dynamic_report(pd.read_csv(source_path), prior)
+        quarter = REPORT_QUARTER.search(source_path.stem).group(1)
+        output_path = output_dir / "Dynamic_Raw_Call_Report_{}.csv".format(quarter)
+        temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
+        dynamic.to_csv(temporary_path, index=False)
+        temporary_path.replace(output_path)
+        written.append(output_path)
+        print("Built dynamic report: {}".format(output_path))
+
+    return written
+
+
+def main():
+    written = build_dynamic_reports(
+        Path(paths.DISTRIBUTED_DIR) / "Cleaned",
+        Path(paths.DYNAMIC_DIR) / "RAW",
+        Path(paths.CSV_DIR) / "quarters.csv",
+    )
+    print("Built {} dynamic report files".format(len(written)))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
