@@ -158,7 +158,7 @@ class RegulatoryCapital:
             return 0.0
         return 1.0 - safe_divide(self.AdjustedZeroRiskToAugmentedRWA(), baseline)
 
-class CallReport_031:
+class CallReport_051:
     def __init__(self, row):
         self.root = self
         self.row = row
@@ -270,6 +270,9 @@ class CallReport_031:
             def AllowanceForCreditLossesOnLoansAndLeases(self):
                 return self.row['RCON3123']
 
+            def TotalIncludingHeldForSale(self):
+                return self.LoansAndLeasesHeldForSale() + self.Total()
+
         def TradingAssets(self):
             return self.row['RCON3545']
 
@@ -315,8 +318,19 @@ class CallReport_031:
         def OtherLiabilities(self):
             return self.row['RCON2930']
 
+        def OtherBorrowedMoney(self):
+            return self.row['RCON3190']
+
         def TotalLiabilities(self):
             return self.row['RCON2948']
+
+        def TotalLiabilitiesIncludingAllowance(self):
+            return self.TotalLiabilities() + (
+                self.LoansAndLeaseFinancingReceivables.AllowanceForCreditLossesOnLoansAndLeases()
+            )
+
+        def ReportedTotalEquityCapital(self):
+            return self.row['RCONG105']
 
         def TotalEquityCapital(self):
             if self.root.ReportingDate() >= 20180331:
@@ -981,6 +995,9 @@ class CallReport_031:
             self.flags = {}
             self.messages = {}
 
+        def ReportedTotal(self):
+            return self.row['RCON2200']
+
         def DomesticDeposits(self, name=False):
             DomesticDeposits = self.root.BalanceSheet.DepositDomesticOffices.Total()
             self.name = "Total Domestic Deposits"
@@ -1109,6 +1126,9 @@ class CallReport_031:
                     return self.name
                 return self.row['RCON2216']
 
+            def ReportedTotal(self):
+                return self.row['RCON2215']
+
             def Total(self, name=False):
                 i = self.Individuals()
                 u = self.USGovt()
@@ -1160,6 +1180,9 @@ class CallReport_031:
                 if name:
                     return self.name
                 return self.row['RCONB550']
+
+            def ReportedTotal(self):
+                return self.row['RCON2385']
 
             def USGovt(self, name=False):
                 self.name = "U.S. Government Non-Transaction Deposits"
@@ -1282,6 +1305,29 @@ class CallReport_031:
                         self.flags = {}
                         self.messages = {}
 
+                    def ReportedTotal(self):
+                        return self.row['RCONJ473']
+
+                    def EffectiveThreeMonths(self):
+                        if self.root.ReportingDate() >= 20170331:
+                            return self.ThreeMonths()
+                        return self.row['RCONA579']
+
+                    def EffectiveTwelveMonths(self):
+                        if self.root.ReportingDate() >= 20170331:
+                            return self.TwelveMonths()
+                        return self.row['RCONA580']
+
+                    def EffectiveThreeYears(self):
+                        if self.root.ReportingDate() >= 20170331:
+                            return self.ThreeYears()
+                        return self.row['RCONA581']
+
+                    def EffectiveOverThreeYears(self):
+                        if self.root.ReportingDate() >= 20170331:
+                            return self.OverThreeYears()
+                        return self.row['RCONA582']
+
                     def Total(self, name=False):
                         self.name = "Total Time Deposits of less than $250,000"
                         if name:
@@ -1364,6 +1410,10 @@ class CallReport_031:
                         self.flags = {}
                         self.messages = {}
 
+                    def ReportedTotal(self):
+                        return self.row['RCONJ474']
+
+
                     def Total(self, name=False):
                         self.name = "Total Time Deposits of more than $250,000"
                         if name:
@@ -1406,7 +1456,10 @@ class CallReport_031:
                     return self.name
                 return self.row['RCON0352']
 
-class CallReport_051:
+            def SavingsTotal(self):
+                return self.SavingsMMDA() + self.SavingsOther()
+
+class CallReport_031:
     def __init__(self, row):
         self.root = self
         self.row = row
@@ -1517,6 +1570,9 @@ class CallReport_051:
             def AllowanceForCreditLossesOnLoansAndLeases(self):
                 return self.row['RCFD3123']
 
+            def TotalIncludingHeldForSale(self):
+                return self.LoansAndLeasesHeldForSale() + self.Total()
+
         def TradingAssets(self):
             return self.row['RCFD3545']
 
@@ -1562,8 +1618,19 @@ class CallReport_051:
         def OtherLiabilities(self):
             return self.row['RCFD2930']
 
+        def OtherBorrowedMoney(self):
+            return self.row['RCFD3190']
+
         def TotalLiabilities(self):
             return self.row['RCFD2948']
+
+        def TotalLiabilitiesIncludingAllowance(self):
+            return self.TotalLiabilities() + (
+                self.LoansAndLeaseFinancingReceivables.AllowanceForCreditLossesOnLoansAndLeases()
+            )
+
+        def ReportedTotalEquityCapital(self):
+            return self.row['RCFDG105']
 
         def TotalEquityCapital(self):
             if self.root.ReportingDate() >= 20180331:
@@ -1963,6 +2030,9 @@ class CallReport_051:
             self.name = "Domestic Deposits"
             self.flags = {}
             self.messages = {}
+
+        def ReportedTotal(self):
+            return self.row['RCON2200']
 
         def DomesticDeposits(self, name=False):
             DomesticDeposits = self.root.BalanceSheet.DepositDomesticOffices.Total()

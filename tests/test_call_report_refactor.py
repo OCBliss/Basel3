@@ -1,5 +1,6 @@
-"""Regression tests for the function-driven Call Report ratio builder."""
+"""Regression tests for the imported Call Report ratio creator."""
 
+import ast
 import math
 import sys
 import tempfile
@@ -14,12 +15,10 @@ CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
 import Call_Report as functions  # noqa: E402
-import Call_Report_v2_1 as builder  # noqa: E402
+import Call_Report_v2_1 as ratios  # noqa: E402
 
 
 class RecordingRow:
-    """Mapping that records source columns while supplying numeric defaults."""
-
     def __init__(self, values=None):
         self.values = {
             "IDRSSD": 1,
@@ -37,32 +36,54 @@ class RecordingRow:
 
 def complete_source_row(values=None):
     recorder = RecordingRow(values)
-    domestic = functions.CallReport_031(recorder)
-    builder.build_report_features(domestic, domestic)
-    builder.build_report_features(functions.CallReport_051(recorder), domestic)
-    complete = {column: 10.0 for column in recorder.columns}
-    complete.update(recorder.values)
+    ratios.create_ratio_entries(recorder)
+    row = {column: 10.0 for column in recorder.columns}
+    row.update(recorder.values)
     if values:
-        complete.update(values)
-    return complete
+        row.update(values)
+    return row
 
 
-class CallReportFunctionLayerTests(unittest.TestCase):
-    def test_both_presentations_have_one_canonical_schema(self):
-        row = RecordingRow()
-        domestic = functions.CallReport_031(row)
-        domestic_features = builder.build_report_features(domestic, domestic)
-        consolidated_features = builder.build_report_features(
-            functions.CallReport_051(row), domestic
+class ImportedRatioCreatorTests(unittest.TestCase):
+    def test_ratio_creator_imports_domain_classes_and_defines_none(self):
+        source_path = CALL_REPORT_DIR / "Call_Report_v2_1.py"
+        tree = ast.parse(source_path.read_text())
+        class_definitions = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+        imported_names = {
+            alias.name
+            for node in ast.walk(tree)
+            if isinstance(node, ast.ImportFrom) and node.module == "Call_Report"
+            for alias in node.names
+        }
+
+        self.assertEqual([], class_definitions)
+        self.assertEqual(
+            {"CallReport_031", "CallReport_051", "safe_divide"},
+            imported_names,
         )
 
-        self.assertEqual(79, len(builder.FEATURE_COLUMNS))
-        self.assertEqual(builder.FEATURE_COLUMNS, tuple(domestic_features))
-        self.assertEqual(builder.FEATURE_COLUMNS, tuple(consolidated_features))
-        self.assertIn("RC-Item10-Item12", consolidated_features)
-        self.assertNotIn("RCB-0213-0111", consolidated_features)
+    def test_form_names_match_domestic_and_consolidated_columns(self):
+        domestic_row = RecordingRow({"RCON0211": 4.0})
+        consolidated_row = RecordingRow({"RCFD0211": 6.0})
 
-    def test_consolidated_treasury_and_intangible_ratios_are_not_shifted(self):
+        domestic = functions.CallReport_051(domestic_row)
+        consolidated = functions.CallReport_031(consolidated_row)
+
+        self.assertEqual(4.0, domestic.Securities.USTreasuries("htm", "ac"))
+        self.assertEqual(6.0, consolidated.Securities.USTreasuries("htm", "ac"))
+        self.assertIn("RCON0211", domestic_row.columns)
+        self.assertIn("RCFD0211", consolidated_row.columns)
+
+    def test_both_explicit_entries_have_the_canonical_schema(self):
+        entry1, entry2 = ratios.create_ratio_entries(RecordingRow())
+
+        self.assertEqual(79, len(ratios.FEATURE_COLUMNS))
+        self.assertEqual(ratios.FEATURE_COLUMNS, tuple(entry1))
+        self.assertEqual(ratios.FEATURE_COLUMNS, tuple(entry2))
+        self.assertIn("RC-Item10-Item12", entry2)
+        self.assertNotIn("RCB-0213-0111", entry2)
+
+    def test_consolidated_treasury_and_intangible_ratios_are_correct(self):
         row = RecordingRow(
             {
                 "RCFD0211": 10.0,
@@ -73,60 +94,56 @@ class CallReportFunctionLayerTests(unittest.TestCase):
                 "RCFD3123": 5.0,
             }
         )
-        domestic = functions.CallReport_031(row)
-        result = builder.build_report_features(functions.CallReport_051(row), domestic)
+        _, entry2 = ratios.create_ratio_entries(row)
 
-        self.assertEqual(3.0, result["RCB-0213-0211"])
-        self.assertAlmostEqual(20.0 / 95.0, result["RC-Item10-Item12"])
+        self.assertEqual(3.0, entry2["RCB-0213-0211"])
+        self.assertAlmostEqual(20.0 / 95.0, entry2["RC-Item10-Item12"])
 
-    def test_mortgage_components_use_schedule_functions(self):
+    def test_mortgage_ratio_calls_imported_schedule_functions(self):
         row = RecordingRow(
             {"RCONG300": 1.0, "RCONG304": 2.0, "RCONG308": 3.0}
         )
-        report = functions.CallReport_031(row)
-        result = builder.build_report_features(report, report)
+        entry1, _ = ratios.create_ratio_entries(row)
 
-        self.assertEqual(1.0 / 6.0, result["RCB-G300-item4a"])
-        self.assertEqual(2.0 / 6.0, result["RCB-G304-Item4a"])
-        self.assertEqual(3.0 / 6.0, result["RCB-G308-Item4a"])
+        self.assertEqual(1.0 / 6.0, entry1["RCB-G300-item4a"])
+        self.assertEqual(2.0 / 6.0, entry1["RCB-G304-Item4a"])
+        self.assertEqual(3.0 / 6.0, entry1["RCB-G308-Item4a"])
 
-    def test_selector_uses_consolidated_values_when_domestic_is_missing(self):
+    def test_selector_uses_consolidated_entry_when_domestic_is_missing(self):
         values = {
             "RCONHT53": math.nan,
             "RCFDHT53": 5.0,
             "RCFD0211": 4.0,
             "RCFD0213": 12.0,
         }
-        selected = builder.select_report_features(complete_source_row(values))
+        selected = ratios.select_report_entry(complete_source_row(values))
 
         self.assertIsNotNone(selected)
         self.assertEqual(3.0, selected["RCB-0213-0211"])
 
-    def test_dataframe_processing_deduplicates_ids_and_preserves_schema(self):
+    def test_dataframe_processing_preserves_schema_and_deduplicates(self):
         first = complete_source_row({"IDRSSD": 7, "FDIC Certificate Number": 70})
         second = dict(first)
         second["RCONHT53"] = math.nan
-        frame = pd.DataFrame([first, second])
 
-        result = builder.process_dataframe(frame)
+        result = ratios.process_dataframe(pd.DataFrame([first, second]))
 
         self.assertEqual(1, len(result))
-        self.assertEqual(list(builder.FEATURE_COLUMNS), result.columns.tolist())
+        self.assertEqual(list(ratios.FEATURE_COLUMNS), result.columns.tolist())
         self.assertEqual(7, result.iloc[0]["IDRSSD"])
 
-    def test_file_processing_is_explicit_and_testable(self):
+    def test_file_processing_writes_one_canonical_row(self):
         frame = pd.DataFrame([complete_source_row()])
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             source = root / "source.csv"
-            output = root / "output" / "result.csv"
+            output = root / "output.csv"
             frame.to_csv(source, index=False)
 
-            written = builder.process_file(source, output)
-            result = pd.read_csv(written)
+            result = pd.read_csv(ratios.process_file(source, output))
 
-        self.assertEqual(list(builder.FEATURE_COLUMNS), result.columns.tolist())
         self.assertEqual(1, len(result))
+        self.assertEqual(list(ratios.FEATURE_COLUMNS), result.columns.tolist())
 
 
 if __name__ == "__main__":
