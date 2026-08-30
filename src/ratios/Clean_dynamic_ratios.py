@@ -30,7 +30,7 @@ CALL_DIR = paths.CALL_DIR # see Basel3_Global_Filepath.py
 
 input_directory = os.path.join(DYNAMIC_DIR, "RAW")
 output_directory = os.path.join(DYNAMIC_DIR, "Cleaned")
-quarters_file = os.path.join(CALL_DIR, "CSV/quarters.csv")
+quarters_file = os.path.join(paths.CSV_DIR, "quarters.csv")
 
 # Ensure the output directory exists
 os.makedirs(output_directory, exist_ok=True)

@@ -25,14 +25,10 @@ import Basel3_Global_Filepath as paths
 ROOT_DIR = paths.BASEL3_ROOT
 CALL_DIR = paths.CALL_DIR
 
-# Define dynamic directories
-TXT_DIR = os.path.join(ROOT_DIR, CALL_DIR, "TXT")
-CSV_DIR = os.path.join(ROOT_DIR, CALL_DIR, "CSV")
-
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-schedules_directory = os.path.join(ROOT_DIR, CALL_DIR, CSV_DIR, "Schedules")
-output_directory = os.path.join(ROOT_DIR, CALL_DIR, CSV_DIR, "Cleaned")
+TXT_DIR = paths.TXT_DIR
+CSV_DIR = paths.CSV_DIR
+schedules_directory = paths.SCHEDULES_DIR
+output_directory = paths.CLEANED_DIR
 
 # Ensure the output directory exists
 os.makedirs(output_directory, exist_ok=True)

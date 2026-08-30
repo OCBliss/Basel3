@@ -26,7 +26,7 @@ sys.stdout.reconfigure(line_buffering=True)
 import os
 
 # Step 1: Determine the Basel3 root dynamically
-BASEL3_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+BASEL3_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 # Step 2: Define code important directories
 CODE_DIR = os.path.join(BASEL3_ROOT, "src")
@@ -40,6 +40,7 @@ CSV_DIR = os.path.join(CALL_DIR, "CSV")
 CLEANED_DIR = os.path.join(CSV_DIR, "Cleaned")
 SCHEDULES_DIR = os.path.join(CSV_DIR, "Schedules")
 INTER_DIR = os.path.join(CSV_DIR, "Interleaved")
+INTERLEAVED_DIR = INTER_DIR
 DISTRIBUTED_DIR = os.path.join(CSV_DIR, "Distributed_Lag")
 DYNAMIC_DIR = os.path.join(CSV_DIR, "Dynamic_Lag")
 

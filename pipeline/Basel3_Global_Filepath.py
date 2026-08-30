@@ -40,6 +40,7 @@ CSV_DIR = os.path.join(CALL_DIR, "CSV")
 CLEANED_DIR = os.path.join(CSV_DIR, "Cleaned")
 SCHEDULES_DIR = os.path.join(CSV_DIR, "Schedules")
 INTER_DIR = os.path.join(CSV_DIR, "Interleaved")
+INTERLEAVED_DIR = INTER_DIR
 DISTRIBUTED_DIR = os.path.join(CSV_DIR, "Distributed_Lag")
 DYNAMIC_DIR = os.path.join(CSV_DIR, "Dynamic_Lag")
 

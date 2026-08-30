@@ -28,9 +28,9 @@ ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
 CALL_DIR = paths.CALL_DIR
 
 # Step 4: Use the Dynamically Determined ROOT_DIR
-processed_directory = os.path.join(CALL_DIR, "CSV/Dynamic_Lag/RAW")
-cleaned_directory = os.path.join(CALL_DIR, "CSV/Distributed_Lag/Cleaned")
-quarters_file = os.path.join(CALL_DIR, "CSV/quarters.csv")
+processed_directory = os.path.join(paths.DYNAMIC_DIR, "RAW")
+cleaned_directory = os.path.join(paths.DISTRIBUTED_DIR, "Cleaned")
+quarters_file = os.path.join(paths.CSV_DIR, "quarters.csv")
 
 os.makedirs(processed_directory, exist_ok=True)
 

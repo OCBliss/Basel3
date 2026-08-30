@@ -22,9 +22,9 @@ import Basel3_Global_Filepath as paths
 ROOT_DIR = paths.BASEL3_ROOT
 CALL_DIR = paths.CALL_DIR
 
-# Define dynamic directories
-TXT_DIR = os.path.join(ROOT_DIR, CALL_DIR, "TXT")
-CSV_DIR = os.path.join(ROOT_DIR, CALL_DIR, "CSV")
+# Use the canonical shared paths rather than rebuilding absolute paths.
+TXT_DIR = paths.TXT_DIR
+CSV_DIR = paths.CSV_DIR
 
 # Ensure directories exist
 os.makedirs(TXT_DIR, exist_ok=True)
@@ -42,7 +42,7 @@ def batch_process_txt_to_csv(delimiter='\t'):
     - delimiter: The delimiter used in the .txt files (default is tab-delimited).
     """
     # Create the "Schedules" folder inside the CSV directory
-    schedules_directory = os.path.join(CSV_DIR, "Schedules")
+    schedules_directory = paths.SCHEDULES_DIR
     os.makedirs(schedules_directory, exist_ok=True)
 
     for subdirectory_name in os.listdir(TXT_DIR):

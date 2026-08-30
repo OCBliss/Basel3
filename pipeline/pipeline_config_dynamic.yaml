@@ -3,78 +3,194 @@
 scripts:
   "1.0":
     path: "call reports/call_reports_mkdir_txt_csvs_global.py"
+    inputs: ["data/TXT/*/*.txt"]
+    outputs: ["data/CSV/Schedules/*/*.csv"]
+    create_dirs: ["data/CSV/Schedules"]
   "2.0":
     path: "call reports/Call_Report_Merged_Cleaned_Global.py"
+    inputs: ["data/CSV/Schedules/*/*.csv"]
+    outputs: ["data/CSV/Cleaned/*.csv"]
+    create_dirs: ["data/CSV/Cleaned"]
   "2.1":
     path: "call reports/numeric_only.py"
+    inputs: ["data/CSV/Cleaned/*.csv"]
   "3.0":
     path: "call reports/Call_Reports_retrospective_Vertical_v5.py"
-  "3.1":
-    path: "call reports/Call_Reports_retrospective_Vertical_Clean.py"
+    inputs: ["data/CSV/Cleaned/*.csv"]
+    outputs: ["data/CSV/Interleaved/*.csv"]
+    create_dirs: ["data/CSV/Interleaved"]
   "4.0":
     path: "ratios/Call_Reports_Distributed_Ratios.py"
+    inputs: ["data/CSV/Interleaved/*.csv", "data/CSV/quarters.csv"]
+    outputs: ["data/CSV/Distributed_Lag/RAW/*.csv"]
+    create_dirs: ["data/CSV/Distributed_Lag/RAW"]
   "4.1":
     path: "ratios/Clean_Distributed_Ratios.py"
+    inputs: ["data/CSV/Distributed_Lag/RAW/*.csv"]
+    outputs: ["data/CSV/Distributed_Lag/Cleaned/*.csv"]
+    create_dirs: ["data/CSV/Distributed_Lag/Cleaned"]
   "5.0":
     path: "ratios/Call_Reports_Dynamic_Ratios.py"
+    inputs: ["data/CSV/Distributed_Lag/Cleaned/*.csv", "data/CSV/quarters.csv"]
+    outputs: ["data/CSV/Dynamic_Lag/RAW/*.csv"]
+    create_dirs: ["data/CSV/Dynamic_Lag/RAW"]
   "5.1":
     path: "ratios/Clean_dynamic_ratios.py"
+    inputs: ["data/CSV/Dynamic_Lag/RAW/*.csv"]
+    outputs: ["data/CSV/Dynamic_Lag/Cleaned/*.csv"]
+    create_dirs: ["data/CSV/Dynamic_Lag/Cleaned"]
   "6.0.1":
     path: "material events/FDIC API/Material_events_de_novo_download_v2.py"
+    outputs: ["Material Events/DE NOVO/RAW/BankFind Suite API - de novo.csv"]
+    create_dirs: ["Material Events/DE NOVO/RAW"]
   "6.0.2":
     path: "material events/FDIC API/Material_events_Failures_download_v2.py"
+    outputs: ["Material Events/Failures/RAW/BankFind Suite API - Failures.csv"]
+    create_dirs: ["Material Events/Failures/RAW"]
   "6.0.3":
     path: "material events/FDIC API/Material_events_mergers_download_v2.py"
+    outputs: ["Material Events/Mergers/RAW/BankFind Suite API - mergers.csv"]
+    create_dirs: ["Material Events/Mergers/RAW"]
   "6.1":
     path: "material events/FDIC API/Material_events_cleaned.py"
+    inputs:
+      - "Material Events/DE NOVO/RAW/*.csv"
+      - "Material Events/Failures/RAW/*.csv"
+      - "Material Events/Mergers/RAW/*.csv"
+    outputs:
+      - "Material Events/DE NOVO/Cleaned/*.csv"
+      - "Material Events/Failures/Cleaned/*.csv"
+      - "Material Events/Mergers/Cleaned/*.csv"
+    create_dirs:
+      - "Material Events/DE NOVO/Cleaned"
+      - "Material Events/Failures/Cleaned"
+      - "Material Events/Mergers/Cleaned"
   "6.1.1":
     path: "material events/FDIC API/Material_events_delete_api.py"
+    inputs:
+      - "Material Events/DE NOVO/RAW/*.csv"
+      - "Material Events/Failures/RAW/*.csv"
+      - "Material Events/Mergers/RAW/*.csv"
   "6.2":
     path: "material events/Material_events_de_novo_flag.py"
+    inputs:
+      - "data/CSV/Dynamic_Lag/Cleaned/*.csv"
+      - "Material Events/DE NOVO/Cleaned/*.csv"
+      - "Material Events/quarters_de_novo.csv"
+    outputs: ["Material Events/DE NOVO/Call Reports/*.csv"]
+    create_dirs: ["Material Events/DE NOVO/Call Reports"]
   "6.3":
     path: "material events/Material_events_failures_flag.py"
+    inputs:
+      - "Material Events/DE NOVO/Call Reports/*.csv"
+      - "Material Events/Failures/Cleaned/*.csv"
+      - "Material Events/quarters_failures.csv"
+    outputs: ["Material Events/Failures/Call Reports/*.csv"]
+    create_dirs: ["Material Events/Failures/Call Reports"]
   "6.4":
     path: "material events/Material_events_mergers_flag.py"
+    inputs:
+      - "Material Events/Failures/Call Reports/*.csv"
+      - "Material Events/Mergers/Cleaned/*.csv"
+      - "Material Events/quarters_failures.csv"
+    outputs: ["Material Events/Mergers/Call Reports/*.csv"]
+    create_dirs: ["Material Events/Mergers/Call Reports"]
   "7.0.0.1":
     path: "peer groups/base/Material_events_peer_group_basel3_t1.py"
+    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
+    outputs:
+      - "Material Events/Failures/Horizons/Basel III T+1/*.csv"
+      - "Material Events/Mergers/Horizons/Basel III T+1/*.csv"
+      - "Material Events/Survivors/Horizons/Basel III T+1/*.csv"
   "7.0.0.2":
     path: "peer groups/base/Material_events_peer_group_basel3_t2.py"
+    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
+    outputs:
+      - "Material Events/Failures/Horizons/Basel III T+2/*.csv"
+      - "Material Events/Mergers/Horizons/Basel III T+2/*.csv"
+      - "Material Events/Survivors/Horizons/Basel III T+2/*.csv"
   "7.0.0.3":
     path: "peer groups/base/Material_events_peer_group_basel3_t3.py"
+    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
+    outputs:
+      - "Material Events/Failures/Horizons/Basel III T+3/*.csv"
+      - "Material Events/Mergers/Horizons/Basel III T+3/*.csv"
+      - "Material Events/Survivors/Horizons/Basel III T+3/*.csv"
   "7.0.0.4":
     path: "peer groups/base/Material_events_peer_group_basel3_t4.py"
+    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
+    outputs:
+      - "Material Events/Failures/Horizons/Basel III T+4/*.csv"
+      - "Material Events/Mergers/Horizons/Basel III T+4/*.csv"
+      - "Material Events/Survivors/Horizons/Basel III T+4/*.csv"
   "7.1.0.1":
     path: "peer groups/horizons/Material_events_peer_group_basel3_t1.py"
+    inputs:
+      - "Material Events/*/Horizons/Basel III T+1/*.csv"
+      - "Material Events/quarters_basel3.csv"
+    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t1.csv"]
   "7.1.0.2":
     path: "peer groups/horizons/Material_events_peer_group_basel3_t2.py"
+    inputs:
+      - "Material Events/*/Horizons/Basel III T+2/*.csv"
+      - "Material Events/quarters_basel3.csv"
+    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t2.csv"]
   "7.1.0.3":
     path: "peer groups/horizons/Material_events_peer_group_basel3_t3.py"
+    inputs:
+      - "Material Events/*/Horizons/Basel III T+3/*.csv"
+      - "Material Events/quarters_basel3.csv"
+    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t3.csv"]
   "7.1.0.4":
     path: "peer groups/horizons/Material_events_peer_group_basel3_t4.py"
+    inputs:
+      - "Material Events/*/Horizons/Basel III T+4/*.csv"
+      - "Material Events/quarters_basel3.csv"
+    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t4.csv"]
   "8.0.1":
     path: "jsd/binning/Material_events_JSD_binning_basel3_20.py"
-    # args: "--bin1_count 20 --bin2_count 5"
+    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
+    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins20.csv"]
   "8.0.2":
     path: "jsd/binning/Material_events_JSD_binning_basel3_30.py"
-    # args: "--bin1_count 30 --bin2_count 5"
+    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
+    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins30.csv"]
   "8.0.3":
     path: "jsd/binning/Material_events_JSD_binning_basel3_50.py"
-    # args: "--bin1_count 50 --bin2_count 5"
+    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
+    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins50.csv"]
   "8.0.4":
     path: "jsd/binning/Material_events_JSD_binning_basel3_100.py"
-    # args: "--bin1_count 100 --bin2_count 5"
+    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
+    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins100.csv"]
   "8.1.1":
     path: "jsd/pmf/Material_events_JSD_probabilities_basel3.py"
+    inputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*.csv"]
+    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Probabilities/probabilities_*.csv"]
   "8.2.0.1":
     path: "jsd/calculation/Material_events_JSD_basel3_t1.py"
+    inputs: ["Material Events/*/JS Divergence/Basel III T+1/Probabilities/*.csv"]
+    outputs: ["Material Events/JSD/BASEL III T+1/*.csv"]
+    create_dirs: ["Material Events/JSD/BASEL III T+1"]
   "8.2.0.2":
     path: "jsd/calculation/Material_events_JSD_basel3_t2.py"
+    inputs: ["Material Events/*/JS Divergence/Basel III T+2/Probabilities/*.csv"]
+    outputs: ["Material Events/JSD/BASEL III T+2/*.csv"]
+    create_dirs: ["Material Events/JSD/BASEL III T+2"]
   "8.2.0.3":
     path: "jsd/calculation/Material_events_JSD_basel3_t3.py"
+    inputs: ["Material Events/*/JS Divergence/Basel III T+3/Probabilities/*.csv"]
+    outputs: ["Material Events/JSD/BASEL III T+3/*.csv"]
+    create_dirs: ["Material Events/JSD/BASEL III T+3"]
   "8.2.0.4":
     path: "jsd/calculation/Material_events_JSD_basel3_t4.py"
+    inputs: ["Material Events/*/JS Divergence/Basel III T+4/Probabilities/*.csv"]
+    outputs: ["Material Events/JSD/BASEL III T+4/*.csv"]
+    create_dirs: ["Material Events/JSD/BASEL III T+4"]
   "8.3.0.1":
     path: "measures/intragroup/JSD_intragroup_filter.py"
+    inputs: ["Material Events/JSD/BASEL III T+*/*.csv"]
+    outputs: ["Material Events/IG/BASEL III T+*/*.csv"]
   # "8.3.0.2.20":
   #   path: "measures/intergroup/JSD_intergroup_call_reports_failures_arg_v2.py"
   #   args:
@@ -106,8 +222,7 @@ dependencies:
   "1.0": ["2.0"]
   "2.0": ["2.1"]
   "2.1": ["3.0"]
-  "3.0": ["3.1"]
-  "3.1": ["4.0"]
+  "3.0": ["4.0"]
   "4.0": ["4.1"]
   "4.1": ["5.0"]
   "5.0": ["5.1"]
@@ -141,30 +256,27 @@ dependencies:
   # "8.3.0.2.20": ["8.3.0.3.20"]
 
 execution:
-  sequential: ["1.0", "2.0", "2.1"]  # Initial data prep
-  concurrent_branches:
-    rcb_schedule:
-      sequential: ["3.0", "3.1", "4.0", "4.1", "5.0", "5.1"]  # RC-B analysis
-      concurrent_groups:
-        fdic: ["6.0.1", "6.0.2", "6.0.3"]
-      concurrent_branches:
-        basel_iii:
-          sequential: ["6.1", "6.1.1", "6.2", "6.3", "6.4"]  # Material event flagging
-          concurrent_groups:
-            peers: ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]  # Peer group creation in parallel
-            filters: ["7.1.0.1", "7.1.0.2", "7.1.0.3", "7.1.0.4"]  # Peer group filtering in parallel
-            bins: ["8.0.1", "8.0.2", "8.0.3", "8.0.4"]
-          intermediate_steps: ["8.1.1"]  # Generate probability mass functions after binning
-          concurrent_branches:  # Split JSD into separate branches for each horizon
-            t1:
-              sequential: ["8.2.0.1"]  # JSD for T+1
-            t2:
-              sequential: ["8.2.0.2"]  # JSD for T+2
-            t3:
-              sequential: ["8.2.0.3"]  # JSD for T+3
-            t4:
-              sequential: ["8.2.0.4"]  # JSD for T+4
-          intermediate_steps: ["8.3.0.1"]
-          # concurrent_groups:
-          #   peers: ["8.3.0.2.20"]
-          #   filters: ["8.3.0.3.20"]
+  # This is an ordered list of phase mappings. Repeated phase types are valid
+  # because every occurrence is a distinct list item and therefore a barrier.
+  - sequential: ["1.0", "2.0", "2.1"]  # Initial data preparation
+  - sequential: ["3.0", "4.0", "4.1", "5.0", "5.1"]  # RC-B analysis
+  - concurrent_groups:
+      fdic_downloads: ["6.0.1", "6.0.2", "6.0.3"]
+  - sequential: ["6.1", "6.1.1", "6.2", "6.3", "6.4"]  # Material-event flags
+  - concurrent_groups:
+      peer_groups: ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]
+  - concurrent_groups:
+      horizon_filters: ["7.1.0.1", "7.1.0.2", "7.1.0.3", "7.1.0.4"]
+  - concurrent_groups:
+      binning: ["8.0.1", "8.0.2", "8.0.3", "8.0.4"]
+  - intermediate_steps: ["8.1.1"]  # PMF barrier after all bins complete
+  - concurrent_branches:
+      t1:
+        - sequential: ["8.2.0.1"]
+      t2:
+        - sequential: ["8.2.0.2"]
+      t3:
+        - sequential: ["8.2.0.3"]
+      t4:
+        - sequential: ["8.2.0.4"]
+  - intermediate_steps: ["8.3.0.1"]  # Rejoin after every JSD horizon

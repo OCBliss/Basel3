@@ -28,10 +28,20 @@ import os
 # Step 1: Determine the Basel3 root dynamically
 BASEL3_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# Step 2: Define other important directories
+# Canonical project directories. Pipeline scripts should import these instead
+# of rebuilding paths with inconsistent spelling or capitalization.
 CODE_DIR = os.path.join(BASEL3_ROOT, "src")
 CALL_DIR = os.path.join(BASEL3_ROOT, "data")
+TXT_DIR = os.path.join(CALL_DIR, "TXT")
+CSV_DIR = os.path.join(CALL_DIR, "CSV")
+CLEANED_DIR = os.path.join(CSV_DIR, "Cleaned")
+SCHEDULES_DIR = os.path.join(CSV_DIR, "Schedules")
+INTERLEAVED_DIR = os.path.join(CSV_DIR, "Interleaved")
+INTER_DIR = INTERLEAVED_DIR
+DISTRIBUTED_DIR = os.path.join(CSV_DIR, "Distributed_Lag")
+DYNAMIC_DIR = os.path.join(CSV_DIR, "Dynamic_Lag")
 MAT_DIR = os.path.join(BASEL3_ROOT, "Material Events")
+PIPE_DIR = os.path.join(BASEL3_ROOT, "pipeline")
 
 # Step 3: Debugging prints
 if __name__ == "__main__":

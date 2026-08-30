@@ -1,71 +1,92 @@
+#!/usr/bin/env python3
+"""Build four-quarter distributed-lag call-report datasets."""
+
+from __future__ import annotations
+
 import sys
-sys.stdout.reconfigure(line_buffering=True)
-import os
-import sys
+from pathlib import Path
+from typing import List
+
 import pandas as pd
-import csv
-# import importlib.util
 
-# Step 1: Locate CODE directory FIRST
-def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "src":
-        parent_dir = os.path.dirname(current_dir)
-        if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'src' directory.")
-        current_dir = parent_dir
-    return current_dir
 
-CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)
+SOURCE_DIR = Path(__file__).resolve().parents[1]
+if str(SOURCE_DIR) not in sys.path:
+    sys.path.insert(0, str(SOURCE_DIR))
 
-# NOW import
-import Basel3_Global_Filepath as paths
+import Basel3_Global_Filepath as paths  # noqa: E402
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-CALL_DIR = paths.CALL_DIR
 
-interleaved_directory = os.path.join(CALL_DIR, "CSV", "Interleaved")
-distributed_directory = os.path.join(CALL_DIR, "CSV", "Distributed_lag", "RAW")
-quarters_file = os.path.join(CALL_DIR, "CSV/quarters.csv")
+def load_quarters(quarters_file: Path) -> List[str]:
+    """Load ordered YYYYMMDD quarter identifiers from the first CSV column."""
 
-# Ensure the output directory exists
-os.makedirs(distributed_directory, exist_ok=True)
+    quarters = pd.read_csv(quarters_file).iloc[:, 0].astype(str)
+    valid = quarters[quarters.str.fullmatch(r"\d{8}", na=False)]
+    if valid.empty:
+        raise ValueError(f"No YYYYMMDD quarters found in {quarters_file}")
+    return valid.tolist()
 
-# Load the quarters file
-quarters_df = pd.read_csv(quarters_file)
-quarters_df = quarters_df.iloc[:, 0].astype(str)
-quarters_df = quarters_df[quarters_df.str.match(r'^\d{8}$')]
-quarters_df = quarters_df.reset_index(drop=True)
 
-# Process each row in the quarters file
-for i in range(len(quarters_df) - 3):
-    # Current quarter
-    current_date = quarters_df.iloc[i]
-    current_file = f'Cleaned_Call_Report_{current_date}.csv'
-    current_path = os.path.join(interleaved_directory, current_file)
+def build_distributed_reports(
+    interleaved_dir: Path,
+    output_dir: Path,
+    quarters_file: Path,
+) -> List[Path]:
+    """Merge each report with the following three configured quarters.
 
-    # Load current file
-    if not os.path.exists(current_path):
-        continue
+    Missing current-quarter files are skipped, matching the historical pipeline
+    behavior. Missing comparison quarters yield a partial window and are reported.
+    """
 
-    current_df = pd.read_csv(current_path)
+    quarters = load_quarters(quarters_file)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    written: List[Path] = []
 
-    # Get the three following quarters
-    previous_dates = [quarters_df.iloc[i + j + 1] for j in range(3)]
+    for index, current_quarter in enumerate(quarters[:-3]):
+        current_name = f"Cleaned_Call_Report_{current_quarter}.csv"
+        current_path = interleaved_dir / current_name
+        if not current_path.is_file():
+            print(f"Skipping missing current report: {current_path}")
+            continue
 
-    # Append previous quarters
-    appended_df = current_df.copy()
-    for prev_date in previous_dates:
-        prev_file = f'Cleaned_Call_Report_{prev_date}.csv'
-        prev_path = os.path.join(interleaved_directory, prev_file)
+        distributed = pd.read_csv(current_path)
+        if "CERT" not in distributed.columns:
+            raise ValueError(f"Required CERT column missing from {current_path}")
 
-        if os.path.exists(prev_path):
-            prev_df = pd.read_csv(prev_path)
-            appended_df = appended_df.merge(prev_df, on='CERT', how='left', suffixes=('', f'_{prev_date}'))
-        pass
-    # Save the appended DataFrame
-    output_file = os.path.join(distributed_directory, f'Distributed_{current_file}')
-    appended_df.to_csv(output_file, index=False)
-    print(f"Processed and saved: {output_file}")
+        for comparison_quarter in quarters[index + 1 : index + 4]:
+            comparison_path = (
+                interleaved_dir / f"Cleaned_Call_Report_{comparison_quarter}.csv"
+            )
+            if not comparison_path.is_file():
+                print(f"Skipping missing comparison report: {comparison_path}")
+                continue
+            comparison = pd.read_csv(comparison_path)
+            if "CERT" not in comparison.columns:
+                raise ValueError(f"Required CERT column missing from {comparison_path}")
+            distributed = distributed.merge(
+                comparison,
+                on="CERT",
+                how="left",
+                suffixes=("", f"_{comparison_quarter}"),
+                validate="one_to_one",
+            )
+
+        output_path = output_dir / f"Distributed_{current_name}"
+        distributed.to_csv(output_path, index=False)
+        written.append(output_path)
+        print(f"Processed and saved: {output_path}")
+
+    return written
+
+
+def main() -> int:
+    build_distributed_reports(
+        Path(paths.INTERLEAVED_DIR),
+        Path(paths.DISTRIBUTED_DIR) / "RAW",
+        Path(paths.CSV_DIR) / "quarters.csv",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -3,8 +3,20 @@ sys.stdout.reconfigure(line_buffering=True)
 import os
 import sys
 import pandas as pd
-import csv
 # import importlib.util
+
+
+class TupleRow:
+    """Provide named, constant-time access to a row produced by ``itertuples``."""
+
+    __slots__ = ("_values", "_positions")
+
+    def __init__(self, values, positions):
+        self._values = values
+        self._positions = positions
+
+    def __getitem__(self, column):
+        return self._values[self._positions[column]]
 
 # Step 1: Locate CODE directory FIRST
 def find_code_dir():
@@ -27,8 +39,8 @@ ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
 CALL_DIR = paths.CALL_DIR
 
 # Update directories dynamically
-cleaned_directory = os.path.join(CALL_DIR, "CSV", "Cleaned")
-interleaved_directory = os.path.join(CALL_DIR, "CSV", "Interleaved")
+cleaned_directory = paths.CLEANED_DIR
+interleaved_directory = paths.INTERLEAVED_DIR
 
 # Ensure the output directory exists
 os.makedirs(interleaved_directory, exist_ok=True)
@@ -49,8 +61,15 @@ for file_name in os.listdir(cleaned_directory):
             entries_1_rcb = []
             entries_2_rcb = []
             
-            # Process rows
-            for _, row in signals_df_rcb.iterrows():
+            # ``iterrows`` creates a pandas Series for every record and made
+            # millions of indexed Series lookups. Tuples preserve the same
+            # values while keeping the financial formulas below unchanged.
+            column_positions = {
+                column: position
+                for position, column in enumerate(signals_df_rcb.columns)
+            }
+            for values in signals_df_rcb.itertuples(index=False, name=None):
+                row = TupleRow(values, column_positions)
                 # --- Entry 1 Calculations ---
                 # Common Variables
                 call_id = row['IDRSSD']

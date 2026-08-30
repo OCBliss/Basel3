@@ -25,12 +25,8 @@ import Basel3_Global_Filepath as paths
 ROOT_DIR = paths.BASEL3_ROOT
 CALL_DIR = paths.CALL_DIR
 
-# Define dynamic directories
-CSV_DIR = os.path.join(ROOT_DIR, CALL_DIR, "CSV")
-
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-cleaned_directory = os.path.join(ROOT_DIR, CSV_DIR, "Cleaned")
+CSV_DIR = paths.CSV_DIR
+cleaned_directory = paths.CLEANED_DIR
 
 # Iterate through each file in the directory
 for filename in os.listdir(cleaned_directory):

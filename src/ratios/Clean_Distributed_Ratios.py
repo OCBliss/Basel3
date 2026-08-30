@@ -26,8 +26,8 @@ import Basel3_Global_Filepath as paths
 ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
 CALL_DIR = paths.CALL_DIR
 
-distributed_directory = os.path.join(CALL_DIR, "CSV/Distributed_Lag/RAW")
-cleaned_directory = os.path.join(CALL_DIR, "CSV/Distributed_Lag/Cleaned")
+distributed_directory = os.path.join(paths.DISTRIBUTED_DIR, "RAW")
+cleaned_directory = os.path.join(paths.DISTRIBUTED_DIR, "Cleaned")
 
 # Ensure the output directory exists
 os.makedirs(cleaned_directory, exist_ok=True)

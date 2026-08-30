@@ -86,7 +86,7 @@ for folder in folders:
 
         try:
             # Load the CSV file with error handling
-            data = pd.read_csv(input_file_path, error_bad_lines=False, warn_bad_lines=True)
+            data = pd.read_csv(input_file_path, on_bad_lines="warn")
 
             # For folders that use "OUT_CERT", rename to "CERT"
             if not use_cert and "OUT_CERT" in data.columns:
@@ -112,4 +112,3 @@ for folder in folders:
             print(f"ParserError while processing {input_file_path}: {e}", flush=True)
         except Exception as e:
             print(f"Unexpected error with {input_file_path}: {e}", flush=True)
-
