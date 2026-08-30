@@ -83,6 +83,30 @@ class ImportedRatioCreatorTests(unittest.TestCase):
         self.assertIn("RC-Item10-Item12", entry2)
         self.assertNotIn("RCB-0213-0111", entry2)
 
+    def test_both_forms_use_the_domestic_rc_e_schedule(self):
+        row = RecordingRow(
+            {
+                "RCONB549": 5.0,
+                "RCON2215": 20.0,
+                "RCFDB549": 99.0,
+                "RCFD2215": 100.0,
+            }
+        )
+
+        entry1, entry2 = ratios.create_ratio_entries(row)
+
+        self.assertEqual(0.25, entry1["RCE-B549-2215"])
+        self.assertEqual(0.25, entry2["RCE-B549-2215"])
+        self.assertNotIn("RCFDB549", row.columns)
+        self.assertNotIn("RCFD2215", row.columns)
+
+    def test_missingness_uses_pandas_scalar_rules(self):
+        self.assertTrue(ratios.is_missing(pd.NA))
+        self.assertTrue(ratios.is_missing(pd.NaT))
+        self.assertTrue(ratios.is_missing(math.nan))
+        self.assertFalse(ratios.is_missing(0.0))
+        self.assertFalse(ratios.is_missing(""))
+
     def test_consolidated_treasury_and_intangible_ratios_are_correct(self):
         row = RecordingRow(
             {
@@ -120,6 +144,41 @@ class ImportedRatioCreatorTests(unittest.TestCase):
 
         self.assertIsNotNone(selected)
         self.assertEqual(3.0, selected["RCB-0213-0211"])
+
+    def test_selector_uses_domestic_entry_when_consolidated_is_missing(self):
+        values = {
+            "RCONHT53": 5.0,
+            "RCFDHT53": math.nan,
+            "RCON0211": 4.0,
+            "RCON0213": 12.0,
+        }
+
+        selected = ratios.select_report_entry(complete_source_row(values))
+
+        self.assertIsNotNone(selected)
+        self.assertEqual(3.0, selected["RCB-0213-0211"])
+
+    def test_selector_keeps_domestic_entry_when_missing_counts_tie(self):
+        values = {
+            "RCON0211": 4.0,
+            "RCON0213": 12.0,
+            "RCFD0211": 4.0,
+            "RCFD0213": 8.0,
+        }
+
+        selected = ratios.select_report_entry(complete_source_row(values))
+
+        self.assertEqual(3.0, selected["RCB-0213-0211"])
+
+    def test_selector_discards_row_when_neither_form_is_usable(self):
+        values = {
+            "RCONHT53": math.nan,
+            "RCFDHT53": math.nan,
+        }
+
+        selected = ratios.select_report_entry(complete_source_row(values))
+
+        self.assertIsNone(selected)
 
     def test_dataframe_processing_preserves_schema_and_deduplicates(self):
         first = complete_source_row({"IDRSSD": 7, "FDIC Certificate Number": 70})
