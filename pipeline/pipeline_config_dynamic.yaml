@@ -15,7 +15,7 @@ scripts:
     path: "call reports/numeric_only.py"
     inputs: ["data/CSV/Cleaned/*.csv"]
   "3.0":
-    path: "call reports/Call_Reports_retrospective_Vertical_v5.py"
+    path: "call reports/Call_Report_v2_1.py"
     inputs: ["data/CSV/Cleaned/*.csv"]
     outputs: ["data/CSV/Interleaved/*.csv"]
     create_dirs: ["data/CSV/Interleaved"]

@@ -2,3 +2,9 @@
 __pycache__/
 *.py[cod]
 pipeline_logs/
+data/CSV/Cleaned/
+data/CSV/Distributed_Lag/
+data/CSV/Dynamic_Lag/
+data/CSV/Interleaved/
+data/CSV/Schedules/
+Material Events/*/RAW/
