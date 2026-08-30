@@ -41,38 +41,52 @@ def build_distributed_reports(
     quarters = load_quarters(quarters_file)
     output_dir.mkdir(parents=True, exist_ok=True)
     written: List[Path] = []
+    available_reports = {
+        path.stem.rsplit("_", 1)[-1]: path
+        for path in interleaved_dir.glob("Cleaned_Call_Report_*.csv")
+    }
+    report_cache = {}
+
+    def load_report(quarter: str) -> pd.DataFrame:
+        if quarter not in report_cache:
+            report_path = available_reports[quarter]
+            report = pd.read_csv(report_path)
+            if "CERT" not in report.columns:
+                raise ValueError(f"Required CERT column missing from {report_path}")
+            report_cache[quarter] = report
+        return report_cache[quarter]
 
     for index, current_quarter in enumerate(quarters[:-3]):
-        current_name = f"Cleaned_Call_Report_{current_quarter}.csv"
-        current_path = interleaved_dir / current_name
-        if not current_path.is_file():
-            print(f"Skipping missing current report: {current_path}")
+        if current_quarter not in available_reports:
             continue
 
-        distributed = pd.read_csv(current_path)
-        if "CERT" not in distributed.columns:
-            raise ValueError(f"Required CERT column missing from {current_path}")
+        current_name = available_reports[current_quarter].name
+        distributed = load_report(current_quarter).copy()
+        missing_comparisons = []
 
         for comparison_quarter in quarters[index + 1 : index + 4]:
-            comparison_path = (
-                interleaved_dir / f"Cleaned_Call_Report_{comparison_quarter}.csv"
-            )
-            if not comparison_path.is_file():
-                print(f"Skipping missing comparison report: {comparison_path}")
+            if comparison_quarter not in available_reports:
+                missing_comparisons.append(comparison_quarter)
                 continue
-            comparison = pd.read_csv(comparison_path)
-            if "CERT" not in comparison.columns:
-                raise ValueError(f"Required CERT column missing from {comparison_path}")
             distributed = distributed.merge(
-                comparison,
+                load_report(comparison_quarter),
                 on="CERT",
                 how="left",
                 suffixes=("", f"_{comparison_quarter}"),
                 validate="one_to_one",
             )
 
+        if missing_comparisons:
+            print(
+                "Partial window for {}: missing {}".format(
+                    current_quarter, ", ".join(missing_comparisons)
+                )
+            )
+
         output_path = output_dir / f"Distributed_{current_name}"
-        distributed.to_csv(output_path, index=False)
+        temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
+        distributed.to_csv(temporary_path, index=False)
+        temporary_path.replace(output_path)
         written.append(output_path)
         print(f"Processed and saved: {output_path}")
 

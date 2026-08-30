@@ -263,8 +263,10 @@ def select_report_entry(row):
 
 
 def process_dataframe(frame):
+    columns = tuple(frame.columns)
     records = []
-    for _, row in frame.iterrows():
+    for values in frame.itertuples(index=False, name=None):
+        row = dict(zip(columns, values))
         selected = select_report_entry(row)
         if selected is not None:
             records.append(selected)

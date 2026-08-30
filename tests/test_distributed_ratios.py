@@ -72,6 +72,27 @@ class DistributedRatiosTests(unittest.TestCase):
                     input_dir, root / "output", quarters_file
                 )
 
+    def test_writes_partial_window_when_comparison_files_are_missing(self):
+        quarters = ["20241231", "20240930", "20240630", "20240331"]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            input_dir = root / "interleaved"
+            input_dir.mkdir()
+            quarters_file = root / "quarters.csv"
+            pd.DataFrame({"Quarters": quarters}).to_csv(quarters_file, index=False)
+            pd.DataFrame({"CERT": [1], "ratio": [0.5]}).to_csv(
+                input_dir / "Cleaned_Call_Report_20241231.csv", index=False
+            )
+
+            written = distributed_ratios.build_distributed_reports(
+                input_dir, root / "output", quarters_file
+            )
+            result = pd.read_csv(written[0])
+
+        self.assertEqual(1, len(written))
+        self.assertEqual(["CERT", "ratio"], result.columns.tolist())
+        self.assertEqual(0.5, result.iloc[0]["ratio"])
+
 
 if __name__ == "__main__":
     unittest.main()
