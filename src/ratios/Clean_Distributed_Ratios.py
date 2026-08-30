@@ -1,60 +1,61 @@
+#!/usr/bin/env python3
+"""Replace missing distributed-lag values on populated Call Report rows."""
+
+from pathlib import Path
 import sys
-sys.stdout.reconfigure(line_buffering=True)
-import os
-import sys
+
 import pandas as pd
-import csv
-# import importlib.util
 
-# Step 1: Locate CODE directory FIRST
-def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "src":
-        parent_dir = os.path.dirname(current_dir)
-        if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'src' directory.")
-        current_dir = parent_dir
-    return current_dir
 
-CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)
+SRC_DIR = Path(__file__).resolve().parents[1]
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
-# NOW import
-import Basel3_Global_Filepath as paths
+import Basel3_Global_Filepath as paths  # noqa: E402
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-CALL_DIR = paths.CALL_DIR
 
-distributed_directory = os.path.join(paths.DISTRIBUTED_DIR, "RAW")
-cleaned_directory = os.path.join(paths.DISTRIBUTED_DIR, "Cleaned")
+def clean_distributed_frame(report):
+    """Fill gaps only where the row has a bank identifier."""
 
-# Ensure the output directory exists
-os.makedirs(cleaned_directory, exist_ok=True)
+    if report.empty:
+        return report.copy()
 
-def batch_process_files(input_directory, output_directory):
-    # Ensure the output directory exists
-    os.makedirs(output_directory, exist_ok=True)
-    
-    # Iterate through all files in the input directory
-    for filename in os.listdir(input_directory):
-        if filename.endswith(".csv"):
-            input_file_path = os.path.join(input_directory, filename)
-            
-            # Load the CSV file into a DataFrame
-            df = pd.read_csv(input_file_path)
-            
-            # Identify rows where the first column is non-empty
-            first_col = df.iloc[:, 0]  # First column
-            rows_to_update = first_col.notna() & first_col.astype(str).str.strip().astype(bool)
-            
-            # Replace empty cells with 0 only in those rows
-            df.loc[rows_to_update] = df.loc[rows_to_update].fillna(0)
-            
-            # Save the modified DataFrame to the output directory
-            output_file_path = os.path.join(output_directory, filename)
-            df.to_csv(output_file_path, index=False)
-            print(f"Processed file saved: {output_file_path}")
+    cleaned = report.copy()
+    bank_identifier = cleaned.iloc[:, 0]
+    populated_bank = (
+        bank_identifier.notna()
+        & bank_identifier.astype(str).str.strip().ne("")
+    )
+    cleaned.loc[populated_bank] = cleaned.loc[populated_bank].fillna(0)
+    return cleaned
 
-# Run the batch processing function
-batch_process_files(distributed_directory, cleaned_directory)
+
+def clean_distributed_reports(raw_dir, cleaned_dir):
+    raw_dir = Path(raw_dir)
+    cleaned_dir = Path(cleaned_dir)
+    cleaned_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+
+    for raw_path in sorted(raw_dir.glob("*.csv")):
+        cleaned = clean_distributed_frame(pd.read_csv(raw_path))
+        output_path = cleaned_dir / raw_path.name
+        temporary_path = output_path.with_suffix(output_path.suffix + ".tmp")
+        cleaned.to_csv(temporary_path, index=False)
+        temporary_path.replace(output_path)
+        written.append(output_path)
+        print("Cleaned distributed report: {}".format(output_path))
+
+    return written
+
+
+def main():
+    written = clean_distributed_reports(
+        Path(paths.DISTRIBUTED_DIR) / "RAW",
+        Path(paths.DISTRIBUTED_DIR) / "Cleaned",
+    )
+    print("Cleaned {} distributed report files".format(len(written)))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
