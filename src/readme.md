@@ -42,13 +42,14 @@ The workflow is defined in `pipeline_config_dynamic4a4.yaml`, allowing flexibili
   - `call reports/`:
     - `call_reports_mkdir_txt_csvs_global.py`
     - `Call_Report_Merged_Cleaned_Global.py`
-    - `numeric_only6.py`
-    - `Call_Reports_retrospective_Vertical5.py`
+    - `numeric_only.py`
+    - `Call_Report.py`
+    - `Call_Report_v2_1.py`
   - `ratios/`:
-    - `Call_Reports_Distributed_Ratios3.py`
-    - `Clean_Distributed_Ratios2.py`
-    - `Call_Reports_Dynamic_Ratios3.py`
-    - `Clean_dynamic_ratio2.py`
+    - `Call_Reports_Distributed_Ratios.py`
+    - `Clean_Distributed_Ratios.py`
+    - `Call_Reports_Dynamic_Ratios.py`
+    - `Clean_dynamic_ratios.py`
   - `material events/`:
     - `FDIC API/`:
       - `Material_events_de_novo_download_v2.py`
