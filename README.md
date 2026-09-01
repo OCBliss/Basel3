@@ -297,25 +297,22 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
    - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
 
 ### Current Workflow
-Below is the full `pipeline_config.yaml` as of now—every step, dependency, and execution detail included.
+Below is the current flow in `pipeline_config_dynamic.yaml`.
 
 ### Execution Flow
-1. Sequential (1.0–3.0):
+1. Sequential (1.0–4.0):
    - "1.0": Cleans raw Call Report data into a usable format (e.g., creates directories, converts text to CSVs).
    - "2.0": Merges and further cleans the data into a unified dataset.
    - "2.1": Converts data to numeric-only format for analysis.
-   - "3.0": Performs vertical analysis on the full Call Report dataset, preparing it for schedule-specific splits.
+   - "3.0": Calculates the current-quarter Call Report ratios.
+   - "4.0": Uses the same ratio methods at P1Q, P2Q, and P3Q and writes the final dynamic-ratio files. Historical rows are joined by `CERT`.
 
-2. Time Period Split:
-   - execute steps 4.0.1–6.4.1 sequentially:
-     - "4.0": Computes distributed ratios for RC, RC-B, etc., data.
-     - "4.1": Cleans those distributed ratios.
-     - "5.0": Computes dynamic ratios.
-     - "5.1": Cleans the dynamic ratios.
-     - "6.1": Cleans material event data.
-     - "6.2": Flags de novo events in RC data.
-     - "6.3": Flags failures in RC data.
-     - "6.4": Flags mergers in RC data.
+2. Material Events:
+   - "6.0.1"–"6.0.3": Download the three FDIC event datasets concurrently.
+   - "6.1": Cleans material event data.
+   - "6.2": Flags de novo events in RC data.
+   - "6.3": Flags failures in RC data.
+   - "6.4": Flags mergers in RC data.
 
 4. Peer Group Filtering:
    - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
@@ -334,8 +331,8 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
 
 ### Directory Structure
 - `pipeline/`:
-  - `Task_manager_Global_yaml-driven5a.py`
-  - `pipeline_config_dynamic4a4.yaml`
+  - `Task_manager_Global_yaml_driven.py`
+  - `pipeline_config_dynamic.yaml`
 - `data/`:
   - `CSV/`:
     - `Schedules/`:
@@ -345,12 +342,9 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
       - `Cleaned_Call_Report_20240630.csv`
     - `Interleaved/`:
       - `Cleaned_Call_Report_20240630.csv`
-    - `Distributed_lag/`:
-      - `RAW/':
-        - `Distributed_Cleaned_Call_Report_20240630.csv`
-      - `Cleaned/`:
-        - `Distributed_Cleaned_Call_Report_20240630.csv`
     - `Dynamic_Lag/`:
+      - `Cleaned/`:
+        - `Dynamic_Cleaned_Call_Report_20240630.csv`
   - `TXT/`:
   - `PDF/`:
 - `src/`: subroot directory containing all scripts.
@@ -361,10 +355,7 @@ Below is the full `pipeline_config.yaml` as of now—every step, dependency, and
     - `Call_Report.py`
     - `Call_Reports_v3_1.py`
   - `ratios/`:
-    - `Call_Reports_Distributed_Ratios.py`
-    - `Clean_Distributed_Ratios.py`
-    - `Call_Reports_Dynamic_Ratios.py`
-    - `Clean_dynamic_ratios.py`
+    - `Dynamic_Ratios.py`
   - `material events/`:
     - `FDIC API/`:
       - `Material_events_de_novo_download_v2.py`

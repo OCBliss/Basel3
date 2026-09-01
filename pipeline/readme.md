@@ -1,8 +1,8 @@
 # Basel III Pipeline for Central Bank Paper
 
-This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on a configurable `pipeline_config_dynamic4a4.yaml`.
+This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on `pipeline_config_dynamic.yaml`.
 
-**NOTE**: Please use --> `Task_manager_Global_yaml_driven5d.py`. working on input_dirs injection for self-healing subroot directories. Folders could be renamed or removed in the script at will.
+Use `Task_manager_Global_yaml_driven.py` to run the workflow.
  
 **Purpose:** yaml-driven task manager for executing the JSD analysis on call reports and RWA analysis on CMT data from FRED.
 
@@ -15,12 +15,12 @@ The pipeline processes financial data through a series of modular Python scripts
 - Dynamic input/output detection
 - Detailed logging for debugging and auditing
 
-The workflow is defined in `pipeline_config_dynamic4a4.yaml`, allowing flexibility for any number of processing branches or steps.
+The workflow is defined in `pipeline_config_dynamic.yaml`, allowing flexibility for any number of processing branches or steps.
 
 ### Directory Structure
 - `pipeline/`:
-  - `Task_manager_Global_yaml-driven5a.py`
-  - `pipeline_config_dynamic4a4.yaml`
+  - `Task_manager_Global_yaml_driven.py`
+  - `pipeline_config_dynamic.yaml`
  
 ## Future Customization - Example
 
@@ -35,7 +35,7 @@ execution:
   sequential: ["1.0", "2.0", "2.1"]
   concurrent_branches: # split by schedule
     rc_schedule:
-      sequential: ["3.0.1", "4.0.1", "4.1.1", "5.0.1", "5.1.1"] # RC analysis
+      sequential: ["3.0.1", "4.0.1"] # ratios and dynamic changes
       concurrent_groups:
         api: ["6.0.1", "6.0.2", "6.0.3"] # FDIC BankFind Suite API
       concurrent_branches: # split by financial/regulatory epoch (GFC, post-GFC, Basel III)

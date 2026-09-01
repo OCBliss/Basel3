@@ -38,7 +38,6 @@ CLEANED_DIR = os.path.join(CSV_DIR, "Cleaned")
 SCHEDULES_DIR = os.path.join(CSV_DIR, "Schedules")
 INTERLEAVED_DIR = os.path.join(CSV_DIR, "Interleaved")
 INTER_DIR = INTERLEAVED_DIR
-DISTRIBUTED_DIR = os.path.join(CSV_DIR, "Distributed_Lag")
 DYNAMIC_DIR = os.path.join(CSV_DIR, "Dynamic_Lag")
 MAT_DIR = os.path.join(BASEL3_ROOT, "Material Events")
 PIPE_DIR = os.path.join(BASEL3_ROOT, "pipeline")

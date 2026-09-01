@@ -71,7 +71,6 @@ class PipelineConfigurationTests(unittest.TestCase):
             "CALL_DIR",
             "CODE_DIR",
             "CSV_DIR",
-            "DISTRIBUTED_DIR",
             "DYNAMIC_DIR",
             "MAT_DIR",
         }

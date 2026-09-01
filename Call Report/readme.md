@@ -19,17 +19,16 @@ subdirectory corresponds to a distinct stage of the data engineering process.
 TXT
  │
  ▼
-Cleaned
+Schedules
  │
  ▼
-Schedules
+Cleaned
  │
  ▼
 Interleaved
  │
- ├──────────────┐
- ▼              ▼
-Distributed Lag Dynamic Lag
+ ▼
+Dynamic Lag
 ```
 
 ---
@@ -67,16 +66,13 @@ Purpose:
 
 ### Interleaved/
 
-Transforms quarterly snapshots into longitudinal bank histories.
-
-Rather than treating each quarter independently, observations belonging to the
-same institution are organized chronologically to facilitate temporal analysis.
+Calculates the common current-quarter ratio schema for each bank and quarter.
 
 Purpose:
 
-- create longitudinal datasets
-- enable trend analysis
-- prepare for lag construction
+- reconcile the two Call Report forms
+- create one common ratio schema
+- prepare the current-quarter values for dynamic changes
 
 **Reason**
 
@@ -89,30 +85,15 @@ definitions.
 The interleaving stage reconciles these structural differences into a common
 representation so that equivalent financial concepts are aligned across all
 institutions. This harmonized dataset enables subsequent temporal analysis,
-distributed lag construction, dynamic ratio calculations, and Jensen-Shannon
-divergence without introducing artifacts from regulatory reporting
+dynamic ratio calculations, and Jensen-Shannon divergence without introducing artifacts from regulatory reporting
 differences.
-
----
-
-### Distributed Lag/
-
-Appends historical observations from previous quarters to each bank.
-
-For every observation quarter, variables from earlier reporting periods are
-merged into the same record.
-
-Purpose:
-
-- provide historical context
-- support lag-based modeling
-- preserve prior quarterly observations
 
 ---
 
 ### Dynamic Lag/
 
-Transforms lagged observations into rates of change.
+Calls the same ratio methods at P1Q, P2Q, and P3Q, aligns banks by `CERT`, and
+transforms the results into rates of change.
 
 Rather than comparing absolute values alone, this stage computes changes
 between reporting periods.

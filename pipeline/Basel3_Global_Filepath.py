@@ -41,7 +41,6 @@ CLEANED_DIR = os.path.join(CSV_DIR, "Cleaned")
 SCHEDULES_DIR = os.path.join(CSV_DIR, "Schedules")
 INTER_DIR = os.path.join(CSV_DIR, "Interleaved")
 INTERLEAVED_DIR = INTER_DIR
-DISTRIBUTED_DIR = os.path.join(CSV_DIR, "Distributed_Lag")
 DYNAMIC_DIR = os.path.join(CSV_DIR, "Dynamic_Lag")
 
 ##--Material Events/
@@ -59,6 +58,5 @@ if __name__ == "__main__":
     print(f"Data Directory: {CSV_DIR}")
     print(f"Data Directory: {CLEANED_DIR}")
     print(f"Data Directory: {INTER_DIR}")
-    print(f"Data Directory: {DISTRIBUTED_DIR}")
     print(f"Data Directory: {DYNAMIC_DIR}")
     print(f"Results Directory: {MAT_DIR}")
