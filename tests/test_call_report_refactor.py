@@ -1,4 +1,4 @@
-"""Regression tests for the imported Call Report ratio creator."""
+"""Regression tests for the explicit, date-aware Call Report ratio creator."""
 
 import ast
 import math
@@ -15,7 +15,7 @@ CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
 import Call_Report as functions  # noqa: E402
-import Call_Report_v2_1 as ratios  # noqa: E402
+import Call_Reports_v3_1 as ratios  # noqa: E402
 
 
 class RecordingRow:
@@ -46,7 +46,7 @@ def complete_source_row(values=None):
 
 class ImportedRatioCreatorTests(unittest.TestCase):
     def test_ratio_creator_imports_domain_classes_and_defines_none(self):
-        source_path = CALL_REPORT_DIR / "Call_Report_v2_1.py"
+        source_path = CALL_REPORT_DIR / "Call_Reports_v3_1.py"
         tree = ast.parse(source_path.read_text())
         class_definitions = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
         imported_names = {
@@ -58,7 +58,7 @@ class ImportedRatioCreatorTests(unittest.TestCase):
 
         self.assertEqual([], class_definitions)
         self.assertEqual(
-            {"CallReport_031", "CallReport_051", "safe_divide"},
+            {"CallReport_031", "CallReport_051", "QuarterCache", "safe_divide"},
             imported_names,
         )
 
@@ -133,19 +133,22 @@ class ImportedRatioCreatorTests(unittest.TestCase):
         self.assertEqual(2.0 / 6.0, entry1["RCB-G304-Item4a"])
         self.assertEqual(3.0 / 6.0, entry1["RCB-G308-Item4a"])
 
-    def test_selector_uses_consolidated_entry_when_domestic_is_missing(self):
+    def test_processing_uses_consolidated_entry_when_domestic_is_missing(self):
         values = {
             "RCONHT53": math.nan,
             "RCFDHT53": 5.0,
             "RCFD0211": 4.0,
             "RCFD0213": 12.0,
         }
-        selected = ratios.select_report_entry(complete_source_row(values))
+        result = ratios.process_dataframe(
+            pd.DataFrame([complete_source_row(values)])
+        )
+        selected = None if result.empty else result.iloc[0]
 
         self.assertIsNotNone(selected)
         self.assertEqual(3.0, selected["RCB-0213-0211"])
 
-    def test_selector_uses_domestic_entry_when_consolidated_is_missing(self):
+    def test_processing_uses_domestic_entry_when_consolidated_is_missing(self):
         values = {
             "RCONHT53": 5.0,
             "RCFDHT53": math.nan,
@@ -153,12 +156,15 @@ class ImportedRatioCreatorTests(unittest.TestCase):
             "RCON0213": 12.0,
         }
 
-        selected = ratios.select_report_entry(complete_source_row(values))
+        result = ratios.process_dataframe(
+            pd.DataFrame([complete_source_row(values)])
+        )
+        selected = None if result.empty else result.iloc[0]
 
         self.assertIsNotNone(selected)
         self.assertEqual(3.0, selected["RCB-0213-0211"])
 
-    def test_selector_keeps_domestic_entry_when_missing_counts_tie(self):
+    def test_processing_keeps_domestic_entry_when_missing_counts_tie(self):
         values = {
             "RCON0211": 4.0,
             "RCON0213": 12.0,
@@ -166,19 +172,37 @@ class ImportedRatioCreatorTests(unittest.TestCase):
             "RCFD0213": 8.0,
         }
 
-        selected = ratios.select_report_entry(complete_source_row(values))
+        result = ratios.process_dataframe(
+            pd.DataFrame([complete_source_row(values)])
+        )
+        selected = result.iloc[0]
 
         self.assertEqual(3.0, selected["RCB-0213-0211"])
 
-    def test_selector_discards_row_when_neither_form_is_usable(self):
+    def test_processing_does_not_use_ht53_as_a_form_gate(self):
         values = {
             "RCONHT53": math.nan,
             "RCFDHT53": math.nan,
         }
 
-        selected = ratios.select_report_entry(complete_source_row(values))
+        result = ratios.process_dataframe(
+            pd.DataFrame([complete_source_row(values)])
+        )
+        selected = None if result.empty else result.iloc[0]
 
-        self.assertIsNone(selected)
+        self.assertIsNotNone(selected)
+
+    def test_processing_discards_row_when_no_ratio_is_usable(self):
+        row = complete_source_row()
+        identity = {"IDRSSD", "RCON9999", "FDIC Certificate Number"}
+        for column in row:
+            if column not in identity:
+                row[column] = math.nan
+
+        result = ratios.process_dataframe(pd.DataFrame([row]))
+
+        self.assertTrue(result.empty)
+        self.assertEqual(list(ratios.FEATURE_COLUMNS), result.columns.tolist())
 
     def test_dataframe_processing_preserves_schema_and_deduplicates(self):
         first = complete_source_row({"IDRSSD": 7, "FDIC Certificate Number": 70})

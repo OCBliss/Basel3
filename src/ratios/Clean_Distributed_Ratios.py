@@ -15,8 +15,6 @@ import Basel3_Global_Filepath as paths  # noqa: E402
 
 
 def clean_distributed_frame(report):
-    """Fill gaps only where the row has a bank identifier."""
-
     if report.empty:
         return report.copy()
 
