@@ -1,3 +1,25 @@
+The three existing flag entry points now share `Material_events_flag.py`. Each accepts `--events`, `--material-dir`, `--input-dir`, `--output-dir`, and `--quarter-map`, and defaults to its original event. The YAML explicitly supplies these arguments for steps `6.2`, `6.3`, and `6.4`.
+
+`--events` accepts `de_novo`, `failures`, and `mergers`. The shared script defaults to all three in de novo → failures → mergers order. A selected stage reads its existing upstream CSV files. Explicit input, output, or quarter-map overrides require one selected event, so a single path cannot accidentally be applied to multiple stages.
+
+For example, step `6.3` passes:
+
+```yaml
+args:
+  - --events
+  - failures
+  - --material-dir
+  - "Material Events"
+  - --input-dir
+  - "Material Events/DE NOVO/Call Reports"
+  - --output-dir
+  - "Material Events/Failures/Call Reports"
+  - --quarter-map
+  - "Material Events/quarters_failures.csv"
+```
+
+The shared implementation loads event dates and quarter windows into lookups once per stage. It retains each event's certificate/date conversions, all four failure/merger comparisons, intermediate CSV boundaries, filenames, and column order. Each flag remains an independent inclusive comparison between the existing START_DATE and its corresponding end date. All three entry points support `--help`; importing them does not process data.
+
 # Step 06.2 — Flag De Novo Banks in Panel Data
 
 ## Purpose

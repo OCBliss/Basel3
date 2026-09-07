@@ -105,6 +105,77 @@ class PipelineConfigurationTests(unittest.TestCase):
 
         self.assertEqual(set(), missing_outputs)
 
+    def test_material_event_arguments_match_scripts_and_artifacts(self):
+        events_by_step = {
+            "6.0.1": ["de_novo"],
+            "6.0.2": ["failures"],
+            "6.0.3": ["mergers"],
+            "6.1": ["de_novo", "failures", "mergers"],
+            "6.1.1": ["de_novo", "failures", "mergers"],
+            "6.2": ["de_novo"],
+            "6.3": ["failures"],
+            "6.4": ["mergers"],
+        }
+        for step, events in events_by_step.items():
+            with self.subTest(step=step):
+                spec = self.config.scripts[step]
+                module_spec = importlib.util.spec_from_file_location(
+                    "material_step_" + step.replace(".", "_"), spec.path
+                )
+                module = importlib.util.module_from_spec(module_spec)
+                original_import_path = sys.path[:]
+                sys.path.insert(0, str(spec.path.parent))
+                try:
+                    module_spec.loader.exec_module(module)
+                    args = module.parse_args(list(spec.args))
+                    default_args = module.parse_args([])
+                finally:
+                    sys.path[:] = original_import_path
+
+                def from_working_directory(value):
+                    value = Path(value)
+                    return (value if value.is_absolute() else spec.cwd / value).resolve()
+
+                self.assertEqual(events, args.events)
+                self.assertEqual(events, default_args.events)
+                self.assertEqual(
+                    PROJECT_ROOT / "Material Events",
+                    from_working_directory(args.material_dir),
+                )
+                if step.startswith("6.0."):
+                    self.assertEqual("2014-01-01", args.start_date)
+                    self.assertEqual("2024-12-31", args.end_date)
+                    self.assertEqual(10000, args.limit)
+                elif step in {"6.2", "6.3", "6.4"}:
+                    self.assertEqual(
+                        spec.inputs[0].parent,
+                        from_working_directory(args.input_dir),
+                    )
+                    self.assertEqual(
+                        spec.outputs[0].parent,
+                        from_working_directory(args.output_dir),
+                    )
+                    self.assertEqual(
+                        spec.inputs[-1],
+                        from_working_directory(args.quarter_map),
+                    )
+
+    def test_material_event_barriers_preserve_stage_order(self):
+        downloads = {"6.0.1", "6.0.2", "6.0.3"}
+        phases = self.config.execution
+        download_position = next(
+            index
+            for index, phase in enumerate(phases)
+            if phase.kind == "concurrent_groups"
+            and any(set(steps) == downloads for _, steps in phase.payload)
+        )
+        flag_phase = phases[download_position + 1]
+        self.assertEqual("sequential", flag_phase.kind)
+        self.assertEqual(("6.1", "6.1.1", "6.2", "6.3", "6.4"), flag_phase.payload)
+        self.assertEqual(downloads, set(self.config.prerequisites["6.1"]))
+        for before, after in zip(flag_phase.payload, flag_phase.payload[1:]):
+            self.assertEqual((before,), self.config.prerequisites[after])
+
 
 if __name__ == "__main__":
     unittest.main()

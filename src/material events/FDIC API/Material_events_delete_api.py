@@ -1,3 +1,4 @@
+import argparse
 import requests
 import pandas as pd
 import os
@@ -28,26 +29,38 @@ spec.loader.exec_module(paths)
 ROOT_DIR = paths.BASEL3_ROOT
 MAT_DIR = paths.MAT_DIR
 
-# Ensure the output directory exists
-os.makedirs(MAT_DIR, exist_ok=True)
-
 # -------------------------------------------------------------------
 # FOLDER CONFIG + DELETION RULES
 # -------------------------------------------------------------------
 
 TARGET_PATTERNS = ["BankFind Suite"]  # core phrase, case-insensitive
 
-folders = [
-    {
-        "input_folder": os.path.join(MAT_DIR, "DE NOVO", "RAW"),
-    },
-    {
-        "input_folder": os.path.join(MAT_DIR, "Failures", "RAW"),
-    },
-    {
-        "input_folder": os.path.join(MAT_DIR, "Mergers", "RAW"),
-    },
-]
+EVENT_FOLDERS = {
+    "de_novo": "DE NOVO",
+    "failures": "Failures",
+    "mergers": "Mergers",
+}
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Remove FDIC API raw download files.")
+    parser.add_argument(
+        "--events", nargs="+", choices=tuple(EVENT_FOLDERS),
+        default=list(EVENT_FOLDERS), help="Event datasets to clean up (default: all).",
+    )
+    parser.add_argument(
+        "--material-dir", default=paths.MAT_DIR,
+        help="Material Events directory (default: repository Material Events).",
+    )
+    return parser.parse_args(argv)
+
+
+def build_folders(material_dir, events):
+    return [
+        {"input_folder": os.path.join(material_dir, EVENT_FOLDERS[event], "RAW")}
+        for event in events
+    ]
+
 
 def file_contains_any_pattern(filepath, patterns):
     """
@@ -76,7 +89,7 @@ def filename_matches_patterns(fname, patterns):
             return True
     return False
 
-def apply_deletion_rules():
+def apply_deletion_rules(folders):
     """
     Iterate over all configured folders and delete files whose:
     - filename contains 'BankFind Suite' (any case), OR
@@ -117,5 +130,11 @@ def apply_deletion_rules():
                     except Exception as e:
                         print(f"[ERROR] Failed to delete {fpath}: {e}")
 
+def main(argv=None):
+    args = parse_args(argv)
+    os.makedirs(args.material_dir, exist_ok=True)
+    apply_deletion_rules(build_folders(args.material_dir, args.events))
+
+
 if __name__ == "__main__":
-    apply_deletion_rules()
+    main()

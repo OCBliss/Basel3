@@ -1,3 +1,4 @@
+import argparse
 import requests
 import pandas as pd
 import os
@@ -35,80 +36,100 @@ quarters_file = os.path.join(CSV_DIR, "quarters.csv")
 # Define Material Events base directory
 MAT_DIR = paths.MAT_DIR
 
-# Define folder structures for processing
-folders = [
-    {
-        "input_folder": os.path.join(MAT_DIR, "DE NOVO/RAW/"),
-        "output_folder": os.path.join(MAT_DIR, "DE NOVO/Cleaned/"),
-        "use_cert": True  # Indicates this folder already uses "CERT"
-    },
-    {
-        "input_folder": os.path.join(MAT_DIR, "Failures/RAW/"),
-        "output_folder": os.path.join(MAT_DIR, "Failures/Cleaned/"),
-        "use_cert": False  # Requires "OUT_CERT" to be renamed to "CERT"
-    },
-    {
-        "input_folder": os.path.join(MAT_DIR, "Mergers/RAW/"),
-        "output_folder": os.path.join(MAT_DIR, "Mergers/Cleaned/"),
-        "use_cert": False  # Requires "OUT_CERT" to be renamed to "CERT"
-    }
-]
+EVENT_FOLDERS = {
+    "de_novo": ("DE NOVO", True),
+    "failures": ("Failures", False),
+    "mergers": ("Mergers", False),
+}
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Clean FDIC material-event downloads.")
+    parser.add_argument(
+        "--events", nargs="+", choices=tuple(EVENT_FOLDERS),
+        default=list(EVENT_FOLDERS), help="Event datasets to clean (default: all).",
+    )
+    parser.add_argument(
+        "--material-dir", default=paths.MAT_DIR,
+        help="Material Events directory (default: repository Material Events).",
+    )
+    return parser.parse_args(argv)
+
+
+def build_folders(material_dir, events):
+    return [
+        {
+            "input_folder": os.path.join(material_dir, EVENT_FOLDERS[event][0], "RAW"),
+            "output_folder": os.path.join(material_dir, EVENT_FOLDERS[event][0], "Cleaned"),
+            "use_cert": EVENT_FOLDERS[event][1],
+        }
+        for event in events
+    ]
+
 
 # The desired column order
 desired_columns = [
     "CERT", "ACQ_CERT", "ACQ_CHARTAGENT", "ACQ_CLASS", "ACQ_INSAGENT1", "ACQ_INSTNAME",
-    "ACQ_ORG_EFF_DTE", "ACQ_REGAGENT", "CHANGECODE", "CHANGECODE_DESC", "CLASS", 
-    "EFFDATE", "ESTDATE", "ESTYEAR", "FDICREGION", "FDICREGION_DESC", "FRM_CLASS", 
-    "FRM_INSAGENT1", "FRM_REGAGENT", "ID", "INSAGENT1", "OUT_CHARTAGENT", "OUT_CLASS", 
-    "OUT_FDICREGION", "OUT_FDICREGION_DESC", "OUT_INSAGENT1", "NEW_CHARTER_DENOVO_FLAG", 
+    "ACQ_ORG_EFF_DTE", "ACQ_REGAGENT", "CHANGECODE", "CHANGECODE_DESC", "CLASS",
+    "EFFDATE", "ESTDATE", "ESTYEAR", "FDICREGION", "FDICREGION_DESC", "FRM_CLASS",
+    "FRM_INSAGENT1", "FRM_REGAGENT", "ID", "INSAGENT1", "OUT_CHARTAGENT", "OUT_CLASS",
+    "OUT_FDICREGION", "OUT_FDICREGION_DESC", "OUT_INSAGENT1", "NEW_CHARTER_DENOVO_FLAG",
     "NEW_CHARTER_FLAG", "REGAGENT"
 ]
 
-# Process each folder
-for folder in folders:
-    input_folder = folder["input_folder"]
-    output_folder = folder["output_folder"]
-    use_cert = folder["use_cert"]
+def main(argv=None):
+    args = parse_args(argv)
+    folders = build_folders(args.material_dir, args.events)
 
-    # Ensure the output folder exists
-    os.makedirs(output_folder, exist_ok=True)
+    # Process each folder
+    for folder in folders:
+        input_folder = folder["input_folder"]
+        output_folder = folder["output_folder"]
+        use_cert = folder["use_cert"]
 
-    # List all CSV files in the input folder
-    csv_files = [file for file in os.listdir(input_folder) if file.endswith('.csv')]
-    
-    if not csv_files:
-        print(f"No CSV files found in {input_folder}.")
-        continue
+        # Ensure the output folder exists
+        os.makedirs(output_folder, exist_ok=True)
 
-    for file in csv_files:
-        input_file_path = os.path.join(input_folder, file)
-        output_file_path = os.path.join(output_folder, file)
+        # List all CSV files in the input folder
+        csv_files = [file for file in os.listdir(input_folder) if file.endswith('.csv')]
 
-        try:
-            # Load the CSV file with error handling
-            data = pd.read_csv(input_file_path, on_bad_lines="warn")
+        if not csv_files:
+            print(f"No CSV files found in {input_folder}.")
+            continue
 
-            # For folders that use "OUT_CERT", rename to "CERT"
-            if not use_cert and "OUT_CERT" in data.columns:
-                data.rename(columns={"OUT_CERT": "CERT"}, inplace=True)
+        for file in csv_files:
+            input_file_path = os.path.join(input_folder, file)
+            output_file_path = os.path.join(output_folder, file)
 
-            # For folders that use "OUT_CERT", rename to "CERT"
-            if not use_cert and "ACQ_CERT" in data.columns:
-                data.rename(columns={"ACQ_CERT": "CERT"}, inplace=True)
+            try:
+                # Load the CSV file with error handling
+                data = pd.read_csv(input_file_path, on_bad_lines="warn")
 
-            # Ensure all desired columns exist, fill missing columns with blank values
-            for column in desired_columns:
-                if column not in data.columns:
-                    data[column] = ''
+                # For folders that use "OUT_CERT", rename to "CERT"
+                if not use_cert and "OUT_CERT" in data.columns:
+                    data.rename(columns={"OUT_CERT": "CERT"}, inplace=True)
 
-            # Reorder columns to match the desired order
-            data = data[desired_columns]
+                # Preserve the acquiring bank as the common CERT key.
+                if not use_cert and "ACQ_CERT" in data.columns:
+                    data.rename(columns={"ACQ_CERT": "CERT"}, inplace=True)
 
-            # Save the processed file to the output folder
-            data.to_csv(output_file_path, index=False)
-            print(f"Processed {file} and saved to {output_file_path}.", flush=True)
+                # Ensure all desired columns exist, fill missing columns with blank values
+                for column in desired_columns:
+                    if column not in data.columns:
+                        data[column] = ''
 
-        except pd.errors.ParserError as e:
-            print(f"ParserError while processing {input_file_path}: {e}", flush=True)
-        except Exception as e:
-            print(f"Unexpected error with {input_file_path}: {e}", flush=True)
+                # Reorder columns to match the desired order
+                data = data[desired_columns]
+
+                # Save the processed file to the output folder
+                data.to_csv(output_file_path, index=False)
+                print(f"Processed {file} and saved to {output_file_path}.", flush=True)
+
+            except pd.errors.ParserError as e:
+                print(f"ParserError while processing {input_file_path}: {e}", flush=True)
+            except Exception as e:
+                print(f"Unexpected error with {input_file_path}: {e}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

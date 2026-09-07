@@ -1,3 +1,16 @@
+The five existing entry points accept command-line arguments supplied by `pipeline/pipeline_config_dynamic.yaml`. The three download entry points share `Material_events_download.py`; each defaults to its original event when run without `--events`.
+
+| Entry point | Arguments |
+|---|---|
+| `Material_events_de_novo_download_v2.py`, `Material_events_Failures_download_v2.py`, `Material_events_mergers_download_v2.py` | `--events`, `--material-dir`, `--start-date`, `--end-date`, `--limit` |
+| `Material_events_cleaned.py`, `Material_events_delete_api.py` | `--events`, `--material-dir` |
+
+Event choices are `de_novo`, `failures`, and `mergers`. Cleaning and deletion default to all three. Downloads retain the default date range `2014-01-01` through `2024-12-31` and limit `10000`. The default material directory comes from `Basel3_Global_Filepath.py`.
+
+For example, YAML step `6.0.2` passes `--events failures --material-dir "Material Events" --start-date 2014-01-01 --end-date 2024-12-31 --limit 10000`. The manager passes these arguments from its `args` list and runs relative paths from the step's working directory. `inputs`, `outputs`, and `create_dirs` describe pipeline artifacts; they do not set script arguments automatically.
+
+The pipeline still runs the three downloads concurrently, waits for all three, cleans the event files, and then deletes matching RAW downloads before flagging. Cleaning retains the existing CERT transformations and output column order. All five entry points support `--help`; importing them does not download, clean, or delete data.
+
 # Step 06.0 — FDIC API Ingestion for De Novo, Mergers, and Failure Events
 
 ## Directory
@@ -7,8 +20,9 @@
         - Material_events_de_novo_download_v2.py
         - Material_events_Failures_download_v2.py
         - Material_events_mergers_download_v2.py
+        - Material_events_download.py (shared implementation)
         - Material_events_delete_api.py
-        - Material_events_cleaned2.py
+        - Material_events_cleaned.py
 
 ## Purpose
 
