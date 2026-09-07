@@ -158,7 +158,37 @@ def _resolve_path(value: Any, base: Path, location: str) -> Path:
     return path.resolve(strict=False)
 
 
-def _path_list(value: Any, base: Path, location: str) -> Tuple[Path, ...]:
+def _parameter_values(value: Any) -> Dict[str, Tuple[str, ...]]:
+    if not isinstance(value, Mapping):
+        raise ConfigError("parameters must be a mapping")
+    parameters = {}
+    for name, values in value.items():
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            raise ConfigError(f"invalid parameter name {name!r}")
+        if not isinstance(values, list):
+            values = [values]
+        if not values or any(not isinstance(item, (str, int, float)) for item in values):
+            raise ConfigError(f"parameters.{name} must contain non-empty scalar values")
+        parameters[name] = tuple(str(item) for item in values)
+    return parameters
+
+
+def _expand_parameter(value: Any, parameters: Optional[Mapping[str, Tuple[str, ...]]], location: str) -> List[str]:
+    """Expand explicit YAML placeholders; separate parameters form a Cartesian product."""
+    text = str(value)
+    if parameters is None:
+        return [text]
+    names = dict.fromkeys(re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", text))
+    expanded = [text]
+    for name in names:
+        if name not in parameters:
+            raise ConfigError(f"{location} references unknown parameter {name!r}")
+        expanded = [item.replace("{" + name + "}", replacement)
+                    for item in expanded for replacement in parameters[name]]
+    return expanded
+
+
+def _path_list(value: Any, base: Path, location: str, parameters=None) -> Tuple[Path, ...]:
     if value is None:
         return tuple()
     if isinstance(value, str):
@@ -169,9 +199,12 @@ def _path_list(value: Any, base: Path, location: str) -> Tuple[Path, ...]:
         values = list(value.values())
     else:
         raise ConfigError(f"{location} must be a path, list, or mapping")
+    if any(not isinstance(item, str) or not item.strip() for item in values):
+        raise ConfigError(f"{location} must contain non-empty path strings")
     return tuple(
-        _resolve_path(item, base, f"{location}[{index}]")
+        _resolve_path(expanded, base, f"{location}[{index}]")
         for index, item in enumerate(values)
+        for expanded in _expand_parameter(item, parameters, location)
     )
 
 
@@ -317,6 +350,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> PipelineConfig:
         "execution",
         "max_parallel_steps",
         "log_root",
+        "parameters",
     }
     unknown = set(raw) - allowed_top_level
     if unknown:
@@ -325,6 +359,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> PipelineConfig:
         if required not in raw:
             raise ConfigError(f"configuration is missing {required!r}")
 
+    parameters = _parameter_values(raw["parameters"]) if "parameters" in raw else None
     raw_scripts = raw["scripts"]
     if not isinstance(raw_scripts, Mapping) or not raw_scripts:
         raise ConfigError("scripts must be a non-empty mapping")
@@ -355,17 +390,19 @@ def load_config(path: Path = DEFAULT_CONFIG) -> PipelineConfig:
         scripts[step_id] = ScriptSpec(
             step_id=step_id,
             path=script_path,
-            args=tuple(str(arg) for arg in args),
+            args=tuple(expanded for arg in args
+                       for expanded in _expand_parameter(arg, parameters, f"scripts.{step_id}.args")),
             inputs=_path_list(
-                definition.get("inputs"), PROJECT_ROOT, f"scripts.{step_id}.inputs"
+                definition.get("inputs"), PROJECT_ROOT, f"scripts.{step_id}.inputs", parameters
             ),
             outputs=_path_list(
-                definition.get("outputs"), PROJECT_ROOT, f"scripts.{step_id}.outputs"
+                definition.get("outputs"), PROJECT_ROOT, f"scripts.{step_id}.outputs", parameters
             ),
             create_dirs=_path_list(
                 definition.get("create_dirs"),
                 PROJECT_ROOT,
                 f"scripts.{step_id}.create_dirs",
+                parameters,
             ),
             cwd=cwd,
         )

@@ -1,199 +1,82 @@
-import requests
-import pandas as pd
-import os
-import sys
-sys.stdout.reconfigure(line_buffering=True)
-import numpy as np
+"""Normalize selected peer-group histogram files into probability mass functions."""
+
+import argparse
+from pathlib import Path
 import re
+import sys
 
-# Step 1: Locate CODE directory FIRST
-def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "src":
-        parent_dir = os.path.dirname(current_dir)
-        if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'src' directory.")
-        current_dir = parent_dir
-    return current_dir
+import pandas as pd
 
-CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)
 
-# NOW import
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 import Basel3_Global_Filepath as paths
 
-# Step 4: Use the Dynamically Determined ROOT_DIR
-ROOT_DIR = paths.BASEL3_ROOT  # Basel3 root directory (dynamically set)
-DYNAMIC_DIR = paths.DYNAMIC_DIR
-MAT_DIR = paths.MAT_DIR
 
-# ==============================
-# PROCESSING FOR JSD BINNING
-# ==============================
+GROUPS = ("Mergers", "Failures", "Survivors")
+BIN_SUFFIX = re.compile(r"_binned_(\d+)\.csv$")
 
-MERG_JSD_DIR = os.path.join(MAT_DIR, "Mergers", "JS Divergence")
-FAIL_JSD_DIR = os.path.join(MAT_DIR, "Failures", "JS Divergence")
-SURV_JSD_DIR = os.path.join(MAT_DIR, "Survivors", "JS Divergence")
 
-# -----------------------------
-# Helper Function to Filter & Concatenate
-# -----------------------------
-def filter_and_concatenate(process_dir, output_dir, output_filename, label):
-    """Reads CSV files from process_dir, filters by valid_dates (comparing last 8 chars in filename),
-    then concatenates and writes to output_dir with output_filename."""
-    # Step 3: Create the binned_path directory if it does not exist
-    os.makedirs(output_dir, exist_ok=True)
+def positive_int(value):
+    value = int(value)
+    if value < 1:
+        raise argparse.ArgumentTypeError("bin counts must be positive integers")
+    return value
 
-    # Step 4: Process files in the dynamically located directory
-    files_in_gamma_path = sorted([f for f in os.listdir(process_dir) if f.endswith('.csv')])
-    if not files_in_gamma_path:
-        raise FileNotFoundError(f"No CSV files found in the directory {process_dir}.")
 
-    # Step 5: Process each file in the binned directory
-    for file_name in files_in_gamma_path:
-        file_path = os.path.join(process_dir, file_name)
-        print(f"Processing file: {file_name}")
-        
-        # Load the data
-        binned_data_basel3 = pd.read_csv(file_path)
-        
-        # Exclude the 'Bin' column for calculations
-        columns_to_process = [col for col in binned_data_basel3.columns if col != 'Bin']
-        
-        # Create a new DataFrame for probabilities
-        probabilities = binned_data_basel3[['Bin']].copy()
-        
-        # Calculate probabilities for each column
-        for column in columns_to_process:
-            total = binned_data_basel3[column].sum()
-            if total == 0:
-                print(f"Column {column} in file {file_name} has a total of 0. Skipping.")
-                probabilities[column] = 0
-            else:
-                probabilities[column] = binned_data_basel3[column] / total
-        
-        # Save the probabilities to a new CSV file
-        gamma_file_path = os.path.join(output_dir, f"probabilities_{file_name}")
-        probabilities.to_csv(gamma_file_path, index=False)
-        
-        print(f"Probabilities saved to {output_dir}")
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--horizons", nargs="+", type=int, choices=(1, 2, 3, 4), required=True)
+    parser.add_argument("--bins", nargs="+", type=positive_int, required=True,
+                        help="Selected bins1 counts in _binned_<count>.csv filenames.")
+    parser.add_argument("--material-dir", type=Path, default=Path(paths.MAT_DIR))
+    return parser.parse_args(argv)
 
-# -----------------------------
-# Now we define each input CSV path (or directory) and its output directory.
 
-# -----------------------------
-# 1) Mergers
-# -----------------------------
-process_mergers_t1 = os.path.join(MERG_JSD_DIR, "Basel III T+1", "Binned")
-output_mergers_t1  = os.path.join(MERG_JSD_DIR, "Basel III T+1", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_mergers_t1,
-    output_dir      = output_mergers_t1,
-    output_filename = "Peer_Group_Mergers_Basel3_binned.csv",
-    label           = "Mergers_t1"
-)
+def selected_files(directory, bins):
+    files = []
+    found = set()
+    for filename in sorted(directory.glob("*.csv")):
+        match = BIN_SUFFIX.search(filename.name)
+        if match and int(match.group(1)) in bins:
+            files.append(filename)
+            found.add(int(match.group(1)))
+    missing = set(bins) - found
+    if missing:
+        raise FileNotFoundError(f"No binned CSV files for {sorted(missing)} in {directory}.")
+    return files
 
-process_mergers_t2 = os.path.join(MERG_JSD_DIR, "Basel III T+2", "Binned")
-output_mergers_t2  = os.path.join(MERG_JSD_DIR, "Basel III T+2", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_mergers_t2,
-    output_dir      = output_mergers_t2,
-    output_filename = "Peer_Group_Mergers_Basel3_binned.csv",
-    label           = "Mergers_t2"
-)
 
-process_mergers_t3 = os.path.join(MERG_JSD_DIR, "Basel III T+3", "Binned")
-output_mergers_t3  = os.path.join(MERG_JSD_DIR, "Basel III T+3", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_mergers_t3,
-    output_dir      = output_mergers_t3,
-    output_filename = "Peer_Group_Mergers_Basel3_binned.csv",
-    label           = "Mergers_t3"
-)
+def normalize_counts(binned, filename):
+    probabilities = binned[["Bin"]].copy()
+    for column in binned.columns:
+        if column == "Bin":
+            continue
+        total = binned[column].sum()
+        if total == 0:
+            print(f"Column {column} in file {filename} has a total of 0. Skipping.", flush=True)
+            probabilities[column] = 0
+        else:
+            probabilities[column] = binned[column] / total
+    return probabilities
 
-process_mergers_t4 = os.path.join(MERG_JSD_DIR, "Basel III T+4", "Binned")
-output_mergers_t4  = os.path.join(MERG_JSD_DIR, "Basel III T+4", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_mergers_t4,
-    output_dir      = output_mergers_t4,
-    output_filename = "Peer_Group_Mergers_Basel3_binned.csv",
-    label           = "Mergers_t4"
-)
 
-# -----------------------------
-# 2) Failures
-# -----------------------------
-process_failures_t1 = os.path.join(FAIL_JSD_DIR, "Basel III T+1", "Binned")
-output_failures_t1  = os.path.join(FAIL_JSD_DIR, "Basel III T+1", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_failures_t1,
-    output_dir      = output_failures_t1,
-    output_filename = "Peer_Group_Failures_Basel3_binned.csv",
-    label           = "Failures_t1"
-)
+def main(argv=None):
+    args = parse_args(argv)
+    bins = set(args.bins)
+    for group in GROUPS:
+        for horizon in dict.fromkeys(args.horizons):
+            directory = args.material_dir / group / "JS Divergence" / f"Basel III T+{horizon}"
+            files = selected_files(directory / "Binned", bins)
+            output = directory / "Probabilities"
+            output.mkdir(parents=True, exist_ok=True)
+            for filename in files:
+                print(f"Processing file: {filename.name}", flush=True)
+                binned = pd.read_csv(filename)
+                target = output / f"probabilities_{filename.name}"
+                normalize_counts(binned, filename.name).to_csv(target, index=False)
+                print(f"Probabilities saved to {output}", flush=True)
+    return 0
 
-process_failures_t2 = os.path.join(FAIL_JSD_DIR, "Basel III T+2", "Binned")
-output_failures_t2  = os.path.join(FAIL_JSD_DIR, "Basel III T+2", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_failures_t2,
-    output_dir      = output_failures_t2,
-    output_filename = "Peer_Group_Failures_Basel3_binned.csv",
-    label           = "Failures_t2"
-)
 
-process_failures_t3 = os.path.join(FAIL_JSD_DIR, "Basel III T+3", "Binned")
-output_failures_t3  = os.path.join(FAIL_JSD_DIR, "Basel III T+3", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_failures_t3,
-    output_dir      = output_failures_t3,
-    output_filename = "Peer_Group_Failures_Basel3_binned.csv",
-    label           = "Failures_t3"
-)
-
-process_failures_t4 = os.path.join(FAIL_JSD_DIR, "Basel III T+4", "Binned")
-output_failures_t4  = os.path.join(FAIL_JSD_DIR, "Basel III T+4", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_failures_t4,
-    output_dir      = output_failures_t4,
-    output_filename = "Peer_Group_Failures_Basel3_binned.csv",
-    label           = "Failures_t4"
-)
-
-# -----------------------------
-# 3) Survivors
-# -----------------------------
-process_survivors_t1 = os.path.join(SURV_JSD_DIR, "Basel III T+1", "Binned")
-output_survivors_t1  = os.path.join(SURV_JSD_DIR, "Basel III T+1", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_survivors_t1,
-    output_dir      = output_survivors_t1,
-    output_filename = "Peer_Group_Survivors_Basel3_binned.csv",
-    label           = "Survivors_t1"
-)
-
-process_survivors_t2 = os.path.join(SURV_JSD_DIR, "Basel III T+2", "Binned")
-output_survivors_t2  = os.path.join(SURV_JSD_DIR, "Basel III T+2", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_survivors_t2,
-    output_dir      = output_survivors_t2,
-    output_filename = "Peer_Group_Survivors_Basel3_binned.csv",
-    label           = "Survivors_t2"
-)
-
-process_survivors_t3 = os.path.join(SURV_JSD_DIR, "Basel III T+3", "Binned")
-output_survivors_t3  = os.path.join(SURV_JSD_DIR, "Basel III T+3", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_survivors_t3,
-    output_dir      = output_survivors_t3,
-    output_filename = "Peer_Group_Survivors_Basel3_binned.csv",
-    label           = "Survivors_t3"
-)
-
-process_survivors_t4 = os.path.join(SURV_JSD_DIR, "Basel III T+4", "Binned")
-output_survivors_t4  = os.path.join(SURV_JSD_DIR, "Basel III T+4", "Probabilities")
-filter_and_concatenate(
-    process_dir     = process_survivors_t4,
-    output_dir      = output_survivors_t4,
-    output_filename = "Peer_Group_Survivors_Basel3_binned.csv",
-    label           = "Survivors_t4"
-)
+if __name__ == "__main__":
+    raise SystemExit(main())

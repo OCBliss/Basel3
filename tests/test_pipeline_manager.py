@@ -7,6 +7,8 @@ import ast
 from contextlib import redirect_stderr
 from io import StringIO
 from pathlib import Path
+import tempfile
+import copy
 
 import yaml
 
@@ -50,7 +52,7 @@ class PipelineConfigurationTests(unittest.TestCase):
         jsd_position = next(
             index
             for index, phase in enumerate(phases)
-            if phase.kind == "concurrent_branches"
+            if phase.kind == "sequential" and "8.2" in phase.payload
         )
         filter_position = next(
             index
@@ -60,6 +62,71 @@ class PipelineConfigurationTests(unittest.TestCase):
 
         self.assertLess(pmf_position, jsd_position)
         self.assertLess(jsd_position, filter_position)
+
+    def test_selected_parameters_control_arguments_and_all_artifacts(self):
+        raw = copy.deepcopy(manager._load_yaml(manager.DEFAULT_CONFIG))
+        raw["parameters"]["horizons"] = [1, 3]
+        raw["parameters"]["bins1"] = [20, 50]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "selected.yaml"
+            path.write_text(yaml.safe_dump(raw))
+            config = manager.load_config(path)
+        for step in ["7.0", "7.1", "8.0", "8.1.1", "8.2", "8.3.0.1"]:
+            spec = config.scripts[step]
+            index = spec.args.index("--horizons")
+            self.assertEqual(("1", "3"), spec.args[index + 1:index + 3])
+            for artifact in spec.inputs + spec.outputs + spec.create_dirs:
+                self.assertNotIn("{", str(artifact))
+                self.assertNotIn("T+2", str(artifact))
+                self.assertNotIn("T+4", str(artifact))
+                self.assertNotIn("Basel3_t2", str(artifact))
+                self.assertNotIn("Basel3_t4", str(artifact))
+        self.assertEqual(12, len(config.scripts["8.0"].outputs))
+        self.assertEqual(12, len(config.scripts["8.2"].outputs))
+        self.assertTrue(all(str(p).endswith(("_20.csv", "_50.csv"))
+                            for p in config.scripts["8.0"].outputs))
+
+    def test_default_configuration_runs_all_original_horizons_and_bin_specifications(self):
+        for step in ["7.0", "7.1", "8.0", "8.1.1", "8.2", "8.3.0.1"]:
+            args = self.config.scripts[step].args
+            index = args.index("--horizons")
+            self.assertEqual(("1", "2", "3", "4"), args[index + 1:index + 5])
+            if step.startswith("8."):
+                index = args.index("--bins1" if step == "8.0" else "--bins")
+                self.assertEqual(("20", "30", "50", "100"), args[index + 1:index + 5])
+                self.assertEqual(48, len(self.config.scripts[step].outputs))
+
+    def test_configuration_without_parameters_preserves_literal_braces(self):
+        raw = {
+            "scripts": {"one": {"path": "one.py", "args": ["--label", "{CERT}"],
+                                 "outputs": ["Material Events/{archive}/result.csv"]}},
+            "dependencies": {}, "execution": [{"sequential": ["one"]}],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "literal.yaml"
+            path.write_text(yaml.safe_dump(raw))
+            config = manager.load_config(path)
+        self.assertEqual(("--label", "{CERT}"), config.scripts["one"].args)
+        self.assertEqual((PROJECT_ROOT / "Material Events/{archive}/result.csv",),
+                         config.scripts["one"].outputs)
+
+    def test_parameter_errors_are_reported_before_execution(self):
+        raw = copy.deepcopy(manager._load_yaml(manager.DEFAULT_CONFIG))
+        for parameters in ({"horizons": []}, {"horizons": {"invalid": 1}}, {}):
+            with self.subTest(parameters=parameters), tempfile.TemporaryDirectory() as directory:
+                raw["parameters"] = parameters
+                path = Path(directory) / "invalid.yaml"
+                path.write_text(yaml.safe_dump(raw))
+                with self.assertRaises(manager.ConfigError):
+                    manager.load_config(path)
+
+    def test_repeated_parameter_in_one_path_uses_the_same_selection(self):
+        self.assertEqual(
+            ["T+1/report_t1_20.csv", "T+1/report_t1_50.csv",
+             "T+3/report_t3_20.csv", "T+3/report_t3_50.csv"],
+            manager._expand_parameter("T+{h}/report_t{h}_{b}.csv",
+                                      {"h": ("1", "3"), "b": ("20", "50")}, "test"),
+        )
 
     def test_stage_steps_are_unique_and_complete(self):
         scheduled = manager._execution_steps(self.config.execution)

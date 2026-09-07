@@ -1,5 +1,12 @@
 # pipeline_config.yaml
 
+# One selection is expanded into both argv and expected artifact paths.
+parameters:
+  horizons: [1, 2, 3, 4]
+  bins1: [20, 30, 50, 100]
+  bins2: 5
+  bins3: 1
+
 scripts:
   "1.0":
     path: "call reports/call_reports_mkdir_txt_csvs_global.py"
@@ -163,135 +170,43 @@ scripts:
       - "Material Events/quarters_failures.csv"
     outputs: ["Material Events/Mergers/Call Reports/*.csv"]
     create_dirs: ["Material Events/Mergers/Call Reports"]
-  "7.0.0.1":
-    path: "peer groups/base/Material_events_peer_group_basel3_t1.py"
+  "7.0":
+    path: "peer groups/base/Material_events_peer_group_basel3.py"
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--input-dir","Material Events/Mergers/Call Reports"]
     inputs: ["Material Events/Mergers/Call Reports/*.csv"]
-    outputs:
-      - "Material Events/Failures/Horizons/Basel III T+1/*.csv"
-      - "Material Events/Mergers/Horizons/Basel III T+1/*.csv"
-      - "Material Events/Survivors/Horizons/Basel III T+1/*.csv"
-  "7.0.0.2":
-    path: "peer groups/base/Material_events_peer_group_basel3_t2.py"
-    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
-    outputs:
-      - "Material Events/Failures/Horizons/Basel III T+2/*.csv"
-      - "Material Events/Mergers/Horizons/Basel III T+2/*.csv"
-      - "Material Events/Survivors/Horizons/Basel III T+2/*.csv"
-  "7.0.0.3":
-    path: "peer groups/base/Material_events_peer_group_basel3_t3.py"
-    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
-    outputs:
-      - "Material Events/Failures/Horizons/Basel III T+3/*.csv"
-      - "Material Events/Mergers/Horizons/Basel III T+3/*.csv"
-      - "Material Events/Survivors/Horizons/Basel III T+3/*.csv"
-  "7.0.0.4":
-    path: "peer groups/base/Material_events_peer_group_basel3_t4.py"
-    inputs: ["Material Events/Mergers/Call Reports/*.csv"]
-    outputs:
-      - "Material Events/Failures/Horizons/Basel III T+4/*.csv"
-      - "Material Events/Mergers/Horizons/Basel III T+4/*.csv"
-      - "Material Events/Survivors/Horizons/Basel III T+4/*.csv"
-  "7.1.0.1":
-    path: "peer groups/horizons/Material_events_peer_group_basel3_t1.py"
-    inputs:
-      - "Material Events/*/Horizons/Basel III T+1/*.csv"
-      - "Material Events/quarters_basel3.csv"
-    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t1.csv"]
-  "7.1.0.2":
-    path: "peer groups/horizons/Material_events_peer_group_basel3_t2.py"
-    inputs:
-      - "Material Events/*/Horizons/Basel III T+2/*.csv"
-      - "Material Events/quarters_basel3.csv"
-    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t2.csv"]
-  "7.1.0.3":
-    path: "peer groups/horizons/Material_events_peer_group_basel3_t3.py"
-    inputs:
-      - "Material Events/*/Horizons/Basel III T+3/*.csv"
-      - "Material Events/quarters_basel3.csv"
-    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t3.csv"]
-  "7.1.0.4":
-    path: "peer groups/horizons/Material_events_peer_group_basel3_t4.py"
-    inputs:
-      - "Material Events/*/Horizons/Basel III T+4/*.csv"
-      - "Material Events/quarters_basel3.csv"
-    outputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t4.csv"]
-  "8.0.1":
-    path: "jsd/binning/Material_events_JSD_binning_basel3_20.py"
-    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
-    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins20.csv"]
-  "8.0.2":
-    path: "jsd/binning/Material_events_JSD_binning_basel3_30.py"
-    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
-    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins30.csv"]
-  "8.0.3":
-    path: "jsd/binning/Material_events_JSD_binning_basel3_50.py"
-    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
-    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins50.csv"]
-  "8.0.4":
-    path: "jsd/binning/Material_events_JSD_binning_basel3_100.py"
-    inputs: ["Material Events/*/Horizons/Peer_Group_*_Basel3_t*.csv"]
-    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*_bins100.csv"]
+    outputs: ["Material Events/Failures/Horizons/Basel III T+{horizons}/*.csv","Material Events/Mergers/Horizons/Basel III T+{horizons}/*.csv","Material Events/Survivors/Horizons/Basel III T+{horizons}/*.csv"]
+  "7.1":
+    path: "peer groups/horizons/Material_events_peer_group_basel3.py"
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--quarter-map","Material Events/quarters_basel3.csv"]
+    inputs: ["Material Events/Failures/Horizons/Basel III T+{horizons}/*.csv","Material Events/Mergers/Horizons/Basel III T+{horizons}/*.csv","Material Events/Survivors/Horizons/Basel III T+{horizons}/*.csv","Material Events/quarters_basel3.csv"]
+    outputs: ["Material Events/Failures/Horizons/Peer_Group_Failures_Basel3_t{horizons}.csv","Material Events/Mergers/Horizons/Peer_Group_Mergers_Basel3_t{horizons}.csv","Material Events/Survivors/Horizons/Peer_Group_Survivors_Basel3_t{horizons}.csv"]
+  "8.0":
+    path: "jsd/binning/Material_events_JSD_binning_basel3.py"
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--bins1","{bins1}","--bins2","{bins2}","--bins3","{bins3}"]
+    inputs: ["Material Events/Failures/Horizons/Peer_Group_Failures_Basel3_t{horizons}.csv","Material Events/Mergers/Horizons/Peer_Group_Mergers_Basel3_t{horizons}.csv","Material Events/Survivors/Horizons/Peer_Group_Survivors_Basel3_t{horizons}.csv"]
+    outputs: ["Material Events/Failures/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Failures_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Mergers/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Mergers_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Survivors/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Survivors_Basel3_t{horizons}_binned_{bins1}.csv"]
   "8.1.1":
     path: "jsd/pmf/Material_events_JSD_probabilities_basel3.py"
-    inputs: ["Material Events/*/JS Divergence/Basel III T+*/Binned/*.csv"]
-    outputs: ["Material Events/*/JS Divergence/Basel III T+*/Probabilities/probabilities_*.csv"]
-  "8.2.0.1":
-    path: "jsd/calculation/Material_events_JSD_basel3_t1.py"
-    inputs: ["Material Events/*/JS Divergence/Basel III T+1/Probabilities/*.csv"]
-    outputs: ["Material Events/JSD/BASEL III T+1/*.csv"]
-    create_dirs: ["Material Events/JSD/BASEL III T+1"]
-  "8.2.0.2":
-    path: "jsd/calculation/Material_events_JSD_basel3_t2.py"
-    inputs: ["Material Events/*/JS Divergence/Basel III T+2/Probabilities/*.csv"]
-    outputs: ["Material Events/JSD/BASEL III T+2/*.csv"]
-    create_dirs: ["Material Events/JSD/BASEL III T+2"]
-  "8.2.0.3":
-    path: "jsd/calculation/Material_events_JSD_basel3_t3.py"
-    inputs: ["Material Events/*/JS Divergence/Basel III T+3/Probabilities/*.csv"]
-    outputs: ["Material Events/JSD/BASEL III T+3/*.csv"]
-    create_dirs: ["Material Events/JSD/BASEL III T+3"]
-  "8.2.0.4":
-    path: "jsd/calculation/Material_events_JSD_basel3_t4.py"
-    inputs: ["Material Events/*/JS Divergence/Basel III T+4/Probabilities/*.csv"]
-    outputs: ["Material Events/JSD/BASEL III T+4/*.csv"]
-    create_dirs: ["Material Events/JSD/BASEL III T+4"]
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--bins","{bins1}"]
+    inputs: ["Material Events/Failures/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Failures_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Mergers/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Mergers_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Survivors/JS Divergence/Basel III T+{horizons}/Binned/Peer_Group_Survivors_Basel3_t{horizons}_binned_{bins1}.csv"]
+    outputs: ["Material Events/Failures/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Failures_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Mergers/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Mergers_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Survivors/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Survivors_Basel3_t{horizons}_binned_{bins1}.csv"]
+  "8.2":
+    path: "jsd/calculation/Material_events_JSD_basel3.py"
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--bins","{bins1}"]
+    inputs: ["Material Events/Failures/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Failures_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Mergers/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Mergers_Basel3_t{horizons}_binned_{bins1}.csv","Material Events/Survivors/JS Divergence/Basel III T+{horizons}/Probabilities/probabilities_Peer_Group_Survivors_Basel3_t{horizons}_binned_{bins1}.csv"]
+    outputs: ["Material Events/JSD/BASEL III T+{horizons}/JSD_survivors_vs_failures_{bins1}.csv","Material Events/JSD/BASEL III T+{horizons}/JSD_survivors_vs_mergers_{bins1}.csv","Material Events/JSD/BASEL III T+{horizons}/JSD_mergers_vs_failures_{bins1}.csv"]
   "8.3.0.1":
     path: "measures/intragroup/JSD_intragroup_filter.py"
-    inputs: ["Material Events/JSD/BASEL III T+*/*.csv"]
-    outputs: ["Material Events/IG/BASEL III T+*/*.csv"]
-  # "8.3.0.2.20":
-  #   path: "measures/intergroup/JSD_intergroup_call_reports_failures_arg_v2.py"
-  #   args:
-  #     - --peer_group
-  #     - failures
-  #     - --bin
-  #     - 20
-
-  # "8.3.0.3.20":
-  #   path: "measures/intergroup/JSD_intergroup_call_reports_failures_z_arg.py"
-  #   args:
-  #     - --peer_group
-  #     - failures
-  #     - --bin
-  #     - 20
-
-  # "8.3.0.4.20":
-  #   path: "measures/intergroup/JSD_intergroup_call_reports_failures_mean.py"
-  #   args:
-  #     - --peer_group
-  #     - failures
-  #     - --bin
-  #     - 20
-
-  # "8.3.0.3":
-  #   path: "STEP 08/STEP 08.3 IG/STEP 08.3.0 BASEL III/STEP 08.3.0.3/JSD_intergroup_call_reports_bins.py"
+    args: ["--horizons","{horizons}","--material-dir","Material Events","--bins","{bins1}","--threshold",0.3]
+    inputs: ["Material Events/JSD/BASEL III T+{horizons}/JSD_survivors_vs_failures_{bins1}.csv","Material Events/JSD/BASEL III T+{horizons}/JSD_survivors_vs_mergers_{bins1}.csv","Material Events/JSD/BASEL III T+{horizons}/JSD_mergers_vs_failures_{bins1}.csv"]
+    outputs: ["Material Events/IG/BASEL III T+{horizons}/JSD_survivors_vs_failures_{bins1}.csv","Material Events/IG/BASEL III T+{horizons}/JSD_survivors_vs_mergers_{bins1}.csv","Material Events/IG/BASEL III T+{horizons}/JSD_mergers_vs_failures_{bins1}.csv"]
 
 dependencies:
   "1.0": ["2.0"]
   "2.0": ["2.1"]
   "2.1": ["3.0"]
   "3.0": ["4.0"]
-  "4.0": ["6.0.1", "6.0.2", "6.0.3"]
+  "4.0": ["6.0.1","6.0.2","6.0.3"]
   "6.0.1": ["6.1"]
   "6.0.2": ["6.1"]
   "6.0.3": ["6.1"]
@@ -299,49 +214,20 @@ dependencies:
   "6.1.1": ["6.2"]
   "6.2": ["6.3"]
   "6.3": ["6.4"]
-  "6.4": ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]
-  "7.0.0.1": ["7.1.0.1"]
-  "7.0.0.2": ["7.1.0.2"]
-  "7.0.0.3": ["7.1.0.3"]
-  "7.0.0.4": ["7.1.0.4"]
-  "7.1.0.1": ["8.0.1"]  # Each filter step only triggers its corresponding binning step
-  "7.1.0.2": ["8.0.2"]
-  "7.1.0.3": ["8.0.3"]
-  "7.1.0.4": ["8.0.4"]
-  "8.0.1": ["8.1.1"]
-  "8.0.2": ["8.1.1"]
-  "8.0.3": ["8.1.1"]
-  "8.0.4": ["8.1.1"]
-  "8.1.1": ["8.2.0.1", "8.2.0.2", "8.2.0.3", "8.2.0.4"]
-  "8.2.0.1": ["8.3.0.1"]
-  "8.2.0.2": ["8.3.0.1"]
-  "8.2.0.3": ["8.3.0.1"]
-  "8.2.0.4": ["8.3.0.1"]
-  # "8.3.0.1": ["8.3.0.2.20"]
-  # "8.3.0.2.20": ["8.3.0.3.20"]
+  "6.4": ["7.0"]
+  "7.0": ["7.1"]
+  "7.1": ["8.0"]
+  "8.0": ["8.1.1"]
+  "8.1.1": ["8.2"]
+  "8.2": ["8.3.0.1"]
 
 execution:
-  # This is an ordered list of phase mappings. Repeated phase types are valid
-  # because every occurrence is a distinct list item and therefore a barrier.
-  - sequential: ["1.0", "2.0", "2.1"]  # Initial data preparation
-  - sequential: ["3.0", "4.0"]  # RC-B analysis
+  - sequential: ["1.0", "2.0", "2.1"]
+  - sequential: ["3.0", "4.0"]
   - concurrent_groups:
       fdic_downloads: ["6.0.1", "6.0.2", "6.0.3"]
-  - sequential: ["6.1", "6.1.1", "6.2", "6.3", "6.4"]  # Material-event flags
-  - concurrent_groups:
-      peer_groups: ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"]
-  - concurrent_groups:
-      horizon_filters: ["7.1.0.1", "7.1.0.2", "7.1.0.3", "7.1.0.4"]
-  - concurrent_groups:
-      binning: ["8.0.1", "8.0.2", "8.0.3", "8.0.4"]
-  - intermediate_steps: ["8.1.1"]  # PMF barrier after all bins complete
-  - concurrent_branches:
-      t1:
-        - sequential: ["8.2.0.1"]
-      t2:
-        - sequential: ["8.2.0.2"]
-      t3:
-        - sequential: ["8.2.0.3"]
-      t4:
-        - sequential: ["8.2.0.4"]
-  - intermediate_steps: ["8.3.0.1"]  # Rejoin after every JSD horizon
+  - sequential: ["6.1", "6.1.1", "6.2", "6.3", "6.4"]
+  - sequential: ["7.0", "7.1", "8.0"]
+  - intermediate_steps: ["8.1.1"]
+  - sequential: ["8.2"]
+  - intermediate_steps: ["8.3.0.1"]

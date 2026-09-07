@@ -1,259 +1,50 @@
-# Step 8.2.0.1 — Jensen-Shannon Divergence Between Peer Groups (T+1 Horizon)
+# Step 8.2 — Jensen-Shannon Comparisons Across Selected Horizons
 
-## Purpose
+`Material_events_JSD_basel3.py` calculates the existing three comparisons for each selected horizon and bin width:
 
-This module computes **Jensen-Shannon Divergence (JSD)** between normalized probability distributions derived from binned financial metrics (Step 8.1.1). It enables quantification of **structural divergence** between:
+- Survivors vs. Failures
+- Survivors vs. Mergers
+- Mergers vs. Failures
 
-- Survivors vs. Failures  
-- Survivors vs. Mergers  
-- Mergers vs. Failures  
+From the repository root:
 
-All comparisons are performed **per financial ratio** for each matching suffix (e.g., `_20.csv`), which corresponds to a specific date or time bin.
+```bash
+python3 "src/jsd/calculation/Material_events_JSD_basel3.py" --horizons 1 2 3 4 --bins 20 30 50 100
+```
 
----
+Both `--horizons` and `--bins` are required. Horizons are integers from 1 through 4. Bin widths are positive integers matching the central interval count in the PMF filename, including 20, 30, 50, and 100. `--material-dir` optionally overrides the Material Events directory supplied by `Basel3_Global_Filepath.py`.
 
-## Input
+The pipeline YAML defaults to all four horizons and all four original bin specifications. A smaller selection, such as `--horizons 1 3 --bins 20 50`, is optional.
 
-This script consumes probability-distribution `.csv` files created in **Step 8.1.1**, located in:
+Only the selected horizons and bin widths are read. Other bin files left in the same probability directories are excluded. The pipeline calls this script directly and passes these arguments in its YAML `args` list.
 
-| Group      | Path Example                                                                 |
-|------------|-------------------------------------------------------------------------------|
-| Survivors  | `Survivors/JS Divergence/Basel III T+1/Probabilities`                        |
-| Failures   | `Failures/JS Divergence/Basel III T+1/Probabilities`                         |
-| Mergers    | `Mergers/JS Divergence/Basel III T+1/Probabilities`                          |
+## Inputs
 
-Each file must share a consistent suffix (e.g., `_20.csv`), and contain:
-- A `Bin` column
-- Normalized probability columns (summing to 1 per column)
+For horizon `h`, the three input directories are:
 
----
+- `Material Events/Survivors/JS Divergence/Basel III T+h/Probabilities/`
+- `Material Events/Failures/JS Divergence/Basel III T+h/Probabilities/`
+- `Material Events/Mergers/JS Divergence/Basel III T+h/Probabilities/`
 
-## Output
+PMF filenames end with `_binned_<width>.csv`. A width is compared only when a matching file exists in all three group directories. Each input contains a `Bin` column and the probability columns produced by the PMF stage.
 
-All output `.csv` files are stored in: `Material Events/JSD/BASEL III T+1/`
+## Calculation
 
+The calculation preserves the original horizon scripts:
 
-For each matched suffix (e.g., `_20`), the following files are produced:
+1. Align each pair of PMFs by `Bin`, filling bins missing from either group with zero.
+2. Compare the columns shared by that pair, retaining their order from the first group.
+3. Convert nonnumeric or missing values to zero and normalize each vector when its sum is positive. An all-zero vector remains zero.
+4. Compute `m = 0.5 * (p + q)` and `sqrt(0.5 * KL(p || m) + 0.5 * KL(q || m))`.
 
-- `JSD_survivors_vs_failures_20.csv`
-- `JSD_survivors_vs_mergers_20.csv`
-- `JSD_mergers_vs_failures_20.csv`
+KL uses the natural logarithm and replaces values below `1e-15` with `1e-15` inside each KL calculation. This retains the existing square-root calculation and treatment of zero PMFs.
 
-Each output file contains a single row labeled `Bin=JSD`, with JSD values per financial ratio column.
+## Outputs
 
----
+For each selected horizon and matched bin width, output goes to `Material Events/JSD/BASEL III T+h/`:
 
-## Methodology
+- `JSD_survivors_vs_failures_<width>.csv`
+- `JSD_survivors_vs_mergers_<width>.csv`
+- `JSD_mergers_vs_failures_<width>.csv`
 
-For each ratio:
-1. Extract its probability vector `p` from one group and `q` from the other
-2. Normalize both (in case of rounding error)
-3. Compute: M = 0.5 * (p + q)
-JSD(p, q) = sqrt(0.5 * KL(p || M) + 0.5 * KL(q || M))
-
-where `KL` is the Kullback–Leibler divergence.
-
----
-
-## Matching Mechanism
-
-Files are matched using their filename suffix:
-- For `Peer_Group_Survivors_Basel3_binned_20.csv`, the suffix is `20`
-- Only suffixes common to all three directories (Survivors, Failures, Mergers) are processed
-
----
-
-# Step 8.2.0.2 — Jensen-Shannon Divergence Between Peer Groups (T+2 Horizon)
-
-## Purpose
-
-This module computes **Jensen-Shannon Divergence (JSD)** between normalized probability distributions derived from binned financial metrics (Step 8.1.1). It enables quantification of **structural divergence** between:
-
-- Survivors vs. Failures  
-- Survivors vs. Mergers  
-- Mergers vs. Failures  
-
-All comparisons are performed **per financial ratio** for each matching suffix (e.g., `_30.csv`), which corresponds to a specific date or time bin.
-
----
-
-## Input
-
-This script consumes probability-distribution `.csv` files created in **Step 8.1.1**, located in:
-
-| Group      | Path Example                                                                 |
-|------------|-------------------------------------------------------------------------------|
-| Survivors  | `Survivors/JS Divergence/Basel III T+2/Probabilities`                        |
-| Failures   | `Failures/JS Divergence/Basel III T+2/Probabilities`                         |
-| Mergers    | `Mergers/JS Divergence/Basel III T+2/Probabilities`                          |
-
-Each file must share a consistent suffix (e.g., `_30.csv`), and contain:
-- A `Bin` column
-- Normalized probability columns (summing to 1 per column)
-
----
-
-## Output
-
-All output `.csv` files are stored in: `Material Events/JSD/BASEL III T+2/`
-
-
-For each matched suffix (e.g., `_30`), the following files are produced:
-
-- `JSD_survivors_vs_failures_30.csv`
-- `JSD_survivors_vs_mergers_30.csv`
-- `JSD_mergers_vs_failures_30.csv`
-
-Each output file contains a single row labeled `Bin=JSD`, with JSD values per financial ratio column.
-
----
-
-## Methodology
-
-For each ratio:
-1. Extract its probability vector `p` from one group and `q` from the other
-2. Normalize both (in case of rounding error)
-3. Compute: M = 0.5 * (p + q)
-JSD(p, q) = sqrt(0.5 * KL(p || M) + 0.5 * KL(q || M))
-
-where `KL` is the Kullback–Leibler divergence.
-
----
-
-## Matching Mechanism
-
-Files are matched using their filename suffix:
-- For `Peer_Group_Survivors_Basel3_binned_30.csv`, the suffix is `30`
-- Only suffixes common to all three directories (Survivors, Failures, Mergers) are processed
-
----
-
-# Step 8.2.0.3 — Jensen-Shannon Divergence Between Peer Groups (T+3 Horizon)
-
-## Purpose
-
-This module computes **Jensen-Shannon Divergence (JSD)** between normalized probability distributions derived from binned financial metrics (Step 8.1.1). It enables quantification of **structural divergence** between:
-
-- Survivors vs. Failures  
-- Survivors vs. Mergers  
-- Mergers vs. Failures  
-
-All comparisons are performed **per financial ratio** for each matching suffix (e.g., `_20.csv`), which corresponds to a specific date or time bin.
-
----
-
-## Input
-
-This script consumes probability-distribution `.csv` files created in **Step 8.1.1**, located in:
-
-| Group      | Path Example                                                                 |
-|------------|-------------------------------------------------------------------------------|
-| Survivors  | `Survivors/JS Divergence/Basel III T+3/Probabilities`                        |
-| Failures   | `Failures/JS Divergence/Basel III T+3/Probabilities`                         |
-| Mergers    | `Mergers/JS Divergence/Basel III T+3/Probabilities`                          |
-
-Each file must share a consistent suffix (e.g., `_20.csv`), and contain:
-- A `Bin` column
-- Normalized probability columns (summing to 1 per column)
-
----
-
-## Output
-
-All output `.csv` files are stored in: `Material Events/JSD/BASEL III T+3/`
-
-
-For each matched suffix (e.g., `_20`), the following files are produced:
-
-- `JSD_survivors_vs_failures_20.csv`
-- `JSD_survivors_vs_mergers_20.csv`
-- `JSD_mergers_vs_failures_20.csv`
-
-Each output file contains a single row labeled `Bin=JSD`, with JSD values per financial ratio column.
-
----
-
-## Methodology
-
-For each ratio:
-1. Extract its probability vector `p` from one group and `q` from the other
-2. Normalize both (in case of rounding error)
-3. Compute: M = 0.5 * (p + q)
-JSD(p, q) = sqrt(0.5 * KL(p || M) + 0.5 * KL(q || M))
-
-where `KL` is the Kullback–Leibler divergence.
-
----
-
-## Matching Mechanism
-
-Files are matched using their filename suffix:
-- For `Peer_Group_Survivors_Basel3_binned_20.csv`, the suffix is `20`
-- Only suffixes common to all three directories (Survivors, Failures, Mergers) are processed
-
----
-
-# Step 8.2.0.4 — Jensen-Shannon Divergence Between Peer Groups (T+4 Horizon)
-
-## Purpose
-
-This module computes **Jensen-Shannon Divergence (JSD)** between normalized probability distributions derived from binned financial metrics (Step 8.1.1). It enables quantification of **structural divergence** between:
-
-- Survivors vs. Failures  
-- Survivors vs. Mergers  
-- Mergers vs. Failures  
-
-All comparisons are performed **per financial ratio** for each matching suffix (e.g., `_20.csv`), which corresponds to a specific date or time bin.
-
----
-
-## Input
-
-This script consumes probability-distribution `.csv` files created in **Step 8.1.1**, located in:
-
-| Group      | Path Example                                                                 |
-|------------|-------------------------------------------------------------------------------|
-| Survivors  | `Survivors/JS Divergence/Basel III T+4/Probabilities`                        |
-| Failures   | `Failures/JS Divergence/Basel III T+4/Probabilities`                         |
-| Mergers    | `Mergers/JS Divergence/Basel III T+4/Probabilities`                          |
-
-Each file must share a consistent suffix (e.g., `_20.csv`), and contain:
-- A `Bin` column
-- Normalized probability columns (summing to 1 per column)
-
----
-
-## Output
-
-All output `.csv` files are stored in: `Material Events/JSD/BASEL III T+4/`
-
-
-For each matched suffix (e.g., `_20`), the following files are produced:
-
-- `JSD_survivors_vs_failures_20.csv`
-- `JSD_survivors_vs_mergers_20.csv`
-- `JSD_mergers_vs_failures_20.csv`
-
-Each output file contains a single row labeled `Bin=JSD`, with JSD values per financial ratio column.
-
----
-
-## Methodology
-
-For each ratio:
-1. Extract its probability vector `p` from one group and `q` from the other
-2. Normalize both (in case of rounding error)
-3. Compute: M = 0.5 * (p + q)
-JSD(p, q) = sqrt(0.5 * KL(p || M) + 0.5 * KL(q || M))
-
-where `KL` is the Kullback–Leibler divergence.
-
----
-
-## Matching Mechanism
-
-Files are matched using their filename suffix:
-- For `Peer_Group_Survivors_Basel3_binned_20.csv`, the suffix is `20`
-- Only suffixes common to all three directories (Survivors, Failures, Mergers) are processed
-
----
+Each file contains one row labeled `Bin=JSD`, followed by the comparison values for its common probability columns.

@@ -163,7 +163,7 @@ timing of distributional changes itself contains economically meaningful
 
 [Here](https://github.com/OCBliss/Basel3/tree/refactor/pipeline)
 
-The Basel III pipeline orchestrates the complete research workflow from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and duration-sensitive RWA modeling.
+The configured Basel III pipeline runs 19 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
 
 Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
 
@@ -264,6 +264,7 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
   - `pyyaml`
   - `pandas`
   - `numpy`
+  - `requests`
 
 
 ### OS Compatibility Note
@@ -281,54 +282,60 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
 2. `Basel3_Global_Filepath.py`:
    - Finds the `Basel3/` root directory dynamically from its own location, then;
    - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
-3. Run `Task_manager_Global_yaml_driven.py`: 
-   - Loads `pipeline_config_dynamic.yaml` and validates required sections (`scripts`, `dependencies`, `execution`).
-   - Executes steps based on the `execution` section:
-     - `sequential`: Runs steps in order, one after another.
-     - `concurrent_branches`: Launches branches in parallel using threads, recursively handling nested branches or groups.
-     - `concurrent_groups`: Runs multiple step lists in parallel within a `concurrent_branches` process.
-     -  `intermediate_steps`: Similar to `sequential`, but functions as a synchronization chokepoint for either a `concurrent_groups` or main `concurrent_branches` process.
-   - Checks `dependencies` to enforce execution order (e.g., 3.0 must complete before 3.1 starts).
-   - Logs results in `Logs_V3/` for each step in the chain.
+3. Run the manager from the repository root:
 
-4. `pipeline_config_dynamic.yaml`:
-   - `scripts`: Maps step IDs (e.g., "1.0") to Python file paths relative to `src/`.
-   - `dependencies`: Defines prerequisites for each step (e.g., "3.0": ["3.1", "3.2"] means 3.0 must run before 3.1 and 3.2).
-   - `execution`: Specifies the workflow with sequential and concurrent sections, controlling the order and parallelism.
+   ```sh
+   python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
+   python3 pipeline/Task_manager_Global_yaml_driven.py
+   ```
+
+   The dry run shows the expanded arguments and artifact paths without running scripts or creating logs. Use `--config path/to/config.yaml` for another configuration, or `--list` to list its tasks.
+
+4. `pipeline/pipeline_config_dynamic.yaml` defines:
+   - `parameters`: Shared horizon and bin selections.
+   - `scripts`: Paths relative to `src/`, argument lists, inputs, outputs and directories to create.
+   - `dependencies`: Prerequisites that must complete before a task runs.
+   - `execution`: An ordered list of sequential or concurrent phases. Each phase completes before the next begins.
+
+   The manager expands parameter placeholders in both arguments and artifact paths, validates the plan, and runs each declared task once. Per-task logs are saved under `pipeline_logs/<run-id>/` by default.
+
+### Select Horizons and Bins
+
+Edit this block at the top of the YAML configuration:
+
+```yaml
+parameters:
+  horizons: [1, 2, 3, 4]
+  bins1: [20, 30, 50, 100]
+  bins2: 5
+  bins3: 1
+```
+
+The default runs all four horizons and all four central bin counts. For an optional subset, `horizons: [1, 3]` and `bins1: [20, 50]` select only T+1/T+3 and those two central bin counts. The same selection reaches peer-group creation, calendar concatenation, binning, PMFs, JSD comparisons and the final filter. Expected input/output paths expand to that selection as well; no separate horizon scripts or duplicated YAML branches are needed.
+
+`bins1` supplies the counts across −1 to 1, `bins2` supplies the count across 1 to 2, and `bins3` is the single unbounded upper bin. Thus `20 + 5 + 1` produces 26 bins. `bins1` accepts positive counts, `bins2` is a positive count, and `bins3` currently accepts only `1`. Output filenames retain the central count, such as `_binned_20.csv`; changing `bins2` updates that specification's outputs.
 
 ### Current Workflow
-Below is the current flow in `pipeline_config_dynamic.yaml`.
 
-### Execution Flow
-1. Sequential (1.0–4.0):
-   - "1.0": Cleans raw Call Report data into a usable format (e.g., creates directories, converts text to CSVs).
-   - "2.0": Merges and further cleans the data into a unified dataset.
-   - "2.1": Converts data to numeric-only format for analysis.
-   - "3.0": Calculates the current-quarter Call Report ratios.
-   - "4.0": Uses the same ratio methods at P1Q, P2Q, and P3Q and writes the final dynamic-ratio files. Historical rows are joined by `CERT`.
+The current configuration has **19 tasks**:
 
-2. Material Events:
-   - "6.0.1"–"6.0.3": Run `Material_events_download.py` concurrently with `--events de_novo`, `--events failures`, and `--events mergers`.
-   - "6.1": Runs `Material_events_cleaned.py` for all three event datasets.
-   - "6.1.1": Runs `Material_events_delete_api.py` to remove matching RAW download files after cleaning.
-   - "6.2"–"6.4": Run `Material_events_flag.py` sequentially with `--events de_novo`, `--events failures`, and `--events mergers`.
+| Tasks | Processing |
+| --- | --- |
+| `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
+| `3.0`, `4.0` | Build current-quarter ratios and dynamic ratios using historical rows joined by `CERT` |
+| `6.0.1`–`6.0.3` | Call `Material_events_download.py` concurrently for de novo, failures and mergers |
+| `6.1`, `6.1.1` | Clean the downloads, then remove matching RAW download files |
+| `6.2`–`6.4` | Call `Material_events_flag.py` in de novo → failures → mergers order |
+| `7.0` | Call `peer groups/base/Material_events_peer_group_basel3.py` for selected horizons |
+| `7.1` | Call `peer groups/horizons/Material_events_peer_group_basel3.py` to select calendar files and concatenate each group/horizon |
+| `8.0` | Call `Material_events_JSD_binning_basel3.py` for selected horizons and bin specifications |
+| `8.1.1` | Normalize selected histograms with `Material_events_JSD_probabilities_basel3.py` |
+| `8.2` | Calculate the three comparisons with `Material_events_JSD_basel3.py` |
+| `8.3.0.1` | Apply `JSD_intragroup_filter.py` to selected results; the configured threshold is `0.3` |
 
-   These eight YAML stages use four Python scripts. Each stage's `args` list supplies its event selection and paths. The download and flag scripts require `--events`, accepting one or more of `de_novo`, `failures`, and `mergers`; cleaning and deletion default to all three when selection is omitted. See the [material-event CLI](src/material%20events/readme.md) and [FDIC API CLI](src/material%20events/FDIC%20API/readme.md) for arguments and examples.
+The eight material-event tasks use four direct scripts. Their YAML `args` lists supply event selections and paths. The six subsequent tasks use two peer-group scripts, one binning script, one PMF script, one calculation script and one filter script. Each selected group/horizon retains its own output files.
 
-4. Peer Group Filtering:
-   - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
-   - `filters`: Runs 7.1.0.1–7.1.0.4 in parallel, applying additional filters to Basel III peer groups.
-
-5. JSD Analysis:
-   - "8.0.1": Performs binning on Basel III data (default 50 bins—configurable within the script).
-   - "8.1.1": Computes JSD probabilities for Basel III.
-   - `t1`: Splits into three concurrent JSD runs with bin sizes 20, 30, 50 (8.2.0.1.1–8.2.0.1.3).
-   - `t2`: Runs single JSD step "8.2.0.2" for T+2 horizon.
-   - `t3`: Runs single JSD step "8.2.0.3" for T+3 horizon.
-   - `t4`: Runs single JSD step "8.2.0.4" for T+4 horizon.
-
-### Notes on Placeholders
-- `t1`, `t2`, `t3`, `t4` and binning (20, 30, 50, 100).
+See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI](src/material%20events/readme.md), [peer-group CLI](src/peer%20groups/base/readme.md), [binning CLI](src/jsd/binning/readme.md), and [JSD calculation CLI](src/jsd/calculation/readme.md).
 
 ### Directory Structure
 - `pipeline/`:
@@ -365,33 +372,18 @@ Below is the current flow in `pipeline_config_dynamic.yaml`.
     - `Material_events_flag.py`
   - `peer groups/`:
     - `base/`:
-      - `Material_events_peer_group_basel3_t1.py`
-      - `Material_events_peer_group_basel3_t2.py`
-      - `Material_events_peer_group_basel3_t3.py`
-      - `Material_events_peer_group_basel3_t4.py`
+      - `Material_events_peer_group_basel3.py`
     - `horizons/`:
-      - `Material_events_peer_group_filter_t1.py`
-      - `Material_events_peer_group_filter_t2.py`
-      - `Material_events_peer_group_filter_t3.py`
-      - `Material_events_peer_group_filter_t4.py`
+      - `Material_events_peer_group_basel3.py`
   - `jsd/`:
     - `binning/`:
-      - `Material_events_JSD_binning_basel3_20.py`
-      - `Material_events_JSD_binning_basel3_30.py`
-      - `Material_events_JSD_binning_basel3_50.py`
-      - `Material_events_JSD_binning_basel3_100.py`
+      - `Material_events_JSD_binning_basel3.py`
     - `pmf/`:
       - `Material_events_JSD_probabilities_basel3.py`
-    - `horizons/`:
-      - `Material_events_JSD_basel3_t1.py`
-      - `Material_events_JSD_basel3_t2.py`
-      - `Material_events_JSD_basel3_t3.py`
-      - `Material_events_JSD_basel3_t4.py`
+    - `calculation/`:
+      - `Material_events_JSD_basel3.py`
+  - `measures/`:
     - `intragroup/`:
-      - `JSD_intragroup_filter3.py`
+      - `JSD_intragroup_filter.py`
     - `intergroup/`:
-      - `JSD_intergroup_call_reports_bins.py`
-
-
-
-  
+      - `JSD_intergroup_call_reports.py`

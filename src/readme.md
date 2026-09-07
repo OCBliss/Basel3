@@ -6,18 +6,53 @@ Use `pipeline/Task_manager_Global_yaml_driven.py` to run the workflow.
  
 **Purpose:** yaml-driven task manager for executing the JSD analysis on call reports and RWA analysis on CMT data from FRED.
 
-## Overview
+## Current Workflow
 
-The pipeline processes financial data through a series of modular Python scripts, supporting:
-- Sequential and concurrent execution of steps
-- Dependency management between tasks
-- Input hashing to skip unchanged steps
-- Dynamic input/output detection
-- Detailed logging for debugging and auditing
+The current configuration contains 19 tasks for Call Report preparation, material events, peer groups, JSD and the final column filter. RWA components remain separately documented under `src/RWA/` and `RWA/`.
 
-The workflow is defined in `pipeline_config_dynamic.yaml`, allowing flexibility for any number of processing branches or steps.
+The manager reads `pipeline/pipeline_config_dynamic.yaml`. Its ordered execution phases, declared dependencies, input/output checks and per-task logs control the run. Independent FDIC downloads run concurrently; each later phase waits for the preceding phase to finish.
 
-Material-event processing uses four Python scripts: one downloader, one cleaner, one RAW-file deletion script, and one flagging script. The eight material-event YAML stages call these scripts directly with explicit `args` lists. Downloading and flagging require `--events` with one or more of `de_novo`, `failures`, and `mergers`; cleaning and deletion default to all three when selection is omitted. All four accept `--material-dir`. See the [material-event CLI](material%20events/readme.md) and [FDIC API CLI](material%20events/FDIC%20API/readme.md) for the remaining options.
+Run from the repository root:
+
+```sh
+python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
+python3 pipeline/Task_manager_Global_yaml_driven.py
+```
+
+`--dry-run` displays expanded commands and expected artifacts without executing scripts. `--config` selects another YAML file; `--list` lists the configured tasks. Logs are written to `pipeline_logs/<run-id>/` by default. The manager executes the configured tasks on each run; it does not skip tasks by input hash.
+
+## Shared Horizon and Bin Selection
+
+The configuration starts with:
+
+```yaml
+parameters:
+  horizons: [1, 2, 3, 4]
+  bins1: [20, 30, 50, 100]
+  bins2: 5
+  bins3: 1
+```
+
+The default runs all four horizons and all four central bin counts. As an optional subset, changing `horizons` to `[1, 3]` and `bins1` to `[20, 50]` selects those horizons and central bin counts throughout the peer/JSD stages. `{horizons}`, `{bins1}`, `{bins2}` and `{bins3}` are expanded in YAML argument lists and artifact paths. A selection therefore controls both script work and the files checked by the manager.
+
+`bins1` is the count across −1 to 1; `bins2` is the count across 1 to 2; `bins3` is one unbounded upper bin. The default specification with 20 central bins has 26 bins in total. The filename suffix records `bins1`, so changing `bins2` updates the output for that central count. See the [binning documentation](jsd/binning/readme.md) for boundaries and filenames.
+
+## Direct Processing Programs
+
+| Tasks | Program(s) |
+| --- | --- |
+| `1.0`–`4.0` | Five configured Call Report/ratio tasks |
+| `6.0.1`–`6.4` | Eight material-event tasks calling one downloader, one cleaner, one RAW deletion program and one flagging program |
+| `7.0` | `peer groups/base/Material_events_peer_group_basel3.py` |
+| `7.1` | `peer groups/horizons/Material_events_peer_group_basel3.py` |
+| `8.0` | `jsd/binning/Material_events_JSD_binning_basel3.py` |
+| `8.1.1` | `jsd/pmf/Material_events_JSD_probabilities_basel3.py` |
+| `8.2` | `jsd/calculation/Material_events_JSD_basel3.py` |
+| `8.3.0.1` | `measures/intragroup/JSD_intragroup_filter.py` |
+
+The shared peer programs require `--horizons`. Binning requires `--horizons` and `--bins1`, with `--bins2` and `--bins3` supplied from the shared configuration. PMF, calculation and filter programs require `--horizons` and `--bins`, where `--bins` receives the selected `bins1` counts. All accept `--material-dir`.
+
+Material-event arguments remain independent: downloading and flagging require `--events` with one or more of `de_novo`, `failures` and `mergers`; cleaning and deletion default to all three when omitted. The YAML supplies those selections explicitly. See the [material-event CLI](material%20events/readme.md) and [FDIC API CLI](material%20events/FDIC%20API/readme.md).
 
 ### Directory Structure
 - `pipeline/`:
@@ -54,159 +89,32 @@ Material-event processing uses four Python scripts: one downloader, one cleaner,
     - `Material_events_flag.py`
   - `peer groups/`:
     - `base/`:
-      - `Material_events_peer_group_basel3_t1.py`
-      - `Material_events_peer_group_basel3_t2.py`
-      - `Material_events_peer_group_basel3_t3.py`
-      - `Material_events_peer_group_basel3_t4.py`
+      - `Material_events_peer_group_basel3.py`
     - `horizons/`:
-      - `Material_events_peer_group_filter_t1.py`
-      - `Material_events_peer_group_filter_t2.py`
-      - `Material_events_peer_group_filter_t3.py`
-      - `Material_events_peer_group_filter_t4.py`
+      - `Material_events_peer_group_basel3.py`
   - `jsd/`:
     - `binning/`:
-      - `Material_events_JSD_binning_basel3_20.py`
-      - `Material_events_JSD_binning_basel3_30.py`
-      - `Material_events_JSD_binning_basel3_50.py`
-      - `Material_events_JSD_binning_basel3_100.py`
+      - `Material_events_JSD_binning_basel3.py`
     - `pmf/`:
       - `Material_events_JSD_probabilities_basel3.py`
-    - `horizons/`:
-      - `Material_events_JSD_basel3_t1.py`
-      - `Material_events_JSD_basel3_t2.py`
-      - `Material_events_JSD_basel3_t3.py`
-      - `Material_events_JSD_basel3_t4.py`
+    - `calculation/`:
+      - `Material_events_JSD_basel3.py`
+  - `measures/`:
     - `intragroup/`:
-      - `JSD_intragroup_filter3.py`
+      - `JSD_intragroup_filter.py`
     - `intergroup/`:
-      - `JSD_intergroup_call_reports_bins.py`
-  
-## Features
+      - `JSD_intergroup_call_reports.py`
 
-- **Modular Design:** Add or modify steps by updating the YAML configuration.
-- **Concurrency:** Executes independent tasks in parallel using `ThreadPoolExecutor`.
-  - ** concurrency_branches
-    - `basel_iii` - runs all analysis for the Basel III period as specificed in paper
-    - `post_gfc` -  runs all analysis for the post-GFC as specificed in paper
-    - `t1` - T+1 creates a branch of each ``concurrency_branches`` for a T+1 look ahead.
-    - `t2` - T+2 creates a branch of each ``concurrency_branches`` for a T+2 look ahead.
-    - `t3` - T+3 creates a branch of each ``concurrency_branches`` for a T+3 look ahead.
-    - `t4` - T+4 creates a branch of each ``concurrency_branches`` for a T+4 look ahead.
-  - ``concurrency_group`` - is a specific concurrency that occurs only inside a ``concurrency_branches`` instance
-    - `jsd` - for instance JSD analysis is only applied once per ``concurrent_branches`` instance.
-      - `bins20` - binning forms the probability mass function for Jensen Shannon Divergence among peers, i.e. (20 bins,...,50 bins)
-      - `bins30`
-      - `bins50`
-    - `peers`: `mergers`, `failures`, `survivors` and `de novo` flags are applied for JSD analysis.
-    - `filters` - we then filter by `peers` and binning.
-    
-  - ``intermediate_steps`` - used to insert required sequential stages (e.g., binning, PMF creation) between concurrent groups.
-  - ``sequential`` - some steps cannot be run without the preceding step eliminating the possibility for concurrency at that step
-- **Efficiency:** Skips steps with unchanged inputs via SHA-256 hashing.
-- **Logging:** Outputs detailed logs to `Logs_V3/` for each step.
-  - ** This creates to ability to restart the entire analysis mid-stream if errors occurs, preventing CPU runtime waste. see ``run_task``
-- **Error Handling:** Graceful failure with exit codes and logs for debugging.
+## Further Configuration
 
-## Future Customization - Example
+Additional schedule or regulatory-epoch workflows can be expressed through the manager's `sequential`, `concurrent_groups`, `concurrent_branches` and `intermediate_steps` phases. `execution` is an ordered list of phase mappings. Every configured task must appear once in the execution plan, and its dependencies must agree with that plan. See the [pipeline guide](../pipeline/readme.md) for the current parameter and argument format.
 
-- **Schedules** specific can be segregated and run à la carte decreasing computational runtime by specifying each schedule as a ``concurrency_branches``
-`pipeline_config.yaml`
-```yaml
-# pipline_config.yaml
-
-# Be sure to have ``dependencies`` match ``execution``
-
-execution:
-  sequential: ["1.0", "2.0", "2.1"]
-  concurrent_branches: # split by schedule
-    rc_schedule:
-      sequential: ["3.0.1", "4.0.1"] # ratios and dynamic changes
-      concurrent_groups:
-        api: ["6.0.1", "6.0.2", "6.0.3"] # FDIC BankFind Suite API
-      concurrent_branches: # split by financial/regulatory epoch (GFC, post-GFC, Basel III)
-        basel_iii: # Basel III regulatory epoch
-          sequential: ["6.1.1", "6.2.1", "6.3.1", "6.4.1"] # performs material event flagging
-          concurrent_groups: # concurrent_groups used because peer groups can be flagged concurrently
-            peers: ["7.0.0.1", "7.0.0.2", "7.0.0.3", "7.0.0.4"] # peer group creation
-            filters: ["7.1.0.1", "7.1.0.2", "7.1.0.3", "7.1.0.4"] # filtering by peer group
-          intermediate_steps: ["8.0.1.1", "8.1.1.1"] a sequential in between ``concurrency grouops`` to bins and creates the probability mass functions
-          concurrent_branches:
-            t1: # this is the `BASEL T+1` folder runs Jensen-Shannon Divergence analysis for peer group flagging ``peers`` for a T+1 (1 quarter) look ahead.
-              concurrent_groups: # ``concurrent_groups`` can be used here because we are simultaneously binning and generating pmfs for various bin sizes.
-                jsd: # actual JSD comparison for peer groups during Basel III epoch
-                  bins20: ["8.2.1.1.1"]
-                  bins30: ["8.2.1.1.2"]
-                  bins50: ["8.2.1.1.3"]
-            t2:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.1.2.1"]
-                  bins30: ["8.2.1.2.2"]
-                  bins50: ["8.2.1.2.3"]
-            t3:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.1.3.1"]
-                  bins30: ["8.2.1.3.2"]
-                  bins50: ["8.2.1.3.3"]
-            t4:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.1.4.1"]
-                  bins30: ["8.2.1.4.2"]
-                  bins50: ["8.2.1.4.3"]
-        post_gfc: # you can simply comment epochs, t1-t4, or entire schedules for faster, more efficient computation.
-          sequential: ["6.1.2", "6.2.2", "6.3.2", "6.4.2"]
-          concurrent_groups:
-            peers: ["7.0.1.1", "7.0.1.2", "7.0.1.3", "7.0.1.4"]
-            filters: ["7.1.1.1", "7.1.1.2", "7.1.1.3", "7.1.1.4"]
-          intermediate_steps: ["8.0.2.1", "8.1.2.1"]
-          concurrent_branches:
-            t1:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.2.1.1"]
-                  bins30: ["8.2.2.1.2"]
-                  bins50: ["8.2.2.1.3"]
-            t2:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.2.2.1"]
-                  bins30: ["8.2.2.2.2"]
-                  bins50: ["8.2.2.2.3"]
-            t3:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.2.3.1"]
-                  bins30: ["8.2.2.3.2"]
-                  bins50: ["8.2.2.3.3"]
-            t4:
-              concurrent_groups:
-                jsd:
-                  bins20: ["8.2.2.4.1"]
-                  bins30: ["8.2.2.4.2"]
-                  bins50: ["8.2.2.4.3"]
-    rcb_schedule:
-      sequential: ["3.0.2"] # RC-B analysis
-```
 ## Prerequisites
 
-- Python 3.6+
-- Required Python packages:
-  - `pyyaml` (for YAML parsing)
-  - `pandas`
-  - `numpy`
-  - `re`
-- Directory structure:
-  - Project must reside within a `CODE/` directory (auto-detected).
-  - `pipeline_config.yaml` must exist in the `CODE/` root.
+Use Python 3 with `pyyaml`, `pandas`, `numpy` and `requests` installed in the interpreter that runs the pipeline:
 
-Install dependencies:
-```bash
-# Ensure correct Python version
-python3 --version
-
-# Install dependencies into that interpreter
-python3 -m pip install --upgrade pip
-python3 -m pip install pyyaml pandas numpy
+```sh
+python3 -m pip install pyyaml pandas numpy requests
 ```
+
+The shared path module resolves the project from `src/Basel3_Global_Filepath.py`; the project does not need an enclosing `CODE/` directory. The default configuration is `pipeline/pipeline_config_dynamic.yaml`.

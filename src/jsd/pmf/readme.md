@@ -1,73 +1,30 @@
-# Step 8.1.1 — Convert Binned Counts to Probabilities
+# Convert selected binned counts to PMFs
 
-## Purpose
+`Material_events_JSD_probabilities_basel3.py` normalizes histogram counts for explicitly selected horizons and central bin counts.
 
-This step normalizes previously binned histogram counts into **probability distributions** over 27 bins for each financial ratio. These distributions represent the empirical behavior of peer groups (Mergers, Failures, Survivors) under Basel III T+1 through T+4 horizons.
+Run from the repository root:
 
-These normalized probabilities enable non-parametric divergence metrics such as **Jensen-Shannon Divergence (JSD)**.
+```bash
+python3 src/jsd/pmf/Material_events_JSD_probabilities_basel3.py \
+  --horizons 1 2 3 4 --bins 20 30 50 100 --material-dir "Material Events"
+```
 
----
+Both `--horizons` and `--bins` are required. `--horizons` selects values from 1–4; `--bins` selects the positive central bin counts represented by `_binned_{count}.csv` filenames.
 
-## Input
+The pipeline YAML defaults to all four horizons and all four original bin specifications. Smaller selections are optional.
 
-From Step 8.0.1, the input files are of the form: `<Peer Group>_Basel3_binned_20.csv`
+For each selected horizon and each of Mergers, Failures, and Survivors, input files are read from:
 
+`Material Events/{Group}/JS Divergence/Basel III T+{horizon}/Binned/`
 
-Located in:
+Only files ending in a selected `_binned_{count}.csv` suffix are processed. Selecting 20 does not select 120 or another existing bin specification. Every selected count must have a matching input file in each selected group/horizon directory. Unselected horizons are not opened.
 
-| Peer Group | Horizon  | Directory Location                                                                 |
-|------------|----------|-------------------------------------------------------------------------------------|
-| Mergers    | T+1–T+4  | `Mergers/JS Divergence/Basel III T+N/Binned/`                                     |
-| Failures   | T+1–T+4  | `Failures/JS Divergence/Basel III T+N/Binned/`                                    |
-| Survivors  | T+1–T+4  | `Survivors/JS Divergence/Basel III T+N/Binned/`                                   |
+The `Bin` column and its order are retained. Each other column is divided by its own total. A zero-total column remains all zero, preserving the original handling.
 
-Each CSV contains:
-- Index: `Bin` (e.g., `[-0.50, -0.40)`, `> 2.00`)
-- Columns: financial ratios with raw bin counts
+Outputs are written to:
 
----
+`Material Events/{Group}/JS Divergence/Basel III T+{horizon}/Probabilities/probabilities_{original_filename}`
 
-## Output
+With the default second and third coverage counts, 20/30/50/100 central bins produce 26/36/56/106 PMF rows. The binning change removes the former empty `[2.00, 2.00)` row and labels the retained final interval `[2.00, inf)`. Complete local comparisons confirmed every other probability value is unchanged. See the binning README for exact endpoint behavior.
 
-Each binned count file is normalized column-wise into a probability distribution: `probabilities_<OriginalFileName>`
-
-
-Saved in:
-
-| Peer Group | Horizon  | Output Directory                                                                   |
-|------------|----------|-------------------------------------------------------------------------------------|
-| Mergers    | T+1–T+4  | `Mergers/JS Divergence/Basel III T+N/Probabilities/`                               |
-| Failures   | T+1–T+4  | `Failures/JS Divergence/Basel III T+N/Probabilities/`                              |
-| Survivors  | T+1–T+4  | `Survivors/JS Divergence/Basel III T+N/Probabilities/`                             |
-
-Each output CSV has the same bin labels, but each ratio column now sums to 1 (within floating point error). Columns with zero total are flagged and filled with 0-probability.
-
----
-
-## Example
-
-A binned file:
-
-| Bin         | RCB-0211-1754_q0 | RCB-0211-1754_q0q1 |
-|-------------|----------------|--------------|
-| [-1.0,-0.9) |      15        |      2       |
-| ...         |      ...       |     ...      |
-| > 2.0       |       0        |      1       |
-
-Is transformed into:
-
-| Bin         | RCB-0211-1754_q0 | RCB-0211-1754_q0q1 |
-|-------------|----------------|--------------|
-| [-1.0,-0.9) |    0.1034      |   0.0400     |
-| ...         |    ...         |   ...        |
-| > 2.0       |    0.0000      |   0.0200     |
-
----
-
-## Use Case
-
-These probability distributions will be input into **Step 8.2.1.X**:
-- Pairwise JSD computation between peer group distributions
-- Measurement of structural divergence in financial behaviors over time
-
-This process supports empirical falsification of systemic monotonicity under Basel III and enables quantification of capital misalignment across risk states.
+Each group, horizon, bin specification, and ratio column is normalized independently. The resulting files feed the selected-horizon JSD calculation.

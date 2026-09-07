@@ -1,4 +1,5 @@
 import requests
+import argparse
 import pandas as pd
 import os
 import sys
@@ -33,30 +34,19 @@ MAT_DIR = paths.MAT_DIR
 JSD_DIR = os.path.join(MAT_DIR, "JSD")
 IG_DIR = os.path.join(MAT_DIR, "IG")
 
-# Define processing and output directories (EXPLICITLY as you specified!)
-process_dir_t1 = os.path.join(JSD_DIR, "BASEL III T+1")
-process_dir_t2 = os.path.join(JSD_DIR, "BASEL III T+2")
-process_dir_t3 = os.path.join(JSD_DIR, "BASEL III T+3")
-process_dir_t4 = os.path.join(JSD_DIR, "BASEL III T+4")
-
-output_dir_t1 = os.path.join(IG_DIR, "BASEL III T+1")
-output_dir_t2 = os.path.join(IG_DIR, "BASEL III T+2")
-output_dir_t3 = os.path.join(IG_DIR, "BASEL III T+3")
-output_dir_t4 = os.path.join(IG_DIR, "BASEL III T+4")
-
 # Function to process CSVs
-def process_csvs(process_dir, output_dir):
+def process_csvs(process_dir, output_dir, bins, threshold=0.3):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     for filename in os.listdir(process_dir):
-        if filename.endswith(".csv"):
+        if any(filename.endswith(f"_{width}.csv") for width in bins):
             file_path = os.path.join(process_dir, filename)
             df = pd.read_csv(file_path)
 
             # Check first row beneath header
             first_row = df.iloc[0]
-            columns_to_keep = [col for col in df.columns if pd.to_numeric(first_row[col], errors='coerce') >= 0.3]
+            columns_to_keep = [col for col in df.columns if pd.to_numeric(first_row[col], errors='coerce') >= threshold]
 
             cleaned_df = df[columns_to_keep]
 
@@ -65,8 +55,29 @@ def process_csvs(process_dir, output_dir):
 
             print(f"Processed: {filename} | Dropped: {len(df.columns) - len(columns_to_keep)} columns")
 
-# Apply function to each directory pair
-process_csvs(process_dir_t1, output_dir_t1)
-process_csvs(process_dir_t2, output_dir_t2)
-process_csvs(process_dir_t3, output_dir_t3)
-process_csvs(process_dir_t4, output_dir_t4)
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Filter selected JSD horizons and bin specifications.")
+    parser.add_argument("--horizons", type=int, choices=[1, 2, 3, 4], nargs="+", required=True)
+    parser.add_argument("--bins", type=int, nargs="+", required=True)
+    parser.add_argument("--material-dir", default=paths.MAT_DIR)
+    parser.add_argument("--threshold", type=float, default=0.3)
+    args = parser.parse_args(argv)
+    if any(width <= 0 for width in args.bins):
+        parser.error("--bins values must be positive")
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    for horizon in dict.fromkeys(args.horizons):
+        process_csvs(
+            os.path.join(args.material_dir, "JSD", f"BASEL III T+{horizon}"),
+            os.path.join(args.material_dir, "IG", f"BASEL III T+{horizon}"),
+            args.bins,
+            args.threshold,
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
