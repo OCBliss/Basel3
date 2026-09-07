@@ -4,6 +4,8 @@ import sys
 import unittest
 import importlib.util
 import ast
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 
 import yaml
@@ -119,6 +121,7 @@ class PipelineConfigurationTests(unittest.TestCase):
         for step, events in events_by_step.items():
             with self.subTest(step=step):
                 spec = self.config.scripts[step]
+                self.assertIn("--events", spec.args)
                 module_spec = importlib.util.spec_from_file_location(
                     "material_step_" + step.replace(".", "_"), spec.path
                 )
@@ -128,7 +131,12 @@ class PipelineConfigurationTests(unittest.TestCase):
                 try:
                     module_spec.loader.exec_module(module)
                     args = module.parse_args(list(spec.args))
-                    default_args = module.parse_args([])
+                    if step.startswith("6.0.") or step in {"6.2", "6.3", "6.4"}:
+                        error_output = StringIO()
+                        with redirect_stderr(error_output), self.assertRaises(SystemExit) as error:
+                            module.parse_args([])
+                        self.assertEqual(2, error.exception.code)
+                        self.assertIn("--events", error_output.getvalue())
                 finally:
                     sys.path[:] = original_import_path
 
@@ -137,7 +145,6 @@ class PipelineConfigurationTests(unittest.TestCase):
                     return (value if value.is_absolute() else spec.cwd / value).resolve()
 
                 self.assertEqual(events, args.events)
-                self.assertEqual(events, default_args.events)
                 self.assertEqual(
                     PROJECT_ROOT / "Material Events",
                     from_working_directory(args.material_dir),
@@ -159,6 +166,25 @@ class PipelineConfigurationTests(unittest.TestCase):
                         spec.inputs[-1],
                         from_working_directory(args.quarter_map),
                     )
+
+    def test_material_steps_call_four_shared_implementations(self):
+        expected = {
+            "6.0.1": "material events/FDIC API/Material_events_download.py",
+            "6.0.2": "material events/FDIC API/Material_events_download.py",
+            "6.0.3": "material events/FDIC API/Material_events_download.py",
+            "6.1": "material events/FDIC API/Material_events_cleaned.py",
+            "6.1.1": "material events/FDIC API/Material_events_delete_api.py",
+            "6.2": "material events/Material_events_flag.py",
+            "6.3": "material events/Material_events_flag.py",
+            "6.4": "material events/Material_events_flag.py",
+        }
+        actual = {
+            step: spec.path.relative_to(PROJECT_ROOT / "src").as_posix()
+            for step, spec in self.config.scripts.items()
+            if step.startswith("6.")
+        }
+        self.assertEqual(expected, actual)
+        self.assertEqual(4, len(set(actual.values())))
 
     def test_material_event_barriers_preserve_stage_order(self):
         downloads = {"6.0.1", "6.0.2", "6.0.3"}

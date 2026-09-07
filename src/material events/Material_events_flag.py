@@ -177,13 +177,12 @@ def run_event(event, args):
     print(f"Processed files: {processed}")
 
 
-def parse_args(argv=None, default_events=None):
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Flag selected material events in de novo → failures → mergers order.",
         epilog="A selected stage reads the same upstream files as its original script."
     )
-    parser.add_argument("--events", nargs="+", choices=list(EVENTS),
-                        default=list(EVENTS) if default_events is None else default_events)
+    parser.add_argument("--events", nargs="+", choices=list(EVENTS), required=True)
     parser.add_argument("--material-dir", type=Path, default=Path(paths.MAT_DIR))
     parser.add_argument("--input-dir", type=Path)
     parser.add_argument("--output-dir", type=Path)

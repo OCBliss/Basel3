@@ -308,11 +308,12 @@ Below is the current flow in `pipeline_config_dynamic.yaml`.
    - "4.0": Uses the same ratio methods at P1Q, P2Q, and P3Q and writes the final dynamic-ratio files. Historical rows are joined by `CERT`.
 
 2. Material Events:
-   - "6.0.1"–"6.0.3": Download the three FDIC event datasets concurrently.
-   - "6.1": Cleans material event data.
-   - "6.2": Flags de novo events in RC data.
-   - "6.3": Flags failures in RC data.
-   - "6.4": Flags mergers in RC data.
+   - "6.0.1"–"6.0.3": Run `Material_events_download.py` concurrently with `--events de_novo`, `--events failures`, and `--events mergers`.
+   - "6.1": Runs `Material_events_cleaned.py` for all three event datasets.
+   - "6.1.1": Runs `Material_events_delete_api.py` to remove matching RAW download files after cleaning.
+   - "6.2"–"6.4": Run `Material_events_flag.py` sequentially with `--events de_novo`, `--events failures`, and `--events mergers`.
+
+   These eight YAML stages use four Python scripts. Each stage's `args` list supplies its event selection and paths. The download and flag scripts require `--events`, accepting one or more of `de_novo`, `failures`, and `mergers`; cleaning and deletion default to all three when selection is omitted. See the [material-event CLI](src/material%20events/readme.md) and [FDIC API CLI](src/material%20events/FDIC%20API/readme.md) for arguments and examples.
 
 4. Peer Group Filtering:
    - `peers`: Runs 7.0.0.1–7.0.0.4 in parallel, filtering peer groups for Basel III across T+1 to T+4 horizons.
@@ -358,14 +359,10 @@ Below is the current flow in `pipeline_config_dynamic.yaml`.
     - `Dynamic_Ratios.py`
   - `material events/`:
     - `FDIC API/`:
-      - `Material_events_de_novo_download_v2.py`
-      - `Material_events_Failures_download_v2.py`
-      - `Material_events_mergers_download_v2.py`
+      - `Material_events_download.py`
+      - `Material_events_cleaned.py`
       - `Material_events_delete_api.py`
-      - `Material_events_cleaned2.py`
-    - `Material_events_de_novo_flag4.py`
-    - `Material_events_failures_flag4.py`
-    - `Material_events_mergers_flag2.py`
+    - `Material_events_flag.py`
   - `peer groups/`:
     - `base/`:
       - `Material_events_peer_group_basel3_t1.py`

@@ -17,6 +17,8 @@ The pipeline processes financial data through a series of modular Python scripts
 
 The workflow is defined in `pipeline_config_dynamic.yaml`, allowing flexibility for any number of processing branches or steps.
 
+Material-event processing uses four Python scripts: one downloader, one cleaner, one RAW-file deletion script, and one flagging script. The eight material-event YAML stages call these scripts directly with explicit `args` lists. Downloading and flagging require `--events` with one or more of `de_novo`, `failures`, and `mergers`; cleaning and deletion default to all three when selection is omitted. All four accept `--material-dir`. See the [material-event CLI](material%20events/readme.md) and [FDIC API CLI](material%20events/FDIC%20API/readme.md) for the remaining options.
+
 ### Directory Structure
 - `pipeline/`:
   - `Task_manager_Global_yaml_driven.py`
@@ -46,14 +48,10 @@ The workflow is defined in `pipeline_config_dynamic.yaml`, allowing flexibility 
     - `Dynamic_Ratios.py`
   - `material events/`:
     - `FDIC API/`:
-      - `Material_events_de_novo_download_v2.py`
-      - `Material_events_Failures_download_v2.py`
-      - `Material_events_mergers_download_v2.py`
+      - `Material_events_download.py`
+      - `Material_events_cleaned.py`
       - `Material_events_delete_api.py`
-      - `Material_events_cleaned2.py`
-    - `Material_events_de_novo_flag4.py`
-    - `Material_events_failures_flag4.py`
-    - `Material_events_mergers_flag2.py`
+    - `Material_events_flag.py`
   - `peer groups/`:
     - `base/`:
       - `Material_events_peer_group_basel3_t1.py`

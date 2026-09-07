@@ -1,10 +1,17 @@
-The three existing flag entry points now share `Material_events_flag.py`. Each accepts `--events`, `--material-dir`, `--input-dir`, `--output-dir`, and `--quarter-map`, and defaults to its original event. The YAML explicitly supplies these arguments for steps `6.2`, `6.3`, and `6.4`.
+`Material_events_flag.py` handles de novo, failure, and merger flagging. Together with `FDIC API/Material_events_download.py`, `FDIC API/Material_events_cleaned.py`, and `FDIC API/Material_events_delete_api.py`, it forms the four-script material-event implementation.
 
-`--events` accepts `de_novo`, `failures`, and `mergers`. The shared script defaults to all three in de novo → failures → mergers order. A selected stage reads its existing upstream CSV files. Explicit input, output, or quarter-map overrides require one selected event, so a single path cannot accidentally be applied to multiple stages.
+The flag script requires `--events`, accepting one or more of `de_novo`, `failures`, and `mergers`. It runs selected stages in de novo → failures → mergers order, reading each stage's existing upstream CSV files. Optional arguments are `--material-dir`, `--input-dir`, `--output-dir`, and `--quarter-map`. Explicit input, output, or quarter-map overrides require one selected event. The default material directory comes from `Basel3_Global_Filepath.py`.
 
-For example, step `6.3` passes:
+For example, from the repository root, run all three flagging stages:
+
+```bash
+python3 "src/material events/Material_events_flag.py" --events de_novo failures mergers
+```
+
+The YAML calls this script directly for steps `6.2`, `6.3`, and `6.4`, selecting one event per stage and supplying its paths. Step `6.3` uses:
 
 ```yaml
+path: "material events/Material_events_flag.py"
 args:
   - --events
   - failures
@@ -18,7 +25,7 @@ args:
   - "Material Events/quarters_failures.csv"
 ```
 
-The shared implementation loads event dates and quarter windows into lookups once per stage. It retains each event's certificate/date conversions, all four failure/merger comparisons, intermediate CSV boundaries, filenames, and column order. Each flag remains an independent inclusive comparison between the existing START_DATE and its corresponding end date. All three entry points support `--help`; importing them does not process data.
+The implementation loads event dates and quarter windows into lookups once per stage. It retains each event's certificate/date conversions, all four failure/merger comparisons, intermediate CSV boundaries, filenames, and column order. Each flag remains an independent inclusive comparison between the existing START_DATE and its corresponding end date. The script supports `--help`; importing it does not process data.
 
 # Step 06.2 — Flag De Novo Banks in Panel Data
 

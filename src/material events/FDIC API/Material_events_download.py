@@ -134,10 +134,9 @@ def fetch_fdic_history(start_date, end_date, change_codes, fields, limit=10000):
     return df
 
 
-def parse_args(argv=None, default_events=None):
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Download FDIC material-event history.")
-    parser.add_argument("--events", nargs="+", choices=list(EVENTS),
-                        default=list(EVENTS) if default_events is None else default_events)
+    parser.add_argument("--events", nargs="+", choices=list(EVENTS), required=True)
     parser.add_argument("--material-dir", type=Path, default=Path(paths.MAT_DIR))
     parser.add_argument("--start-date", default="2014-01-01")
     parser.add_argument("--end-date", default="2024-12-31")

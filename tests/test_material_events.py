@@ -31,14 +31,14 @@ STAGES = (
     "6.0.1", "6.0.2", "6.0.3", "6.1", "6.1.1", "6.2", "6.3", "6.4"
 )
 ENTRYPOINTS = {
-    "6.0.1": "FDIC API/Material_events_de_novo_download_v2.py",
-    "6.0.2": "FDIC API/Material_events_Failures_download_v2.py",
-    "6.0.3": "FDIC API/Material_events_mergers_download_v2.py",
+    "6.0.1": "FDIC API/Material_events_download.py",
+    "6.0.2": "FDIC API/Material_events_download.py",
+    "6.0.3": "FDIC API/Material_events_download.py",
     "6.1": "FDIC API/Material_events_cleaned.py",
     "6.1.1": "FDIC API/Material_events_delete_api.py",
-    "6.2": "Material_events_de_novo_flag.py",
-    "6.3": "Material_events_failures_flag.py",
-    "6.4": "Material_events_mergers_flag.py",
+    "6.2": "Material_events_flag.py",
+    "6.3": "Material_events_flag.py",
+    "6.4": "Material_events_flag.py",
 }
 EVENT_FILES = {
     "de_novo": ("DE NOVO", "BankFind Suite API - de novo.csv"),
@@ -215,11 +215,11 @@ def write_http_stub(root):
 
 
 class MaterialEventsTests(unittest.TestCase):
-    def test_all_eight_existing_scripts_have_working_cli_help(self):
+    def test_four_executables_have_working_cli_help(self):
         with tempfile.TemporaryDirectory() as directory:
-            for stage, relative in ENTRYPOINTS.items():
+            for relative in dict.fromkeys(ENTRYPOINTS.values()):
                 script = PROJECT_ROOT / "src/material events" / relative
-                with self.subTest(stage=stage):
+                with self.subTest(script=relative):
                     result = subprocess.run(
                         [sys.executable, str(script), "--help"], cwd=directory,
                         capture_output=True, text=True, timeout=30,
@@ -227,13 +227,96 @@ class MaterialEventsTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertIn("--events", result.stdout)
                     self.assertIn("--material-dir", result.stdout)
-                    if stage.startswith("6.0."):
+                    if relative == ENTRYPOINTS["6.0.1"]:
                         for option in ("--start-date", "--end-date", "--limit"):
                             self.assertIn(option, result.stdout)
-                    if stage in {"6.2", "6.3", "6.4"}:
+                    if relative == ENTRYPOINTS["6.2"]:
                         for option in ("--input-dir", "--output-dir", "--quarter-map"):
                             self.assertIn(option, result.stdout)
             self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_shared_commands_require_events_before_writing(self):
+        for relative in (ENTRYPOINTS["6.0.1"], ENTRYPOINTS["6.2"]):
+            with self.subTest(script=relative), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                result = subprocess.run(
+                    [sys.executable, str(PROJECT_ROOT / "src/material events" / relative),
+                     "--material-dir", str(root / "output")],
+                    cwd=root, capture_output=True, text=True, timeout=30,
+                )
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("required", result.stderr)
+                self.assertIn("--events", result.stderr)
+                self.assertEqual(list(root.iterdir()), [])
+
+    def test_downloader_runs_only_selected_single_or_multiple_events(self):
+        for selected in (("failures",), ("mergers", "de_novo")):
+            with self.subTest(events=selected), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                stub = write_http_stub(root)
+                env = os.environ.copy()
+                env["PYTHONPATH"] = str(stub) + os.pathsep + env.get("PYTHONPATH", "")
+                result = subprocess.run(
+                    [sys.executable, str(PROJECT_ROOT / "src/material events" / ENTRYPOINTS["6.0.1"]),
+                     "--events", *selected, "--material-dir", str(root / "Material Events"),
+                     "--start-date", "2019-01-01", "--end-date", "2021-12-31", "--limit", "137"],
+                    cwd=root, env=env, capture_output=True, text=True, timeout=30,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for event, (folder, filename) in EVENT_FILES.items():
+                    event_dir = root / "Material Events" / folder
+                    self.assertEqual(event_dir.exists(), event in selected)
+                    self.assertEqual((root / ("request_" + event + ".json")).exists(),
+                                     event in selected)
+                    if event in selected:
+                        downloaded = pd.read_csv(event_dir / "RAW" / filename)
+                        cert_column = "CERT" if event == "de_novo" else "ACQ_CERT"
+                        self.assertEqual(downloaded[cert_column].tolist(),
+                                         [row["data"][cert_column] for row in event_rows(event)])
+
+    def test_flagger_runs_selected_stages_in_upstream_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            panel = write_fixture(root)
+            material = root / "Material Events"
+            upstream = material / "DE NOVO/Call Reports"
+            upstream.mkdir()
+            panel["DE_NOVO_FLAG"] = [1, 1, 0, 0, 0, 0, 0, 0, 0]
+            upstream_file = upstream / "DE NOVO_20200331.csv"
+            panel.to_csv(upstream_file, index=False)
+            upstream_bytes = upstream_file.read_bytes()
+            for event in ("failures", "mergers"):
+                folder, filename = EVENT_FILES[event]
+                cleaned = material / folder / "Cleaned"
+                cleaned.mkdir()
+                pd.DataFrame([{"CERT": row["data"]["ACQ_CERT"],
+                               "EFFDATE": row["data"]["EFFDATE"]}
+                              for row in event_rows(event)]).to_csv(cleaned / filename, index=False)
+            # No de novo event table exists: the selected stages must use the
+            # prepared upstream panel without silently running de novo again.
+            result = subprocess.run(
+                [sys.executable, str(PROJECT_ROOT / "src/material events" / ENTRYPOINTS["6.2"]),
+                 "--events", "mergers", "failures", "--material-dir", str(material)],
+                cwd=root, capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(upstream_file.read_bytes(), upstream_bytes)
+            failures = pd.read_csv(material / "Failures/Call Reports/Failures_20200331.csv")
+            mergers = pd.read_csv(material / "Mergers/Call Reports/Mergers_20200331.csv")
+            failure_flags = ["FAILURE_T{}".format(i) for i in range(1, 5)]
+            merger_flags = ["MERGER_T{}".format(i) for i in range(1, 5)]
+            self.assertEqual(failures[failure_flags].values.tolist(), [
+                [1, 1, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1],
+                [0, 0, 1, 1], [0, 0, 0, 1], [0, 0, 0, 0],
+                [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0],
+            ])
+            self.assertEqual(mergers[merger_flags].values.tolist(), [
+                [1, 1, 1, 1], [0, 1, 1, 1], [0, 1, 1, 1],
+                [0, 0, 1, 1], [0, 0, 0, 1], [0, 0, 0, 0],
+                [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0],
+            ])
+            pd.testing.assert_frame_equal(failures[list(panel.columns)], panel)
+            pd.testing.assert_frame_equal(mergers[list(failures.columns)], failures)
 
     def test_actual_yaml_runs_all_material_stages_and_preserves_expected_flags(self):
         production = manager.load_config()

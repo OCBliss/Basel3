@@ -28,7 +28,7 @@ scripts:
     outputs: ["data/CSV/Dynamic_Lag/Cleaned/*.csv"]
     create_dirs: ["data/CSV/Dynamic_Lag/Cleaned"]
   "6.0.1":
-    path: "material events/FDIC API/Material_events_de_novo_download_v2.py"
+    path: "material events/FDIC API/Material_events_download.py"
     args:
       - --events
       - de_novo
@@ -43,7 +43,7 @@ scripts:
     outputs: ["Material Events/DE NOVO/RAW/BankFind Suite API - de novo.csv"]
     create_dirs: ["Material Events/DE NOVO/RAW"]
   "6.0.2":
-    path: "material events/FDIC API/Material_events_Failures_download_v2.py"
+    path: "material events/FDIC API/Material_events_download.py"
     args:
       - --events
       - failures
@@ -58,7 +58,7 @@ scripts:
     outputs: ["Material Events/Failures/RAW/BankFind Suite API - Failures.csv"]
     create_dirs: ["Material Events/Failures/RAW"]
   "6.0.3":
-    path: "material events/FDIC API/Material_events_mergers_download_v2.py"
+    path: "material events/FDIC API/Material_events_download.py"
     args:
       - --events
       - mergers
@@ -107,7 +107,7 @@ scripts:
       - "Material Events/Failures/RAW/*.csv"
       - "Material Events/Mergers/RAW/*.csv"
   "6.2":
-    path: "material events/Material_events_de_novo_flag.py"
+    path: "material events/Material_events_flag.py"
     args:
       - --events
       - de_novo
@@ -126,7 +126,7 @@ scripts:
     outputs: ["Material Events/DE NOVO/Call Reports/*.csv"]
     create_dirs: ["Material Events/DE NOVO/Call Reports"]
   "6.3":
-    path: "material events/Material_events_failures_flag.py"
+    path: "material events/Material_events_flag.py"
     args:
       - --events
       - failures
@@ -145,7 +145,7 @@ scripts:
     outputs: ["Material Events/Failures/Call Reports/*.csv"]
     create_dirs: ["Material Events/Failures/Call Reports"]
   "6.4":
-    path: "material events/Material_events_mergers_flag.py"
+    path: "material events/Material_events_flag.py"
     args:
       - --events
       - mergers
