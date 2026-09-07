@@ -15,7 +15,7 @@ CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
 import Call_Report as functions  # noqa: E402
-import Call_Reports_v3_1 as ratios  # noqa: E402
+import Call_Reports_v4_0 as ratios  # noqa: E402
 
 
 class RecordingRow:
@@ -46,7 +46,7 @@ def complete_source_row(values=None):
 
 class ImportedRatioCreatorTests(unittest.TestCase):
     def test_ratio_creator_imports_domain_classes_and_defines_none(self):
-        source_path = CALL_REPORT_DIR / "Call_Reports_v3_1.py"
+        source_path = CALL_REPORT_DIR / "Call_Reports_v4_0.py"
         tree = ast.parse(source_path.read_text())
         class_definitions = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
         imported_names = {

@@ -280,7 +280,7 @@ class DynamicRatiosTests(unittest.TestCase):
     def test_ratio_dictionary_is_imported_not_recreated(self):
         source = MODULE_PATH.read_text()
 
-        self.assertIn("from Call_Reports_v3_1 import", source)
+        self.assertIn("from Call_Reports_v4_0 import", source)
         self.assertNotIn('"RCB-', source)
         self.assertNotIn("safe_divide", source)
 

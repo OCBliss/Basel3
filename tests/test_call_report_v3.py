@@ -15,7 +15,7 @@ CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
 import Call_Report as dated  # noqa: E402
-import Call_Reports_v3_1 as dated_ratios  # noqa: E402
+import Call_Reports_v4_0 as dated_ratios  # noqa: E402
 
 
 class RecordingRow:
@@ -291,17 +291,29 @@ class CallReportSourceAuditTests(unittest.TestCase):
 
     def test_ratio_domain_calls_all_name_their_date(self):
         tree = ast.parse(
-            (CALL_REPORT_DIR / "Call_Reports_v3_1.py").read_text()
+            (CALL_REPORT_DIR / "Call_Reports_v4_0.py").read_text()
         )
-        build_entry = next(
+        creator = next(
             node
             for node in tree.body
             if isinstance(node, ast.FunctionDef)
-            and node.name == "build_entry"
+            and node.name == "create_ratio_entries"
         )
+        entries = {
+            target.id: node.value
+            for node in creator.body
+            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
+            for target in node.targets
+            if isinstance(target, ast.Name)
+        }
+        self.assertEqual({"entry_051", "entry_031"}, set(entries))
+        self.assertEqual(152, sum(len(entry.keys) - 3 for entry in entries.values()))
+        for entry in entries.values():
+            self.assertEqual(dated_ratios.FEATURE_COLUMNS, tuple(key.value for key in entry.keys))
         domain_calls = [
             node
-            for node in ast.walk(build_entry)
+            for entry in entries.values()
+            for node in ast.walk(entry)
             if isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
         ]
@@ -311,12 +323,12 @@ class CallReportSourceAuditTests(unittest.TestCase):
             if not self.has_forwarded_date(call)
         ]
 
-        self.assertGreater(len(domain_calls), 100)
+        self.assertGreater(len(domain_calls), 200)
         self.assertEqual([], failures)
 
     def test_ratio_caller_has_no_form_selection_branch(self):
         tree = ast.parse(
-            (CALL_REPORT_DIR / "Call_Reports_v3_1.py").read_text()
+            (CALL_REPORT_DIR / "Call_Reports_v4_0.py").read_text()
         )
         function_names = {
             node.name
@@ -330,10 +342,11 @@ class CallReportSourceAuditTests(unittest.TestCase):
         }
 
         self.assertNotIn("select_report_entry", function_names)
+        self.assertNotIn("build_entry", function_names)
         self.assertTrue({"use_031", "use_051"}.isdisjoint(loaded_names))
 
     def test_only_the_two_public_modules_are_dependencies(self):
-        forbidden = {"Call_Report_v2_1", "Call_Report_v3"}
+        forbidden = {"Call_Report_v2_1", "Call_Report_v3", "Call_Reports_v3_1"}
 
         def imported_modules(source_path):
             tree = ast.parse(source_path.read_text())
@@ -349,7 +362,7 @@ class CallReportSourceAuditTests(unittest.TestCase):
 
         domain_imports = imported_modules(CALL_REPORT_DIR / "Call_Report.py")
         caller_imports = imported_modules(
-            CALL_REPORT_DIR / "Call_Reports_v3_1.py"
+            CALL_REPORT_DIR / "Call_Reports_v4_0.py"
         )
 
         self.assertTrue(forbidden.isdisjoint(domain_imports))
@@ -631,7 +644,7 @@ class DatedCallReportTests(DatedCallReportFixture):
 
         self.assertAlmostEqual(40.0 / 30.0, result)
 
-    def test_ratio_caller_keeps_each_forms_deposits_and_aligns_lags(self):
+    def test_ratio_caller_uses_051_deposits_and_keeps_031_native_values(self):
         current = self.rows[20241231]
         row_031 = dict(current)
         row_031.update(
@@ -647,6 +660,10 @@ class DatedCallReportTests(DatedCallReportFixture):
                 "RCONB550": 3.0,
                 "RCON2385": 12.0,
                 "RCONJ473": 6.0,
+                "RCFD0211": 6.0,
+                "RCFD1754": 12.0,
+                "RCFD2948": 180.0,
+                "RCFD3123": 20.0,
             }
         )
         for column in (
@@ -706,20 +723,35 @@ class DatedCallReportTests(DatedCallReportFixture):
             actual_p0[0]["RCB-0211-1754"],
         )
         self.assertEqual(0.9, actual_p0[0]["RCE-B549-2215"])
-        expected_031_transaction = {
-            "RCE-B549-2215": 0.2,
-            "RCE-2202-2215": 0.3,
-            "RCE-2203-2215": 0.4,
-            "RCE-B551-2215": 0.5,
-            "RCE-2213-2215": 0.6,
-            "RCE-2216-2215": 0.7,
-            "RCE-2215-2200": 0.25,
+        expected_domestic_deposits = {
+            "RCE-B549-2215": 0.9,
+            "RCE-2202-2215": 1.0,
+            "RCE-2203-2215": 1.0,
+            "RCE-B551-2215": 1.0,
+            "RCE-2213-2215": 1.0,
+            "RCE-2216-2215": 1.0,
+            "RCE-2215-2200": 1.0,
+            "RCE-B550-2385": 1.0,
+            "RCE-2385-2200": 1.0,
+            "RCE-itemM2a-2385": 2.0,
+            "RCE-6648-2385": 1.0,
+            "RCE-J473-2385": 1.0,
+            "RCE-J474-2385": 1.0,
+            "RCE-HK07-savings": 0.5,
+            "RCE-HK08-savings": 0.5,
+            "RCE-HK09-savings": 0.5,
+            "RCE-HK10-savings": 0.5,
         }
-        for feature, expected in expected_031_transaction.items():
-            self.assertAlmostEqual(expected, actual_p0[1][feature])
-            self.assertNotEqual(actual_p0[0][feature], actual_p0[1][feature])
-        self.assertEqual(0.25, actual_p0[1]["RCE-B550-2385"])
-        self.assertEqual(0.5, actual_p0[1]["RCE-J473-2385"])
+        self.assertEqual(17, len(expected_domestic_deposits))
+        for feature, expected in expected_domestic_deposits.items():
+            with self.subTest(feature=feature):
+                self.assertAlmostEqual(expected, actual_p0[0][feature])
+                self.assertAlmostEqual(expected, actual_p0[1][feature])
+        self.assertEqual(6.0 / 12.0, actual_p0[1]["RCB-0211-1754"])
+        self.assertNotEqual(actual_p0[0]["RCB-0211-1754"], actual_p0[1]["RCB-0211-1754"])
+        self.assertEqual(10.0 / 20.0, actual_p0[0]["RC-2200-Item21"])
+        self.assertEqual(10.0 / 200.0, actual_p0[1]["RC-2200-Item21"])
+        self.assertNotEqual(80.0 / 200.0, actual_p0[1]["RC-2200-Item21"])
 
         actual_p1q = dated_ratios.create_ratio_entries(
             current,

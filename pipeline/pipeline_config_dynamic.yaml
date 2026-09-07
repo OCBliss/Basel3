@@ -35,8 +35,17 @@ scripts:
     path: "call reports/numeric_only.py"
     inputs: ["data/CSV/Cleaned/*.csv"]
   "3.0":
-    path: "call reports/Call_Reports_v3_1.py"
-    inputs: ["data/CSV/Cleaned/*.csv"]
+    path: "call reports/Call_Reports_v4_0.py"
+    args:
+      - --input-dir
+      - "data/CSV/Cleaned"
+      - --output-dir
+      - "data/CSV/Interleaved"
+      - --quarter-map
+      - "data/CSV/quarter_flag.csv"
+      - --date
+      - P0
+    inputs: ["data/CSV/Cleaned/*.csv", "data/CSV/quarter_flag.csv"]
     outputs: ["data/CSV/Interleaved/*.csv"]
     create_dirs: ["data/CSV/Interleaved"]
   "4.0":

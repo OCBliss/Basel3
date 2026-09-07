@@ -1,4 +1,4 @@
-# Call Report preparation and conversion
+# Call Report preparation, conversion and ratios
 
 The pipeline reads the tab-delimited FFIEC schedules under `data/TXT/`. The older root-level `Call Report/` directory and the PDF reference reports are not inputs.
 
@@ -39,3 +39,21 @@ python3 pipeline/Task_manager_Global_yaml_driven.py
 ```
 
 The [pipeline guide](../../pipeline/readme.md) describes the execution order. The [ratio catalogue](../ratios/variables.md) lists the calculated columns.
+
+## Ratio API and caller
+
+`Call_Report.py` is the API layer. It defines `CallReport_031`, `CallReport_051`, their schedule methods, historical-quarter lookup and division behavior. `Call_Reports_v4_0.py` imports that API and constructs `report_051` and `report_031` for each bank row. Each of its two entries contains all 76 ratios plus `IDRSSD`, `RCON9999` and `CERT`, with the full form and method path written in every expression.
+
+The 031 entry uses 051 domestic-deposit calls for all 17 `RCE-*` ratios. Its `RC-2200-Item21` numerator also uses 051 domestic deposits; the denominator uses 031 liabilities. The remaining 031 expressions call the 031 instance. Both entries are written out separately, including repeated expressions.
+
+Task `3.0` calls v4 with its input, output, quarter map and `P0` date supplied by YAML. `Dynamic_Ratios.py` remains the separate task `4.0`; it imports v4's ratio calculation and calls it for `P1Q`, `P2Q` and `P3Q`.
+
+To run the current-ratio stage after source cleaning:
+
+```sh
+python3 "src/call reports/Call_Reports_v4_0.py" --input-dir data/CSV/Cleaned --output-dir data/CSV/Interleaved --quarter-map data/CSV/quarter_flag.csv --date P0
+```
+
+The same paths are defaults resolved from the caller's location, so a normal Python build from an editor or another working directory can run it without arguments. `--date` also accepts `P1Q`, `P2Q`, `P3Q` and `P1Y`. The caller requires `Call_Report.py` beside it; the API remains a separate file.
+
+The downloaded 2013 files omit six capital columns: `RCOAA223`, `RCOAP840`, `RCOAP859`, `RCFAA223`, `RCFAP840` and `RCFAP859`. Before passing a pre-2014 row to the API, the caller supplies missing values for absent columns in that list. It preserves supplied values and leaves the input row unchanged. This keeps unavailable capital ratios missing without substituting another form's fields.

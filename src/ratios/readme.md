@@ -12,8 +12,8 @@ Inputs:
 - `data/CSV/Interleaved/Cleaned_Call_Report_<YYYYMMDD>.csv`
 - `data/CSV/quarter_flag.csv`
 
-The current values come from the Interleaved file. The same functions in
-`Call_Reports_v3_1.py` calculate `P1Q`, `P2Q`, and `P3Q`. Lag results merge on
+The current values come from the Interleaved file. The explicit entries in
+`Call_Reports_v4_0.py`, using the separate `Call_Report.py` API, calculate `P1Q`, `P2Q`, and `P3Q`. Lag results merge on
 `CERT`, matching the original distributed-lag pipeline.
 
 For every ratio, the output contains:

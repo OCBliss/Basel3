@@ -1,11 +1,12 @@
 # Ratio variables
 
 This catalogue lists the 76 ratio columns produced by
-[Call_Reports_v3_1.py](../call%20reports/Call_Reports_v3_1.py). The names match
-`FEATURE_COLUMNS`; the calculations below follow `build_entry()` and the
-methods in [Call_Report.py](../call%20reports/Call_Report.py).
+[Call_Reports_v4_0.py](../call%20reports/Call_Reports_v4_0.py). The names match
+`FEATURE_COLUMNS`; the calculations below follow the two explicit entries
+in `create_ratio_entries()` and the separate API methods in
+[Call_Report.py](../call%20reports/Call_Report.py).
 
-The builder evaluates the `CallReport_031` and `CallReport_051` implementations
+The caller evaluates the `CallReport_031` and `CallReport_051` implementations
 and keeps the row with fewer missing values for each `IDRSSD`. Their field
 prefixes and date rules can differ. The method names below retain those
 distinctions. Each method receives the selected `date`; that repeated argument
@@ -15,21 +16,26 @@ Division in the tables means `safe_divide`: a missing input produces a missing
 result, and a non-missing numerator divided by zero produces zero. The capital
 methods apply their own documented date branches described below.
 
-These are the objects used in `build_entry()`:
+The tables use short names for readability. The executable caller writes
+out the full form-specific path every time; it does not use these aliases.
 
-```python
-balance = report.BalanceSheet
-loans = balance.LoansAndLeaseFinancingReceivables
-securities = report.Securities
-government_maturities = report.Maturities.Government
-residential_maturities = report.Maturities.ResidentialMortgage
-domestic_deposits = report.DepositLiabilities
-transaction = domestic_deposits.TransactionDeposits
-nontransaction = domestic_deposits.NonTransactionDeposits
-time_deposits = nontransaction.TimeDeposits
-less_than_250k = time_deposits.LessThan250k
-capital = report.RegulatoryCapital
-```
+| Table name | 051 entry | 031 entry |
+| --- | --- | --- |
+| `balance` | `report_051.BalanceSheet` | `report_031.BalanceSheet` |
+| `loans` | `report_051.BalanceSheet.LoansAndLeaseFinancingReceivables` | `report_031.BalanceSheet.LoansAndLeaseFinancingReceivables` |
+| `securities` | `report_051.Securities` | `report_031.Securities` |
+| `government_maturities` | `report_051.Maturities.Government` | `report_031.Maturities.Government` |
+| `residential_maturities` | `report_051.Maturities.ResidentialMortgage` | `report_031.Maturities.ResidentialMortgage` |
+| `domestic_deposits` | `report_051.DepositLiabilities` | `report_051.DepositLiabilities` |
+| `transaction` | `report_051.DepositLiabilities.TransactionDeposits` | `report_051.DepositLiabilities.TransactionDeposits` |
+| `nontransaction` | `report_051.DepositLiabilities.NonTransactionDeposits` | `report_051.DepositLiabilities.NonTransactionDeposits` |
+| `time_deposits` | `report_051.DepositLiabilities.NonTransactionDeposits.TimeDeposits` | `report_051.DepositLiabilities.NonTransactionDeposits.TimeDeposits` |
+| `less_than_250k` | `report_051.DepositLiabilities.NonTransactionDeposits.TimeDeposits.LessThan250k` | `report_051.DepositLiabilities.NonTransactionDeposits.TimeDeposits.LessThan250k` |
+| `capital` | `report_051.RegulatoryCapital` | `report_031.RegulatoryCapital` |
+
+The 031 entry's 17 `RCE-*` expressions use the 051 domestic-deposit API.
+`RC-2200-Item21` also uses 051 deposits in its numerator and 031 liabilities
+in its denominator. These form choices are explicit in the caller.
 
 For securities, `htm` and `afs` select held-to-maturity and available-for-sale;
 `ac` and `fv` select amortized cost and fair value.

@@ -16,7 +16,7 @@ for import_path in (CALL_REPORT_DIR, SRC_DIR):
 
 import Basel3_Global_Filepath as paths  # noqa: E402
 from Call_Report import QuarterCache  # noqa: E402
-from Call_Reports_v3_1 import FEATURE_COLUMNS, process_dataframe  # noqa: E402
+from Call_Reports_v4_0 import FEATURE_COLUMNS, process_dataframe  # noqa: E402
 
 
 REPORT_QUARTER = re.compile(r"(\d{8})$")

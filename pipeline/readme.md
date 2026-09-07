@@ -60,7 +60,8 @@ Script paths are relative to `src/`. Artifact paths and the default working dire
 | --- | --- |
 | `0.0` | Download, validate and extract the required FFIEC quarters from the active material-event date ranges |
 | `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
-| `3.0`, `4.0` | Current-quarter and dynamic ratios |
+| `3.0` | `call reports/Call_Reports_v4_0.py`: two explicit ratio entries using the separate `Call_Report.py` API |
+| `4.0` | `ratios/Dynamic_Ratios.py`: current and three historical-quarter changes through the v4 caller |
 | `6.0.1`, `6.0.2`, `6.0.3` | Concurrent calls to `Material_events_download.py`, with separate event arguments |
 | `6.1`, `6.1.1` | Clean material events, then remove matching RAW downloads |
 | `6.2`, `6.3`, `6.4` | Sequential calls to `Material_events_flag.py` for de novo, failures and mergers |
