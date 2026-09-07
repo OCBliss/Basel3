@@ -8,7 +8,7 @@ Use `Task_manager_Global_yaml_driven.py` to run the workflow.
 
 ## Run the Configured Pipeline
 
-The current YAML contains **19 tasks**, covering Call Reports through the final JSD column filter. RWA components remain separate from this execution list.
+The current YAML contains **20 tasks**, covering Call Reports through the final JSD column filter. RWA components remain separate from this execution list.
 
 From the repository root:
 
@@ -16,6 +16,8 @@ From the repository root:
 python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
 python3 pipeline/Task_manager_Global_yaml_driven.py
 ```
+
+Task `0.0` receives the active YAML through the reserved `{config_path}` argument. It completes before conversion and stops the pipeline if any required quarter cannot be prepared. Quarter tables remain in the tracked root-level `Material Events/` folder; output folders are created at runtime.
 
 Use `--config path/to/config.yaml` for another configuration or `--list` to list its tasks. A dry run displays commands, inputs and outputs without creating directories, logs or subprocesses. A real run writes per-task logs under `pipeline_logs/<run-id>/`, unless `log_root` is configured.
 
@@ -56,6 +58,7 @@ Script paths are relative to `src/`. Artifact paths and the default working dire
 
 | Tasks | Work |
 | --- | --- |
+| `0.0` | Download, validate and extract the required FFIEC quarters from the active material-event date ranges |
 | `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
 | `3.0`, `4.0` | Current-quarter and dynamic ratios |
 | `6.0.1`, `6.0.2`, `6.0.3` | Concurrent calls to `Material_events_download.py`, with separate event arguments |

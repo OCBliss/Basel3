@@ -1,53 +1,41 @@
-# Step 01 — TXT to CSV Preprocessing with FDIC Certificate Augmentation
+# Call Report preparation and conversion
 
-## Overview
+The pipeline reads the tab-delimited FFIEC schedules under `data/TXT/`. The older root-level `Call Report/` directory and the PDF reference reports are not inputs.
 
-This preprocessing script converts FFIEC Call Report `.txt` files into standardized `.csv` format. It dynamically finds and loads project-specific filepaths, processes each quarterly folder of text files, extracts the FDIC Certificate Number (`FDIC CERT`) using the `POR` file, and writes out clean, augmented `.csv` files to a structured subdirectory layout.
+## Prepare the required quarters
 
-The resulting files are saved in: <ROOT_DIR>`Call Report/CSV/Schedules/`
+Task `0.0` runs `prepare_call_reports.py`. It reads the material-event download date ranges from the active YAML, adds the three previous quarters required for ratio changes, and downloads **Call Reports — Single Period** ZIPs. It validates and extracts them before conversion starts.
 
----
+From the repository root, inspect the required quarters without downloading:
 
-## Dependencies
+```sh
+python3 "src/call reports/prepare_call_reports.py" --plan
+```
 
-- Python ≥ 3.6
-- `csv`, `os`, `sys`, `importlib.util`
+The current configuration requires 47 quarters, from 2013Q2 through 2024Q4. Extracted files go directly inside `data/TXT/FFIEC CDR Call Bulk All Schedules YYYYMMDD/`. ZIPs and validation records are retained under `data/FFIEC/`; these downloaded files are ignored by Git. See the [source guide](../readme.md) for configuration, repair and rerun options.
 
----
+## Convert TXT files to schedule CSVs
 
-## Functionality
+Task `1.0` runs `call_reports_mkdir_txt_csvs_global.py`. For each quarterly folder it:
 
-- **Dynamic Filepath Resolution**  
-  Locates `Basel3_Global_Filepath.py` anywhere on the system.
-  
-- **Directory Creation**  
-  Ensures existence of necessary directories under `/TXT` and `/CSV`.
+1. Reads the POR file and builds the `IDRSSD` to FDIC certificate mapping.
+2. Converts each other TXT file to CSV, keeping its original filename stem.
+3. Inserts `FDIC Certificate Number` after `IDRSSD` and drops rows whose first field is blank, including schedule-description rows.
+4. Writes the files under `data/CSV/Schedules/YYYYMMDD/`.
 
-- **FDIC Certificate Augmentation**  
-  Uses `FFIEC CDR Call Bulk POR.txt` to map `IDRSSD → FDIC CERT`.
+The POR file supplies identifiers; it is not itself exported as a schedule CSV. All paths resolve from this checkout through `src/Basel3_Global_Filepath.py`.
 
-- **Batch TXT → CSV Conversion**  
-  Converts all non-POR `.txt` files in quarterly subfolders into `.csv` format, injecting the FDIC Certificate number as the second column.
+A direct conversion run prints an error and skips a quarter without a usable POR mapping. The normal pipeline first validates the archives and required source files in task `0.0`.
 
-- **Error Handling**  
-  Skips subdirectories without a valid `POR` file or IDRSSD mapping.
+## Continue processing
 
----
+The YAML then merges each quarter's schedules, removes nonnumeric columns, calculates current-quarter ratios, and runs the dynamic-ratio stage. Their files are under `data/CSV/Cleaned/`, `data/CSV/Interleaved/` and `data/CSV/Dynamic_Lag/Cleaned/`. The lag lookup is the tracked `data/CSV/quarter_flag.csv`.
 
-## Output Structure
+Run the configured sequence from the repository root:
 
-Each output `.csv` will contain:
+```sh
+python3 -m pip install -r requirements.txt
+python3 pipeline/Task_manager_Global_yaml_driven.py
+```
 
-1. `IDRSSD` — Institution identifier
-2. `FDIC Certificate Number` — Mapped from POR file
-3. Remaining columns — Original schedule columns
-
----
-
-## Usage
-
-Ensure the following conditions:
-
-1. `Basel3_Global_Filepath.py` exists and defines `ROOT_DIR`.
-2. FFIEC Call Report text data is placed into: <ROOT_DIR>`Call Reports/TXT/`
-3. They are download from the FFIEC CDR, unzipped, and convert ending date MM:DD:YYYY --> YYYY:MM:DD
+The [pipeline guide](../../pipeline/readme.md) describes the execution order. The [ratio catalogue](../ratios/variables.md) lists the calculated columns.

@@ -163,7 +163,7 @@ timing of distributional changes itself contains economically meaningful
 
 [Here](https://github.com/OCBliss/Basel3/tree/refactor/pipeline)
 
-The configured Basel III pipeline runs 19 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
+The configured Basel III pipeline runs 20 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
 
 Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
 
@@ -178,7 +178,7 @@ The YAML configuration therefore represents the research workflow itself rather 
 
 ### Call Reports
 
-[Here](https://github.com/OCBliss/Basel3/tree/refactor/call%20reports)
+[Here](https://github.com/OCBliss/Basel3/tree/refactor/src/call%20reports)
 
 The empirical analysis in this repository is built upon FFIEC Call Reports, the
 quarterly regulatory filings submitted by every insured U.S. commercial bank.
@@ -195,7 +195,7 @@ cross-sectional, and distributional analysis.
 
 ### JSD
 
-[Here](https://github.com/OCBliss/Basel3/tree/refactor/JSD)
+[Binning, PMF and calculation guide](src/readme.md)
 
 Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon divergence was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
 
@@ -274,14 +274,16 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
 - The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation. The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
 
 ### How It Works
-1. Download FFIEC CDR data:
-   - `https://cdr.ffiec.gov/public/PWS/DownloadBulkData.aspx`
-   - Dowload `Call Report - Single Period` for all periods in question
-   - Place unzipped files `\Basel_iii\data\TXT`
-   - Make sure folders are `FFIEC CDR Call Bulk All Schedules YYYYMMDD`
+1. Install the dependencies from the repository root:
+
+   ```sh
+   python3 -m pip install -r requirements.txt
+   ```
+
+   The pipeline's first task downloads FFIEC **Call Reports — Single Period**, in tab-delimited format. It reads the material-event date ranges in the active YAML, includes three earlier quarters for the dynamic ratios, validates the ZIPs, and extracts them under `data/TXT/`. The current settings require 47 quarters, from 2013Q2 through 2024Q4. No bulk data needs to be copied from another checkout. See the [preparation and rerun instructions](src/readme.md).
 2. `Basel3_Global_Filepath.py`:
    - Finds the `Basel3/` root directory dynamically from its own location, then;
-   - Finds the `src/`, `Call Reports/`, `Material Events/` directories and dynamically build sub-root directories.
+   - Resolves `src/`, `data/` and `Material Events/` within that checkout.
 3. Run the manager from the repository root:
 
    ```sh
@@ -317,10 +319,11 @@ The default runs all four horizons and all four central bin counts. For an optio
 
 ### Current Workflow
 
-The current configuration has **19 tasks**:
+The current configuration has **20 tasks**:
 
 | Tasks | Processing |
 | --- | --- |
+| `0.0` | Download and verify all required FFIEC reporting quarters before conversion |
 | `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
 | `3.0`, `4.0` | Build current-quarter ratios and dynamic ratios using historical rows joined by `CERT` |
 | `6.0.1`–`6.0.3` | Call `Material_events_download.py` concurrently for de novo, failures and mergers |
@@ -353,10 +356,14 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
     - `Dynamic_Lag/`:
       - `Cleaned/`:
         - `Dynamic_Cleaned_Call_Report_20240630.csv`
-  - `TXT/`:
-  - `PDF/`:
+  - `TXT/`: downloaded quarterly schedules, stored locally.
+  - `FFIEC/`: validated ZIP cache and preparation records, stored locally.
+- `Material Events/`: tracked quarter tables and reference CSVs. The pipeline creates event, peer-group, JSD and filtered-output subfolders when it runs.
+- `PDF/`: research models and the archived bank-report PDFs in `Call Reports/`.
+- `RWA/`: source data and separate RWA research work.
 - `src/`: subroot directory containing all scripts.
   - `call reports/`:
+    - `prepare_call_reports.py`
     - `call_reports_mkdir_txt_csvs_global.py`
     - `Call_Report_Merged_Cleaned_Global.py`
     - `numeric_only.py`
@@ -364,6 +371,7 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
     - `Call_Reports_v3_1.py`
   - `ratios/`:
     - `Dynamic_Ratios.py`
+    - `variables.md`: ratio definitions.
   - `material events/`:
     - `FDIC API/`:
       - `Material_events_download.py`
@@ -387,3 +395,5 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
       - `JSD_intragroup_filter.py`
     - `intergroup/`:
       - `JSD_intergroup_call_reports.py`
+
+The old root-level `Call Report/`, `JSD/` and `Variables/` directories are not part of a fresh clone. Call Report data is downloaded into `data/`; new JSD results are written under `Material Events/`; the [ratio catalogue](src/ratios/variables.md) is kept beside the ratio code. Historical CSVs and saved sample results remain available in [commit 176c8db](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1). Existing local copies are retained and ignored by Git.

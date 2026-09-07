@@ -38,4 +38,4 @@ This folder contains the original call report schedules formatted by the FFIEC's
 
 ## Notes
 - Scripts for appending FDIC Certificate Numbers and processing MDRM codes are available in the `Scripts` folder.
-- Refer to the main `README.md` in the `Call Report` folder for an overview of all related subfolders.
+- See the [data guide](../readme.md) for the downloaded files, reference tables and generated outputs.

@@ -39,7 +39,7 @@ This step flags all **de novo banks** in the dynamic lagged panel dataset based 
 
 - cleaned BankFind Suite data: `/Material Events/DE NOVO/Cleaned/`
 - Quarter reference file mapping quarter identifiers to date ranges: `/Material Events/quarters_de_novo.csv`
-- `/Call Report/CSV/Dynamic_Lag/Cleaned/`
+- `/data/CSV/Dynamic_Lag/Cleaned/`
 
 
 ---

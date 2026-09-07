@@ -9,6 +9,18 @@ data/CSV/Interleaved/
 data/CSV/Schedules/
 data/TXT/FFIEC CDR Call Bulk All Schedules */
 Material Events/*/RAW/
+# Keep downloaded and generated material-event files local. Quarter tables
+# and reference CSVs at the top of Material Events remain versioned.
+/Material Events/DE NOVO/
+/Material Events/Failures/
+/Material Events/Mergers/
+/Material Events/Survivors/
+/Material Events/JSD/
+/Material Events/IG/
+# Retain older local data and results without shipping them in a fresh clone.
+/Call Report/
+/JSD/
+/Variables/
 data/FFIEC/
 data/FFIEC_backups/
 data/.ffiec-*/
