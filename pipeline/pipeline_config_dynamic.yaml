@@ -8,6 +8,19 @@ parameters:
   bins3: 1
 
 scripts:
+  "0.0":
+    path: "call reports/prepare_call_reports.py"
+    args:
+      - --config
+      - "{config_path}"
+      - --txt-dir
+      - "data/TXT"
+      - --cache-dir
+      - "data/FFIEC"
+      - --manifest
+      - "data/FFIEC/prepared.json"
+    outputs: ["data/FFIEC/prepared.json", "data/TXT/*/*.txt"]
+    create_dirs: ["data/FFIEC"]
   "1.0":
     path: "call reports/call_reports_mkdir_txt_csvs_global.py"
     inputs: ["data/TXT/*/*.txt"]
@@ -202,6 +215,7 @@ scripts:
     outputs: ["Material Events/IG/BASEL III T+{horizons}/JSD_survivors_vs_failures_{bins1}.csv","Material Events/IG/BASEL III T+{horizons}/JSD_survivors_vs_mergers_{bins1}.csv","Material Events/IG/BASEL III T+{horizons}/JSD_mergers_vs_failures_{bins1}.csv"]
 
 dependencies:
+  "0.0": ["1.0"]
   "1.0": ["2.0"]
   "2.0": ["2.1"]
   "2.1": ["3.0"]
@@ -222,7 +236,7 @@ dependencies:
   "8.2": ["8.3.0.1"]
 
 execution:
-  - sequential: ["1.0", "2.0", "2.1"]
+  - sequential: ["0.0", "1.0", "2.0", "2.1"]
   - sequential: ["3.0", "4.0"]
   - concurrent_groups:
       fdic_downloads: ["6.0.1", "6.0.2", "6.0.3"]

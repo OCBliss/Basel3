@@ -165,6 +165,8 @@ def _parameter_values(value: Any) -> Dict[str, Tuple[str, ...]]:
     for name, values in value.items():
         if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
             raise ConfigError(f"invalid parameter name {name!r}")
+        if name == "config_path":
+            raise ConfigError("parameters.config_path is reserved for the active configuration path")
         if not isinstance(values, list):
             values = [values]
         if not values or any(not isinstance(item, (str, int, float)) for item in values):
@@ -390,8 +392,13 @@ def load_config(path: Path = DEFAULT_CONFIG) -> PipelineConfig:
         scripts[step_id] = ScriptSpec(
             step_id=step_id,
             path=script_path,
-            args=tuple(expanded for arg in args
-                       for expanded in _expand_parameter(arg, parameters, f"scripts.{step_id}.args")),
+            args=tuple(
+                expanded for arg in args
+                for expanded in (
+                    [str(config_path)] if arg == "{config_path}"
+                    else _expand_parameter(arg, parameters, f"scripts.{step_id}.args")
+                )
+            ),
             inputs=_path_list(
                 definition.get("inputs"), PROJECT_ROOT, f"scripts.{step_id}.inputs", parameters
             ),

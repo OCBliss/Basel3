@@ -9,3 +9,6 @@ data/CSV/Interleaved/
 data/CSV/Schedules/
 data/TXT/FFIEC CDR Call Bulk All Schedules */
 Material Events/*/RAW/
+data/FFIEC/
+data/FFIEC_backups/
+data/.ffiec-*/

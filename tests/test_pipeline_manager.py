@@ -4,11 +4,13 @@ import sys
 import unittest
 import importlib.util
 import ast
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+import os
 from pathlib import Path
 import tempfile
 import copy
+from unittest import mock
 
 import yaml
 
@@ -109,6 +111,119 @@ class PipelineConfigurationTests(unittest.TestCase):
         self.assertEqual(("--label", "{CERT}"), config.scripts["one"].args)
         self.assertEqual((PROJECT_ROOT / "Material Events/{archive}/result.csv",),
                          config.scripts["one"].outputs)
+
+    def test_prep_receives_the_active_alternate_configuration_path(self):
+        raw = copy.deepcopy(manager._load_yaml(manager.DEFAULT_CONFIG))
+        raw["parameters"]["horizons"] = [1, 3]
+        with tempfile.TemporaryDirectory() as directory:
+            # Braces in the real path must not be interpreted as parameters.
+            path = Path(directory) / "alternate {horizons}.yaml"
+            path.write_text(yaml.safe_dump(raw))
+            config = manager.load_config(path)
+            prep = config.scripts["0.0"]
+            self.assertEqual(config.path, path.resolve())
+            self.assertEqual(
+                ("--config", str(path.resolve()), "--txt-dir", "data/TXT",
+                 "--cache-dir", "data/FFIEC", "--manifest", "data/FFIEC/prepared.json"),
+                prep.args,
+            )
+            self.assertNotIn(str(manager.DEFAULT_CONFIG), prep.args)
+
+    def test_config_path_token_works_without_user_parameters(self):
+        raw = {
+            "scripts": {"one": {"path": "one.py",
+                                 "args": ["--config", "{config_path}", "--label", "{CERT}"]}},
+            "dependencies": {}, "execution": [{"sequential": ["one"]}],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config {CERT}.yaml"
+            path.write_text(yaml.safe_dump(raw))
+            config = manager.load_config(path)
+            self.assertEqual(("--config", str(path.resolve()), "--label", "{CERT}"),
+                             config.scripts["one"].args)
+
+    def test_user_parameters_cannot_override_config_path(self):
+        raw = copy.deepcopy(manager._load_yaml(manager.DEFAULT_CONFIG))
+        raw["parameters"]["config_path"] = "some_other_configuration.yaml"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "collision.yaml"
+            path.write_text(yaml.safe_dump(raw))
+            with self.assertRaisesRegex(manager.ConfigError, "config_path.*reserved"):
+                manager.load_config(path)
+
+    def test_prep_runs_before_conversion_and_declares_completed_artifacts(self):
+        self.assertEqual("sequential", self.config.execution[0].kind)
+        self.assertEqual(("0.0", "1.0", "2.0", "2.1"), self.config.execution[0].payload)
+        self.assertEqual((), self.config.prerequisites["0.0"])
+        self.assertEqual(("0.0",), self.config.prerequisites["1.0"])
+        prep = self.config.scripts["0.0"]
+        self.assertEqual(PROJECT_ROOT / "src/call reports/prepare_call_reports.py", prep.path)
+        self.assertEqual((PROJECT_ROOT / "data/FFIEC/prepared.json", PROJECT_ROOT / "data/TXT/*/*.txt"),
+                         prep.outputs)
+        self.assertEqual((PROJECT_ROOT / "data/FFIEC",), prep.create_dirs)
+        self.assertNotIn("--start-date", prep.args)
+        self.assertNotIn("--end-date", prep.args)
+
+    def test_failed_preparation_stops_the_real_pipeline_before_conversion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            txt_dir = root / "data/TXT"
+            cache_dir = root / "data/FFIEC"
+            manifest = cache_dir / "prepared.json"
+            marker = root / "consumer-ran"
+            consumer = root / "consumer.py"
+            consumer.write_text("from pathlib import Path\nPath('consumer-ran').write_text('ran')\n")
+            stub_dir = root / "offline"
+            stub_dir.mkdir()
+            (stub_dir / "sitecustomize.py").write_text(
+                "from pathlib import Path\n"
+                "import requests\n"
+                "def deny_network(*args, **kwargs):\n"
+                "    Path(__file__).with_name('network-attempted').write_text('attempted')\n"
+                "    raise AssertionError('This fixture must not make HTTP requests')\n"
+                "requests.sessions.Session.request = deny_network\n"
+            )
+            raw = {
+                "scripts": {
+                    "0.0": {
+                        "path": str(PROJECT_ROOT / "src/call reports/prepare_call_reports.py"),
+                        "args": ["--config", "{config_path}", "--txt-dir", str(txt_dir),
+                                 "--cache-dir", str(cache_dir), "--manifest", str(manifest)],
+                        "outputs": [str(manifest), str(txt_dir / "*/*.txt")],
+                        "create_dirs": [str(cache_dir)], "cwd": str(root),
+                    },
+                    "1.0": {"path": str(consumer), "outputs": [str(marker)], "cwd": str(root)},
+                    "6.0.1": {
+                        "path": str(PROJECT_ROOT / "src/material events/FDIC API/Material_events_download.py"),
+                        "args": ["--events", "failures", "--start-date", "not-a-date",
+                                 "--end-date", "2024-03-31", "--material-dir", str(root / "Material Events")],
+                        "cwd": str(root),
+                    },
+                },
+                "dependencies": {"0.0": ["1.0"], "1.0": ["6.0.1"]},
+                "execution": [{"sequential": ["0.0", "1.0", "6.0.1"]}],
+                "log_root": str(root / "logs"),
+            }
+            config_path = root / "alternate {fixture}.yaml"
+            config_path.write_text(yaml.safe_dump(raw))
+            config = manager.load_config(config_path)
+            runner = manager.PipelineRunner(config, run_id="invalid_prep_dates")
+            runner.preflight()
+            runner.initialize_logs()
+            with mock.patch.dict(os.environ, {"PYTHONPATH": str(stub_dir)}):
+                with redirect_stdout(StringIO()):
+                    with self.assertRaisesRegex(manager.StepFailure, "step 0.0 exited with status 1"):
+                        runner.run()
+            self.assertEqual(set(), runner.completed)
+            self.assertFalse(marker.exists())
+            self.assertFalse(txt_dir.exists())
+            self.assertFalse(manifest.exists())
+            self.assertFalse((stub_dir / "network-attempted").exists())
+            prep_log = (runner.log_dir / "0.0.log").read_text()
+            self.assertIn(str(config_path), prep_log)
+            self.assertIn("Invalid material-event dates in step 6.0.1", prep_log)
+            self.assertFalse((runner.log_dir / "1.0.log").exists())
+            self.assertFalse((runner.log_dir / "6.0.1.log").exists())
 
     def test_parameter_errors_are_reported_before_execution(self):
         raw = copy.deepcopy(manager._load_yaml(manager.DEFAULT_CONFIG))
