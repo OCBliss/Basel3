@@ -1,5 +1,19 @@
 # Step 08.3.0.2 — Call Report Concatenation by Outcome & Basel Horizon
 
+Run from `Basel3_repo` after generating the cohort horizon panels and installing
+the root requirements:
+
+```bash
+python3 src/measures/intergroup/JSD_intergroup_call_reports.py
+```
+
+The script has no CLI options and is not part of the default pipeline. It reads
+the three groups' `Horizons/` folders and writes
+`Material Events/IG/Call Reports/RAW/Call_Report_Basel3_t<h>.csv`. Existing files
+can be replaced. Missing inputs are printed and skipped, so inspect the messages
+before treating an output as a complete three-group panel. This script executes
+at import and should not be imported for a read-only inspection.
+
 This step takes the peer-group–aligned call-report datasets for:
 
 - Survivors
@@ -45,17 +59,17 @@ The script expects the following folder organization:
 
 - Material Events/
     - Survivors/
-        - Peer Group Survivors/
+        - Horizons/
             - Peer_Group_Survivors_Basel3_t1.csv
             - Peer_Group_Survivors_Basel3_t2.csv
             - ...
     - Mergers/
-        - Peer Group Mergers/
+        - Horizons/
             - Peer_Group_Mergers_Basel3_t1.csv
             - Peer_Group_Mergers_Basel3_t2.csv
             - ...
     - Failures/
-        - Peer Group Failures/
+        - Horizons/
             - Peer_Group_Failures_Basel3_t1.csv
             - Peer_Group_Failures_Basel3_t2.csv
             - ...

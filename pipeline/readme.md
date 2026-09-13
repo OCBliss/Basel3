@@ -21,7 +21,34 @@ Task `0.0` receives the active YAML through the reserved `{config_path}` argumen
 
 Use `--config path/to/config.yaml` for another configuration or `--list` to list its tasks. A dry run displays commands, inputs and outputs without creating directories, logs or subprocesses. A real run writes per-task logs under `pipeline_logs/<run-id>/`, unless `log_root` is configured.
 
-## Select Horizons and Bin Specifications Once
+For environment setup and the complete guide index, see the [root README](../README.md).
+
+## Run the separate RWA hierarchy
+
+The endogenous parameter hierarchy has its own configuration. Preview or execute
+it from `Basel3_repo`:
+
+```bash
+python3 pipeline/Task_manager_Global_yaml_driven.py \
+  --config pipeline/pipeline_config_rwa_hierarchy.yaml --dry-run
+python3 pipeline/Task_manager_Global_yaml_driven.py \
+  --config pipeline/pipeline_config_rwa_hierarchy.yaml
+```
+
+Before each execution, set a new `parameters.output_dir` in that YAML. The default
+is `RWA/Experimental/HIERARCHY/run`; an existing output directory is an error.
+The configuration fits all eight FRED tenors, uses 2,520-observation yield windows
+and 252-observation parameter windows, retains 3,024 observations, and simulates
+256 paths over 20 reported steps with four internal increments each. Its optional
+estimation-noise benchmark defaults to disabled; `noise_replicates: 16` enables a
+small diagnostic at additional cost. Do not pre-create the output directory.
+
+The declared artifacts include the completion manifest, parameter dynamics,
+scenario summary and scenario array. See the [RWA guide](../src/RWA/readme.md)
+for direct execution and the [model specification](../src/RWA/parameter_hierarchy.md)
+for assumptions and unfinished work.
+
+## Call Report/JSD horizon and bin settings
 
 Edit the top-level block in `pipeline_config_dynamic.yaml`:
 

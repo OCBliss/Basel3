@@ -13,6 +13,30 @@ volatility. Run it with `src/RWA/parameter_hierarchy.py` or the separate
 `pipeline/pipeline_config_rwa_hierarchy.yaml` configuration. The model guide
 explains its finite hierarchy and the remaining recursive RWA milestones.
 
+## Run the endogenous hierarchy
+
+Install the root `requirements.txt` in your active environment, then run from
+`Basel3_repo`. Choose a new output name on each run:
+
+```bash
+python3 src/RWA/parameter_hierarchy.py \
+  --output RWA/Experimental/HIERARCHY/my-run \
+  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
+  --paths 256 --steps 20 --substeps 4 --noise-replicates 16
+```
+
+The input is the eight `RWA/FRED/DGS*.csv` series. Outputs include the first-pass
+yield parameters, second-pass dynamics for mu/theta/sigma, RAW and CURVE exports,
+joint scenarios, summary quantiles and a completion manifest. Paths must stay
+inside the repository; existing output directories are rejected. The optional
+noise benchmark repeats the complete estimation/repair procedure and adds
+runtime. Set `--noise-replicates 0` to disable it for a purely operational run.
+
+See the [model guide](parameter_hierarchy.md) for the Python interface, settings
+and file schemas, and the [archived results](../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
+for actual-data and synthetic evidence. This finite hierarchy does not yet
+recalibrate each simulated path or calculate exposure-level RWA.
+
 ## Rolling CIR calibration
 
 Run from the repository root:
@@ -76,6 +100,18 @@ and generated outputs are not automatically migrated by this code change.
    contain `observation_date`, the DGS column, `yield_clean`, `theta`, `mu`,
    and `sigma`.
 
+After assembling the legacy curve inputs described above, the commands are:
+
+```bash
+python3 src/RWA/mu_curve_nss_repair.py
+python3 'src/RWA/theta_curve_nss_repair*.py'
+python3 src/RWA/CMT_data_parameters_rebuild.py
+```
+
+These legacy commands write their configured historical output locations. The
+new hierarchy's coupled stabilization and CURVE exports are a separate workflow;
+do not silently mix calibrations from different dates, settings or repair methods.
+
 The CIR calibration constrains mu and theta to be positive. Both curve-repair
 scripts therefore validate **all** reconstructed nodes before accepting a row:
 nonfinite, zero, or negative candidates are rejected without changing any of its
@@ -93,6 +129,7 @@ does not carry the NSS audit fields, so retain the repaired curve files with it.
 
 ```sh
 python3 -m unittest discover -s tests -p test_rwa_calibration.py -v
+python3 -m unittest discover -s tests -p test_rwa_hierarchy.py -v
 python3 -m unittest discover -s tests -v
 ```
 

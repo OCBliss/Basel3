@@ -1,0 +1,164 @@
+Processing DGS1.csv...
+Starting 3 calculations for DGS1.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS1.csv. Row 1: theta=0.001670772278703631, mu=147.56017363034306, sigma=0.49446841547072673
+Done processing DGS1.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS1_with_parameters.csv
+Processing DGS1.csv...
+Starting 3 calculations for DGS1.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS1.csv. Row 2522: theta=0.001670772278703631, mu=147.56017363034306, sigma=0.49446841547072673
+Done processing DGS1.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS1_with_parameters.csv
+Processing DGS1.csv...
+Starting 3 calculations for DGS1.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS1.csv. Row 1: theta=0.23631597515512423, mu=0.5265995426138874, sigma=0.4953352832282769
+Done processing DGS1.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS1_with_parameters.csv
+Processing DGS2.csv...
+Starting 3 calculations for DGS2.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS2.csv. Row 1: theta=0.006576408697596302, mu=47.61332095091278, sigma=0.5898935907914631
+Done processing DGS2.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS2_with_parameters.csv
+Processing DGS2.csv...
+Starting 3 calculations for DGS2.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS2.csv. Row 2522: theta=0.006576408697596302, mu=47.61332095091278, sigma=0.5898935907914631
+Done processing DGS2.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS2_with_parameters.csv
+Processing DGS2.csv...
+Starting 3 calculations for DGS2.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS2.csv. Row 1: theta=0.27246166663412097, mu=0.9347141606945687, sigma=0.592538062694144
+Done processing DGS2.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS2_with_parameters.csv
+Processing DGS3.csv...
+Starting 3 calculations for DGS3.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS3.csv. Row 1: theta=0.027044009969019036, mu=13.04377064698981, sigma=0.6085092390546071
+Done processing DGS3.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS3_with_parameters.csv
+Processing DGS3.csv...
+Starting 3 calculations for DGS3.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS3.csv. Row 2522: theta=0.027044009969019036, mu=13.04377064698981, sigma=0.6085092390546071
+Done processing DGS3.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS3_with_parameters.csv
+Processing DGS3.csv...
+Starting 3 calculations for DGS3.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS3.csv. Row 1: theta=0.29585920684847095, mu=1.1920555390597274, sigma=0.6085978722062586
+Done processing DGS3.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS3_with_parameters.csv
+Processing DGS5.csv...
+Starting 3 calculations for DGS5.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS5.csv. Row 1: theta=0.12067591931457429, mu=4.258032692977467, sigma=0.6142264969134115
+Done processing DGS5.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS5_with_parameters.csv
+Processing DGS5.csv...
+Starting 3 calculations for DGS5.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS5.csv. Row 2522: theta=0.12067591931457429, mu=4.258032692977467, sigma=0.6142264969134115
+Done processing DGS5.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS5_with_parameters.csv
+Processing DGS5.csv...
+Starting 3 calculations for DGS5.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS5.csv. Row 1: theta=0.3678812944228575, mu=1.6584690126029762, sigma=0.6152146514817699
+Done processing DGS5.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS5_with_parameters.csv
+Processing DGS7.csv...
+Starting 3 calculations for DGS7.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS7.csv. Row 1: theta=0.17514967667360587, mu=3.6138294494450407, sigma=0.5925429446449733
+Done processing DGS7.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS7_with_parameters.csv
+Processing DGS7.csv...
+Starting 3 calculations for DGS7.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS7.csv. Row 2522: theta=0.17514967667360587, mu=3.6138294494450407, sigma=0.5925429446449733
+Done processing DGS7.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS7_with_parameters.csv
+Processing DGS7.csv...
+Starting 3 calculations for DGS7.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS7.csv. Row 1: theta=0.4190384078522053, mu=1.9615630640007602, sigma=0.5932801011118898
+Done processing DGS7.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS7_with_parameters.csv
+Processing DGS10.csv...
+Starting 3 calculations for DGS10.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS10.csv. Row 1: theta=0.2528230273527934, mu=3.2588127105765348, sigma=0.5666857136601272
+Done processing DGS10.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS10_with_parameters.csv
+Processing DGS10.csv...
+Starting 3 calculations for DGS10.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS10.csv. Row 2522: theta=0.2528230273527934, mu=3.2588127105765348, sigma=0.5666857136601272
+Done processing DGS10.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS10_with_parameters.csv
+Processing DGS10.csv...
+Starting 3 calculations for DGS10.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS10.csv. Row 1: theta=0.5009197463071169, mu=2.1818556656630643, sigma=0.5661914124434607
+Done processing DGS10.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS10_with_parameters.csv
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+Processing DGS20.csv...
+Starting 3 calculations for DGS20.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS20.csv. Row 1: theta=0.28400806093912656, mu=3.514175701980282, sigma=0.5130501778286146
+Done processing DGS20.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS20_with_parameters.csv
+Processing DGS20.csv...
+Starting 3 calculations for DGS20.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS20.csv. Row 2522: theta=0.28400806093912656, mu=3.514175701980282, sigma=0.5130501778286146
+Done processing DGS20.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS20_with_parameters.csv
+Processing DGS20.csv...
+Starting 3 calculations for DGS20.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS20.csv. Row 1: theta=0.577439224440407, mu=2.568808808138632, sigma=0.5112572668681493
+Done processing DGS20.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS20_with_parameters.csv
+Processing DGS30.csv...
+Starting 3 calculations for DGS30.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS30.csv. Row 1: theta=0.36627684463634363, mu=3.3363263854369927, sigma=0.492680589751181
+Done processing DGS30.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/descending_output/DGS30_with_parameters.csv
+Processing DGS30.csv...
+Starting 3 calculations for DGS30.csv: trailing windows from earliest to latest eligible observation date...
+Processed 3/3 windows in DGS30.csv. Row 2522: theta=0.36627684463634363, mu=3.3363263854369927, sigma=0.492680589751181
+Done processing DGS30.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/ascending_output/DGS30_with_parameters.csv
+Processing DGS30.csv...
+Starting 3 calculations for DGS30.csv: output row 3 down to row 1...
+Processed 3/3 windows in DGS30.csv. Row 1: theta=0.6404730634198996, mu=2.761499375756932, sigma=0.49328230697507786
+Done processing DGS30.csv. Output saved to: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmprmklij_j/baseline_output/DGS30_with_parameters.csv
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+.codex-engineering/runs/2026-09-13/validate_real_windows.py:43: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  dates = pd.to_datetime(df.observation_date, errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:159: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+/Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/quasi-MLE-Euler.py:147: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  or not isinstance(WINDOW_SIZE, (int, np.integer))
+Traceback (most recent call last):
+  File ".codex-engineering/runs/2026-09-13/validate_real_windows.py", line 115, in <module>
+    assert (repaired[columns].astype(float) > 0).all()
+AssertionError

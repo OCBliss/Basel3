@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__/
+.venv/
 *.py[cod]
 pipeline_logs/
 data/CSV/Cleaned/
@@ -24,3 +25,6 @@ Material Events/*/RAW/
 data/FFIEC/
 data/FFIEC_backups/
 data/.ffiec-*/
+# Ad hoc hierarchy scenarios stay local; selected research evidence is retained
+# explicitly under .codex-engineering/runs/.
+/RWA/Experimental/HIERARCHY/

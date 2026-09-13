@@ -2,6 +2,14 @@
 
 The code in `src/` turns FFIEC Call Reports into bank-level ratios and changes in those ratios, attaches material-event flags, builds the corresponding peer groups, and compares their distributions. The current pipeline ends with the JSD column filter. The RWA programs and intergroup analysis are separate from that execution plan.
 
+Component guides: [Call Reports](call%20reports/readme.md),
+[ratios](ratios/readme.md), [material events](material%20events/readme.md),
+[peer groups](peer%20groups/readme.md), [JSD](jsd/readme.md),
+[measures](measures/readme.md), and [RWA](RWA/readme.md).
+Ongoing changes are published on `main`; see the
+[Git workflow](../.codex-engineering/GIT_WORKFLOW.md) and
+[engineering record](../.codex-engineering/readme.md).
+
 ## Run the pipeline
 
 Run these commands from the repository root, the directory containing `requirements.txt`, `pipeline/` and `src/`:

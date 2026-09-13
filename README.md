@@ -5,6 +5,44 @@
 **Contact:** johnny.waller.nb@gmail.com  
 **Affiliation:** Independent Researcher  
 
+## Start here
+
+Active development is published on [main](https://github.com/OCBliss/Basel3/tree/main).
+All existing `refactor` work is included there. Stable capabilities can subsequently
+be integrated back into `refactor`; ongoing changes remain visible on `main`.
+
+From the `Basel3_repo` directory, prepare a local Python environment and preview
+the main workflow:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
+```
+
+The preview starts no processing. To run the complete Call Report/JSD workflow,
+use the same final command without `--dry-run`; it downloads required FFIEC data
+and writes the configured outputs. Python 3.8 or later is supported by the current
+source; install versions of the requirements compatible with your interpreter.
+
+| What to do | Guide |
+| --- | --- |
+| Run or configure the task manager | [Pipeline](pipeline/readme.md) |
+| Understand the source and data flow | [Source overview](src/readme.md) |
+| Download and process Call Reports | [Call Reports](src/call%20reports/readme.md) |
+| Construct outcome cohorts and horizons | [Peer groups](src/peer%20groups/readme.md) |
+| Compare distributions | [JSD](src/jsd/readme.md) |
+| Filter results or combine cohort data | [Measures](src/measures/readme.md) |
+| Run endogenous RWA parameter dynamics | [RWA](src/RWA/readme.md) |
+| Run regression checks | [Tests](tests/readme.md) |
+| Inspect discoveries, failed attempts and results | [Engineering journal](.codex-engineering/readme.md) |
+| Commit, synchronize branches or repair SSH | [Git workflow](.codex-engineering/GIT_WORKFLOW.md) |
+
+The [RWA hierarchy result](.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
+documents the implemented milestone and its empirical limitations. The complete
+recursive model and valuation objective in the PDF remain under development.
+
 ## Basel III Under Strain: Empirical Evidence from Call Report Data
 
 This project implements a data pipeline used to test key assumptions of the Basel III regulatory framework, specifically the belief that regulatory capital adequacy and liquidity classifications (e.g., HQLA, NML stability) correspond to reduced failure risk.
@@ -161,7 +199,7 @@ timing of distributional changes itself contains economically meaningful
 
 ## Pipeline
 
-[Here](https://github.com/OCBliss/Basel3/tree/refactor/pipeline)
+[Here](pipeline/readme.md)
 
 The configured Basel III pipeline runs 20 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
 
@@ -178,7 +216,7 @@ The YAML configuration therefore represents the research workflow itself rather 
 
 ### Call Reports
 
-[Here](https://github.com/OCBliss/Basel3/tree/refactor/src/call%20reports)
+[Here](src/call%20reports/readme.md)
 
 The empirical analysis in this repository is built upon FFIEC Call Reports, the
 quarterly regulatory filings submitted by every insured U.S. commercial bank.
@@ -201,7 +239,7 @@ Basel III makes claims about classification: that regulatory categories such as 
 
 ### Material Events
 
-[Here](https://github.com/OCBliss/Basel3/tree/refactor/Material%20Events)
+[Here](Material%20Events/readme.md)
 
 Basel III is ultimately concerned with the ability of regulatory metrics to
 distinguish institutions that subsequently experience materially different
@@ -226,7 +264,7 @@ not reflected in regulatory risk weights.
 
 ### PDF
 
-Explanation of the RWA module mathematical foundation [Here](https://github.com/OCBliss/Basel3/tree/refactor/PDF)
+Explanation of the RWA module mathematical foundation [Here](PDF/readme.md)
 
 ### Current Components
 

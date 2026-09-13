@@ -1,0 +1,18 @@
+test_appending_future_data_does_not_change_any_past_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_ascending_input_assigns_each_fit_to_last_date_in_its_window (test_rwa_calibration.RollingCIRTests) ... ok
+test_exact_window_retains_schema_row_labels_and_metadata (test_rwa_calibration.RollingCIRTests) ... ok
+test_failed_fit_resets_warm_start_without_moving_results_to_another_date (test_rwa_calibration.RollingCIRTests) ... ok
+test_invalid_dates_fail_before_fitting_or_overwriting_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_likelihood_matches_independent_forward_transition_calculation (test_rwa_calibration.RollingCIRTests) ... ok
+test_missing_yields_use_only_earlier_observations_in_any_order (test_rwa_calibration.RollingCIRTests) ... ok
+test_newest_first_input_uses_forward_time_transitions (test_rwa_calibration.RollingCIRTests) ... ok
+test_nonpositive_and_infinite_yields_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_real_optimizer_is_invariant_to_row_order_and_future_observations (test_rwa_calibration.RollingCIRTests) ... ok
+test_row_order_does_not_change_date_keyed_estimates (test_rwa_calibration.RollingCIRTests) ... ok
+test_short_input_and_invalid_window_size_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_unknown_initial_yield_is_not_filled_from_the_future (test_rwa_calibration.RollingCIRTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.522s
+
+OK

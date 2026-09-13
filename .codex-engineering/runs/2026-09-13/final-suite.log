@@ -1,0 +1,143 @@
+test_default_yaml_runs_all_four_horizons_and_all_four_bin_specifications (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_selected_horizons_reach_every_stage_and_ignore_stale_other_bins (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_both_explicit_entries_have_the_canonical_schema (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_both_forms_use_the_domestic_rc_e_schedule (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_consolidated_treasury_and_intangible_ratios_are_correct (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_dataframe_processing_preserves_schema_and_deduplicates (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_file_processing_writes_one_canonical_row (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_form_names_match_domestic_and_consolidated_columns (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_missingness_uses_pandas_scalar_rules (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_mortgage_ratio_calls_imported_schedule_functions (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_processing_discards_row_when_no_ratio_is_usable (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_processing_does_not_use_ht53_as_a_form_gate (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_processing_keeps_domestic_entry_when_missing_counts_tie (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_processing_uses_consolidated_entry_when_domestic_is_missing (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_processing_uses_domestic_entry_when_consolidated_is_missing (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_ratio_creator_imports_domain_classes_and_defines_none (test_call_report_refactor.ImportedRatioCreatorTests) ... ok
+test_domain_values_do_not_read_a_bound_row_directly (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_every_domain_method_has_the_date_contract (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_internal_domain_calls_forward_the_active_date (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_only_the_two_public_modules_are_dependencies (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_ratio_caller_has_no_form_selection_branch (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_ratio_domain_calls_all_name_their_date (test_call_report_v3.CallReportSourceAuditTests) ... ok
+test_cavg_window_uses_the_resolved_anchors_calendar_quarter (test_call_report_v3.DatedCallReportTests) ... ok
+test_global_changes_are_relative_to_the_requested_anchor (test_call_report_v3.DatedCallReportTests) ... ok
+test_global_math_preserves_missing_history_and_values (test_call_report_v3.DatedCallReportTests) ... ok
+test_history_lookup_keeps_the_bank_and_caches_native_reports (test_call_report_v3.DatedCallReportTests) ... ok
+test_missing_anchor_date_does_not_leak_p0_into_history (test_call_report_v3.DatedCallReportTests) ... ok
+test_missing_bank_history_remains_missing_instead_of_zero (test_call_report_v3.DatedCallReportTests) ... ok
+test_nested_calls_and_method_arguments_use_the_dated_native_object (test_call_report_v3.DatedCallReportTests) ... ok
+test_one_calculation_can_mix_current_and_lagged_periods (test_call_report_v3.DatedCallReportTests) ... ok
+test_p0_methods_match_the_unchanged_domain_formulas (test_call_report_v3.DatedCallReportTests) ... ok
+test_ratio_caller_uses_051_deposits_and_keeps_031_native_values (test_call_report_v3.DatedCallReportTests) ... ok
+test_relative_dates_are_anchored_to_each_rows_p0 (test_call_report_v3.DatedCallReportTests) ... ok
+test_both_complete_literal_entries_preserve_the_76_ratio_schema (test_call_reports_v4.ExplicitV4SourceTests) ... ok
+test_caller_imports_the_existing_api_without_embedding_it (test_call_reports_v4.ExplicitV4SourceTests) ... ok
+test_every_ratio_names_its_form_and_the_original_domestic_route (test_call_reports_v4.ExplicitV4SourceTests) ... ok
+test_consolidated_entry_uses_domestic_deposits_and_consolidated_liabilities (test_call_reports_v4.V4NumericalTests) ... ok
+test_copied_caller_and_api_run_without_the_old_runner (test_call_reports_v4.V4NumericalTests) ... ok
+test_forms_keep_separate_securities_maturities_and_capital (test_call_reports_v4.V4NumericalTests) ... ok
+test_historical_calls_keep_the_bank_quarter_and_each_forms_values (test_call_reports_v4.V4NumericalTests) ... ok
+test_historical_date_selects_its_own_deposit_reporting_rule (test_call_reports_v4.V4NumericalTests) ... ok
+test_zero_denominator_and_missing_numerator_remain_distinct (test_call_reports_v4.V4NumericalTests) ... ok
+test_builds_existing_column_names_and_merges_on_cert (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_maps_certificate_to_the_historical_rssd (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_missing_history_remains_missing (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_pipeline_calls_all_three_dates_and_writes_306_columns (test_dynamic_ratios.DynamicRatiosTests) ... Built dynamic report: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/.codex-engineering/runs/2026-09-13/tmp/tmpzmmzfgo4/Dynamic/Dynamic_Cleaned_Call_Report_20241231.csv
+ok
+test_ratio_dictionary_is_imported_not_recreated (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_rejects_duplicate_certificate_keys (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_unmapped_certificate_does_not_create_a_zero_history_row (test_dynamic_ratios.DynamicRatiosTests) ... ok
+test_accepts_flat_and_single_folder_archives (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_compressed_stream_corruption_raises_preparation_error (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_rejects_empty_or_header_only_required_members_before_publication (test_ffiec_preparation.FfiecArchiveTests) ... Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+ok
+test_rejects_html_truncated_archives_and_bad_crc (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_rejects_incomplete_split_schedule_and_accepts_complete_parts (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_rejects_missing_por_ent_or_rc (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_rejects_path_traversal_symlinks_and_duplicate_basenames (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_rejects_wrong_quarter_and_non_txt_payloads (test_ffiec_preparation.FfiecArchiveTests) ... ok
+test_actual_yaml_requires_44_event_quarters_and_three_earlier_quarters (test_ffiec_preparation.FfiecPlanningTests) ... ok
+test_different_yaml_ranges_are_unioned_with_each_quarters_history (test_ffiec_preparation.FfiecPlanningTests) ... ok
+test_quarter_ends_include_boundaries_and_exclude_partial_quarters (test_ffiec_preparation.FfiecPlanningTests) ... ok
+test_first_run_then_cached_rerun_and_repair_of_missing_or_modified_files (test_ffiec_preparation.FfiecPreparationTests) ... Downloading Call Reports -- Single Period: 20240331
+ok
+test_invalid_download_does_not_publish_a_completed_quarter (test_ffiec_preparation.FfiecPreparationTests) ... Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+ok
+test_invalid_new_plan_removes_stale_manifest_except_in_plan_mode (test_ffiec_preparation.FfiecPreparationTests) ... ok
+test_refresh_downloads_new_archive_and_invalid_refresh_keeps_existing_data (test_ffiec_preparation.FfiecPreparationTests) ... Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+Downloading Call Reports -- Single Period: 20240331
+ok
+test_revalidates_entire_archive_inventory_not_only_required_schedules (test_ffiec_preparation.FfiecPreparationTests) ... Downloading Call Reports -- Single Period: 20240331
+ok
+test_successful_plan_preserves_existing_manifest_without_network (test_ffiec_preparation.FfiecPreparationTests) ... ok
+test_unmanaged_existing_folder_is_preserved_when_replaced (test_ffiec_preparation.FfiecPreparationTests) ... Downloading Call Reports -- Single Period: 20240331
+ok
+test_all_four_bin_counts_preserve_boundary_mass_without_empty_interval (test_jsd_binning.JsdBinningTests) ... ok
+test_cli_runs_t1_t3_and_ignores_unselected_bin_files (test_jsd_binning.JsdBinningTests) ... ok
+test_invalid_or_missing_selections_fail_before_writing (test_jsd_binning.JsdBinningTests) ... ok
+test_missing_selected_bin_is_not_satisfied_by_another_bin_file (test_jsd_binning.JsdBinningTests) ... ok
+test_pmf_normalizes_each_column_and_retains_zero_total_columns (test_jsd_binning.JsdBinningTests) ... ok
+test_second_region_count_is_configurable (test_jsd_binning.JsdBinningTests) ... ok
+test_required_selection_and_validation_precede_writes (test_jsd_calculation.JSDCalculationTests) ... ok
+test_selected_horizons_and_widths_exclude_stale_inputs (test_jsd_calculation.JSDCalculationTests) ... ok
+test_single_custom_width_and_zero_pmf_are_preserved (test_jsd_calculation.JSDCalculationTests) ... ok
+test_width_must_be_present_in_all_three_groups (test_jsd_calculation.JSDCalculationTests) ... ok
+test_actual_yaml_runs_all_material_stages_and_preserves_expected_flags (test_material_events.MaterialEventsTests) ... ok
+test_downloader_runs_only_selected_single_or_multiple_events (test_material_events.MaterialEventsTests) ... ok
+test_flagger_runs_selected_stages_in_upstream_order (test_material_events.MaterialEventsTests) ... ok
+test_four_executables_have_working_cli_help (test_material_events.MaterialEventsTests) ... ok
+test_shared_commands_require_events_before_writing (test_material_events.MaterialEventsTests) ... ok
+test_commands_require_valid_explicit_horizons_before_writing (test_peer_groups.PeerGroupTests) ... ok
+test_concatenation_keeps_file_order_duplicates_and_empty_file_columns (test_peer_groups.PeerGroupTests) ... ok
+test_input_without_mergers_prefix_uses_its_own_filename (test_peer_groups.PeerGroupTests) ... ok
+test_no_matching_files_do_not_replace_existing_output (test_peer_groups.PeerGroupTests) ... ok
+test_selected_horizons_preserve_membership_duplicates_and_filename_calendar (test_peer_groups.PeerGroupTests) ... ok
+test_survivor_coercion_is_independent_for_each_group_and_horizon (test_peer_groups.PeerGroupTests) ... ok
+test_config_path_token_works_without_user_parameters (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_configuration_without_parameters_preserves_literal_braces (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_default_configuration_runs_all_original_horizons_and_bin_specifications (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_duplicate_yaml_keys_are_rejected (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_every_configured_script_exists (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_failed_preparation_stops_the_real_pipeline_before_conversion (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_intermediate_barriers_surround_jsd_horizons (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_material_event_arguments_match_scripts_and_artifacts (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_material_event_barriers_preserve_stage_order (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_material_steps_call_four_shared_implementations (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_parameter_errors_are_reported_before_execution (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_prep_receives_the_active_alternate_configuration_path (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_prep_runs_before_conversion_and_declares_completed_artifacts (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_repeated_parameter_in_one_path_uses_the_same_selection (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_scripts_only_reference_defined_shared_paths (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_selected_parameters_control_arguments_and_all_artifacts (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_shared_pipeline_paths_are_defined (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_stage_steps_are_unique_and_complete (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_steps_declare_artifact_contracts (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_user_parameters_cannot_override_config_path (test_pipeline_manager.PipelineConfigurationTests) ... ok
+test_all_maturities_flow_through_nss_files_and_parameter_rebuild (test_rwa_calibration.RollingCIRTests) ... ok
+test_appending_future_data_does_not_change_any_past_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_ascending_input_assigns_each_fit_to_last_date_in_its_window (test_rwa_calibration.RollingCIRTests) ... ok
+test_exact_window_retains_schema_row_labels_and_metadata (test_rwa_calibration.RollingCIRTests) ... ok
+test_failed_fit_resets_warm_start_without_moving_results_to_another_date (test_rwa_calibration.RollingCIRTests) ... ok
+test_invalid_dates_fail_before_fitting_or_overwriting_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_likelihood_matches_independent_forward_transition_calculation (test_rwa_calibration.RollingCIRTests) ... ok
+test_missing_yields_use_only_earlier_observations_in_any_order (test_rwa_calibration.RollingCIRTests) ... ok
+test_newest_first_input_uses_forward_time_transitions (test_rwa_calibration.RollingCIRTests) ... ok
+test_nonpositive_and_infinite_yields_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_real_optimizer_is_invariant_to_row_order_and_future_observations (test_rwa_calibration.RollingCIRTests) ... ok
+test_row_order_does_not_change_date_keyed_estimates (test_rwa_calibration.RollingCIRTests) ... ok
+test_short_input_and_invalid_window_size_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_single_nonfinite_fit_does_not_contaminate_later_windows (test_rwa_calibration.RollingCIRTests) ... ok
+test_unknown_initial_yield_is_not_filled_from_the_future (test_rwa_calibration.RollingCIRTests) ... ok
+
+----------------------------------------------------------------------
+Ran 123 tests in 32.198s
+
+OK
