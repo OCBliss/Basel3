@@ -175,3 +175,10 @@ hourly-interval tool update reported success, but independent reads still showed
 daily 02:00; the discrepancy is unresolved. Never claim a corrected schedule until
 saved recurrence is verified. Do not overwrite later user settings when updating
 the work brief. See AGENTS.md for the standing engineering and control standards.
+
+
+Publication of the supporting layout task is verified at
+5ef0f8020958f8620d3028f412fdbe64f9ec0f6d on origin/main. After the required pull,
+13 GitHub source/configuration/guide blobs matched the local commit. The full
+149-test suite and 280-link/62-shell-example documentation check passed. See
+runs/2026-09-13-layout/publication.json and the journal completion entry.

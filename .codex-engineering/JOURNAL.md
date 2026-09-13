@@ -458,3 +458,19 @@ throughout the run rather than waiting until the end.
 - **Publication:** Complete review and publish this coherent change immediately,
   pull and inspect the published source/guides. Record the verified commit after
   that cycle; do not treat local completion as GitHub publication.
+
+
+### 2026-09-13T14:17:41-07:00 — organized source published and reviewed
+
+- Pushed 5ef0f8020958f8620d3028f412fdbe64f9ec0f6d to origin/main, then pulled
+  successfully. The working tree was clean and local/remote main matched.
+- Independently fetched 13 affected source, YAML, README and instruction files
+  through the authenticated GitHub connector. Every GitHub blob matched the
+  local committed blob. See runs/2026-09-13-layout/publication.json.
+- Final documentation check: 280 local links, 62 shell blocks, 23 authored Python
+  directories; no missing links, shell syntax failures or duplicate published
+  component READMEs. Downloaded FFIEC notices remain preserved source material.
+- Published component names and guides were reviewed against the tested execution
+  paths. Broader review retains the upstream FRED acquisition/freshness gap and
+  the unimplemented valuation stages as explicit unfinished work. The two-hour
+  schedule discrepancy remains unresolved and was not reported as fixed.

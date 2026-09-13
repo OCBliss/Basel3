@@ -69,3 +69,10 @@ in [AGENTS.md](../../../AGENTS.md) and the [checkpoint](../../CURRENT_TASK.md).
 Two attempts to save the explicitly requested two-hour schedule returned success
 but persisted daily 02:00. Schedule correction remains unverified; no direct
 scheduler-storage modifications or duplicate automation were made.
+
+
+## Publication
+
+[Publication verification](publication.json) records commit
+`5ef0f8020958f8620d3028f412fdbe64f9ec0f6d`, a successful push/pull with matching
+local/remote main, and independent matching GitHub blobs for 13 affected files.
