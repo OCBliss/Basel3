@@ -6,15 +6,19 @@ historical research CSVs. Start with the [source component map](../../../src/RWA
 
 ## Path migration
 
+The destination column below follows the current domain layout. The validation
+logs and publication record later in this file document the earlier layout
+checkpoint; they are not evidence that a subsequent move has been tested.
+
 | Previous path | Current path |
 | --- | --- |
-| `src/RWA/quasi-MLE-Euler.py` | `src/RWA/yield_calibration/calibrate.py` |
-| `src/RWA/mu_curve_nss_repair.py` | `src/RWA/curve_repair/mu.py` |
-| `src/RWA/theta_curve_nss_repair*.py` | `src/RWA/curve_repair/theta.py` |
-| `src/RWA/CMT_data_parameters_rebuild.py` | `src/RWA/parameter_rebuild/rebuild.py` |
-| `src/RWA/cir_hierarchy.py` | `src/RWA/parameter_hierarchy/core.py` |
-| `src/RWA/parameter_hierarchy.py` | `src/RWA/parameter_hierarchy/workflow.py` |
-| `src/RWA/parameter_hierarchy.md` | `src/RWA/parameter_hierarchy/readme.md` |
+| `src/RWA/quasi-MLE-Euler.py` | `src/RWA/calibration/yields/calibrate.py` |
+| `src/RWA/mu_curve_nss_repair.py` | `src/RWA/calibration/curves/mu.py` |
+| `src/RWA/theta_curve_nss_repair*.py` | `src/RWA/calibration/curves/theta.py` |
+| `src/RWA/CMT_data_parameters_rebuild.py` | `src/RWA/data/parameters/rebuild.py` |
+| `src/RWA/cir_hierarchy.py` | `src/RWA/models/parameter_hierarchy/core.py` |
+| `src/RWA/parameter_hierarchy.py` | `src/RWA/models/parameter_hierarchy/workflow.py` |
+| `src/RWA/parameter_hierarchy.md` | `src/RWA/models/parameter_hierarchy/readme.md` |
 | `pipeline/pipeline_config_rwa_hierarchy.yaml` | `pipeline/rwa_hierarchy/config.yaml` |
 | `src/ratios/variables.md` | `src/ratios/variables/readme.md` |
 

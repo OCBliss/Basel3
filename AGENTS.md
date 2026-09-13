@@ -22,8 +22,13 @@ commits and the relevant complete execution paths before choosing work. Resume
 an unfinished capability first. Select one substantive analytical or engineering
 capability, implement it, test it against independent expectations and existing
 consumers, and iterate on failures until the selected milestone is complete.
-Routine repairs and documentation can support a milestone but do not satisfy
-the recurring capability-development assignment on their own.
+Data acquisition, cleaning, guides, routine repairs, organization and publication
+are required supporting work. They never count as the substantive research/model
+task by themselves. Complete them as needed without asking the user to identify
+each dependency, then advance an analytical or model capability in the same run.
+Anticipate data access requirements: build usable retrieval pipelines, handle
+timeouts, transient failures, rate limits and response changes, and validate
+returned data before model execution. Never silently substitute stale inputs.
 
 For RWA, read `PDF/Recursive IRR Model.pdf` and the existing implementation.
 The author's clarification requires applying the calibration to the estimated
@@ -73,7 +78,9 @@ inside repository documents so they work in GitHub and a fresh clone.
 
 Use exactly one README per directory, case-insensitively. Group code into named
 component folders when their responsibilities, interfaces or usage warrant it;
-nest related components where that makes navigation clearer. Do not collect
+nest related components where that makes navigation clearer. For RWA, preserve
+the stable top-level source domains data, calibration and models; add components
+inside the responsible domain instead of a top-level folder per task. Do not collect
 unrelated scripts or competing README files in a flat directory. Keep shared
 implementation and its entry point together and explain their relationship.
 When moving code, inspect all affected YAML, imports, root discovery, test paths,

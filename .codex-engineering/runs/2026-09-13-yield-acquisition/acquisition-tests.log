@@ -1,0 +1,42 @@
+test_appending_future_observations_does_not_change_past_cleaned_values (test_rwa_yield_data.YieldParsingTests) ... ok
+test_common_start_can_use_an_earlier_genuine_source_without_backfilling (test_rwa_yield_data.YieldParsingTests) ... ok
+test_common_support_and_causal_fills_preserve_original_quotes (test_rwa_yield_data.YieldParsingTests) ... ok
+test_dates_must_be_unique_valid_iso_calendar_dates (test_rwa_yield_data.YieldParsingTests) ... ok
+test_empty_series_and_disjoint_real_support_fail (test_rwa_yield_data.YieldParsingTests) ... ok
+test_excessively_old_fill_is_rejected_even_with_recent_recovery (test_rwa_yield_data.YieldParsingTests) ... ok
+test_future_quote_does_not_hide_stale_requested_history (test_rwa_yield_data.YieldParsingTests) ... ok
+test_input_order_does_not_change_dated_results (test_rwa_yield_data.YieldParsingTests) ... ok
+test_invalid_requested_dates_and_limits_fail (test_rwa_yield_data.YieldParsingTests) ... ok
+test_invalid_tokens_cannot_be_silently_reclassified_as_missing (test_rwa_yield_data.YieldParsingTests) ... ok
+test_long_calendar_gap_is_rejected_even_when_both_quotes_are_real (test_rwa_yield_data.YieldParsingTests) ... ok
+test_malformed_headers_and_empty_payloads_fail (test_rwa_yield_data.YieldParsingTests) ... ok
+test_server_bounds_are_applied_locally_and_cannot_seed_a_fill (test_rwa_yield_data.YieldParsingTests) ... ok
+test_staleness_uses_last_genuine_quote_for_each_tenor (test_rwa_yield_data.YieldParsingTests) ... ok
+test_weekend_is_not_expanded_into_invented_rows (test_rwa_yield_data.YieldParsingTests) ... ok
+test_connection_timeout_is_retried_and_terminal_failure_creates_nothing (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_existing_output_is_preserved_without_network_request (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_export_retains_the_prior_quote_needed_to_fill_at_common_start (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_external_output_and_symlink_escape_are_rejected_before_fetch (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_interrupted_body_retries_from_the_start_without_duplicate_bytes (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_invalid_response_never_publishes_a_complete_snapshot_or_reserves_output (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_manifest_quality_must_match_the_preserved_raw_observations (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_oversized_body_is_rejected_even_without_content_length (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_permanent_http_failure_and_redirect_are_not_retried (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_publication_failure_removes_the_reserved_incomplete_snapshot (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_real_hierarchy_cli_records_verified_snapshot_and_rejects_later_tampering (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_request_uses_official_endpoint_date_bounds_and_a_bounded_timeout (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_snapshot_preserves_response_and_is_compatible_with_existing_reader (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_transient_responses_are_retried_with_a_finite_attempt_budget (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_updated_source_hash_cannot_disguise_a_change_from_raw_quotes (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_rejects_a_series_symlink_outside_the_repository (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_rejects_changed_processed_or_raw_bytes (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_rejects_duplicate_or_missing_maturity_contracts (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_rejects_incomplete_or_unsupported_manifests (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_rejects_manifest_source_path_traversal (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verification_requires_the_snapshot_own_input_directory (test_rwa_yield_data.YieldSnapshotTests) ... ok
+test_verified_provenance_identifies_the_exact_snapshot_manifest (test_rwa_yield_data.YieldSnapshotTests) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 2.159s
+
+OK

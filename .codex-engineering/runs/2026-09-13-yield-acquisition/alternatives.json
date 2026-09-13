@@ -1,0 +1,136 @@
+{
+  "hypothesis": "Preserve source missingness, constrain causal fills and validate acquisition provenance before fitting parameter dynamics.",
+  "actual_DGS30_historical_source": {
+    "sha256": "b33fb4fe8cf6ce8a803eff0b67f23c54cd7554e7d7995975eebe4ea8155a8bee",
+    "rows_during_noted_discontinuation": 1038,
+    "genuine_quotes_during_noted_discontinuation": 994,
+    "maximum_observed_quote_gap_calendar_days": 4,
+    "finding": "The response is populated during the discontinuation described by source notes. Its reason/vintage is not established. Do not claim an observed multi-year missing gap."
+  },
+  "synthetic_long_gap": {
+    "input": "observation_date,DGS30\n2026-08-03,4.5\n2026-08-04,\n2026-08-12,\n2026-08-13,4.6\n",
+    "rejected": "DGS30 has a quote gap exceeding max_fill_days"
+  },
+  "cleaning_alternatives": [
+    {
+      "maturity": 1,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.3112795773030094,
+      "observed_only_zero_increment_fraction": 0.2817441303306181,
+      "sqrt_jsd_natural_log": {
+        "50": 0.015559469196933432,
+        "100": 0.022867414724499168,
+        "200": 0.022867414724499196
+      }
+    },
+    {
+      "maturity": 2,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.2448885825867218,
+      "observed_only_zero_increment_fraction": 0.21250598945855295,
+      "sqrt_jsd_natural_log": {
+        "50": 0.02221533954722318,
+        "100": 0.027268892053808454,
+        "200": 0.02726889205380847
+      }
+    },
+    {
+      "maturity": 3,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.16701125660464047,
+      "observed_only_zero_increment_fraction": 0.13128893148059415,
+      "sqrt_jsd_natural_log": {
+        "50": 0.0354897185126185,
+        "100": 0.03548971851261812,
+        "200": 0.0354897185126181
+      }
+    },
+    {
+      "maturity": 5,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.12979554330346887,
+      "observed_only_zero_increment_fraction": 0.0924772400574988,
+      "sqrt_jsd_natural_log": {
+        "50": 0.04206764476355936,
+        "100": 0.042067644763559287,
+        "200": 0.04206764476355925
+      }
+    },
+    {
+      "maturity": 7,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.1153227659085688,
+      "observed_only_zero_increment_fraction": 0.07738380450407283,
+      "sqrt_jsd_natural_log": {
+        "50": 0.03168869377624025,
+        "100": 0.045592481628967195,
+        "200": 0.045592481628967174
+      }
+    },
+    {
+      "maturity": 10,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.11555249253388468,
+      "observed_only_zero_increment_fraction": 0.0776233828461907,
+      "sqrt_jsd_natural_log": {
+        "50": 0.04553038729711282,
+        "100": 0.04553038729711285,
+        "200": 0.045530387297112854
+      }
+    },
+    {
+      "maturity": 20,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.12037675166551803,
+      "observed_only_zero_increment_fraction": 0.08265452803066603,
+      "sqrt_jsd_natural_log": {
+        "50": 0.04427590758678973,
+        "100": 0.04427590758678985,
+        "200": 0.04427590758678988
+      }
+    },
+    {
+      "maturity": 30,
+      "retained_calendar_rows": 4354,
+      "genuine_quotes": 4175,
+      "imputed_quotes": 179,
+      "filled_zero_increment_fraction": 0.1171605789110958,
+      "observed_only_zero_increment_fraction": 0.07930043124101581,
+      "sqrt_jsd_natural_log": {
+        "50": 0.03493992223297559,
+        "100": 0.0451018992073416,
+        "200": 0.0451018992073416
+      }
+    }
+  ],
+  "comparison_method": "Compare first differences of causally filled quotes with first differences after dropping missing quotes. For each tenor/bin count use shared equal-width edges spanning both samples. Report square-root Jensen-Shannon divergence with natural logarithms, matching repository convention; 50,100,200 bins check sensitivity.",
+  "limits": [
+    "Observed-only transitions can span multiple days; fixed dt is not corrected by deleting missing rows.",
+    "Filled transitions contain artificial zero increments and must remain identifiable.",
+    "The distribution comparison does not establish superiority of either handling policy or forecast skill.",
+    "Current downloads with past observation bounds are not historical real-time vintages."
+  ],
+  "live": {
+    "common_start": "2010-01-04",
+    "common_end": "2026-09-10",
+    "common_rows": 4354,
+    "first_stage_rows": 4040,
+    "second_stage_rows": 6096,
+    "paths": 256,
+    "steps": 20
+  }
+}

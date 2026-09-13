@@ -7,14 +7,14 @@ different parameter columns and anomaly thresholds.
 
 ## Prepare and run
 
-Install the [repository requirements](../../../requirements.txt), including
-NumPy, pandas and SciPy. First complete [yield calibration](../yield_calibration/readme.md)
-and the [CURVE assembly recipe](../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
+Install the [repository requirements](../../../../requirements.txt), including
+NumPy, pandas and SciPy. First complete [yield calibration](../yields/readme.md)
+and the [CURVE assembly recipe](../../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
 From `Basel3_repo`, run:
 
 ```bash
-python3 src/RWA/curve_repair/mu.py
-python3 src/RWA/curve_repair/theta.py
+python3 src/RWA/calibration/curves/mu.py
+python3 src/RWA/calibration/curves/theta.py
 ```
 
 These scripts have no command-line settings or preview mode. `INPUT_FILE`,
@@ -62,7 +62,7 @@ The fit may interpolate or extrapolate depending on where the remaining nodes
 lie. A low residual on retained maturities does not guarantee a reliable missing
 or anomalous maturity. These scripts repair mu and theta separately; they do not
 jointly constrain the original CIR drift product `theta * mu`. The
-[parameter hierarchy](../parameter_hierarchy/readme.md) uses a separate coupled
+[parameter hierarchy](../../models/parameter_hierarchy/readme.md) uses a separate coupled
 stabilization method and should not be silently mixed with these outputs.
 
 ## Audit and failures
@@ -85,15 +85,15 @@ code. Empty input tables are unsupported. Rejection retains potentially unstable
 original estimates and is not evidence that those estimates are acceptable.
 
 After reviewing both repaired tables, run
-[parameter reconstruction](../parameter_rebuild/readme.md). Retain the repaired
+[parameter reconstruction](../../data/parameters/readme.md). Retain the repaired
 tables with their audit fields: reconstruction exports only market data and the
-three parameter columns. The [NSS output guide](../../../RWA/Experimental/MLE%20YIELD/NSS/readme.md)
+three parameter columns. The [NSS output guide](../../../../RWA/Experimental/MLE%20YIELD/NSS/readme.md)
 also provides an audit inspection command.
 
 ## Verification
 
 Use the repository-local temporary-file setup in the
-[test guide](../../../tests/readme.md), then run:
+[test guide](../../../../tests/readme.md), then run:
 
 ```bash
 python3 -B -m unittest discover -s tests -p test_rwa_calibration.py -v

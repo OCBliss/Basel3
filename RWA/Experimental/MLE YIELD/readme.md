@@ -9,10 +9,10 @@ commands write their configured output locations and can replace existing CSVs.
 
 | Order | Stage | How to run and inspect it |
 | --- | --- | --- |
-| 1 | [RAW](RAW/readme.md) | `python3 src/RWA/yield_calibration/calibrate.py` fits trailing yield windows |
+| 1 | [RAW](RAW/readme.md) | `python3 src/RWA/calibration/yields/calibrate.py` fits trailing yield windows |
 | 2 | [CURVE](CURVE/readme.md) | Run the documented Python assembly recipe to align mu/theta/sigma across maturities |
 | 3 | [NSS](NSS/readme.md) | Run the mu and theta repair commands, then inspect row/node audits |
-| 4 | [MLE VOL/RAW](../MLE%20VOL/RAW/readme.md) | `python3 src/RWA/parameter_rebuild/rebuild.py` reconstructs per-tenor histories |
+| 4 | [MLE VOL/RAW](../MLE%20VOL/RAW/readme.md) | `python3 src/RWA/data/parameters/rebuild.py` reconstructs per-tenor histories |
 
 The first-pass model is `dX = theta*(mu-X)*dt + sigma*sqrt(X)*dW`.
 The current calibration uses 2,520 observations per trailing window and
@@ -27,6 +27,6 @@ repairs its configured finite-value threshold violations, not every identificati
 problem, and reconstruction does not propagate the repair audit columns.
 
 For jointly simulated mu/theta/sigma dynamics and an estimation-noise diagnostic,
-use the separate [endogenous hierarchy](../../../src/RWA/parameter_hierarchy/readme.md).
+use the separate [endogenous hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md).
 It generates its own RAW/CURVE exports in a new chosen output folder. The default
 Call Report/JSD pipeline does not run either RWA workflow automatically.

@@ -45,7 +45,7 @@ small diagnostic at additional cost. Do not pre-create the output directory.
 
 The declared artifacts include the completion manifest, parameter dynamics,
 scenario summary and scenario array. See the [RWA guide](../src/RWA/readme.md)
-for direct execution and the [model specification](../src/RWA/parameter_hierarchy/readme.md)
+for direct execution and the [model specification](../src/RWA/models/parameter_hierarchy/readme.md)
 for assumptions and unfinished work.
 
 ## Call Report/JSD horizon and bin settings
@@ -108,3 +108,18 @@ Dependencies validate prerequisites without automatically adding omitted tasks. 
 ## Further Customization
 
 Additional schedules or regulatory epochs can use the same phase types with their own declared scripts, arguments, paths and dependencies. Keep their execution plans and artifact declarations aligned. Horizon and bin choices within the current Basel III workflow belong in `parameters`, so those choices do not require copied script files or duplicated horizon branches.
+
+
+## Retrieve yields and run the RWA model
+
+The [live RWA workflow](rwa_live/readme.md) connects FRED retrieval to the hierarchy
+with a verified snapshot, preserving the historical local input files. Choose new
+snapshot and model output directories in its configuration, then run:
+
+```bash
+python3 pipeline/Task_manager_Global_yaml_driven.py --config pipeline/rwa_live/config.yaml --dry-run
+python3 pipeline/Task_manager_Global_yaml_driven.py --config pipeline/rwa_live/config.yaml
+```
+
+This two-task workflow is separate from both the default Call Report/JSD plan and
+the one-task offline hierarchy plan. Its dependency mapping runs acquisition first.

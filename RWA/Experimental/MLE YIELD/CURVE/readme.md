@@ -8,9 +8,9 @@ assembly itself does not fit a curve, interpolate dates or repair a ridge.
 
 | File | Required columns after `observation_date` | Consumer |
 | --- | --- | --- |
-| `mu_curve.csv` | `mu1y, mu2y, mu3y, mu5y, mu7y, mu10y, mu20y, mu30y` | [mu repair](../../../../src/RWA/curve_repair/mu.py) |
-| `theta_curve.csv` | `theta1y, theta2y, theta3y, theta5y, theta7y, theta10y, theta20y, theta30y` | [theta repair](../../../../src/RWA/curve_repair/theta.py) |
-| `sigma_curve.csv` | `sigma1y, sigma2y, sigma3y, sigma5y, sigma7y, sigma10y, sigma20y, sigma30y` | [parameter rebuild](../../../../src/RWA/parameter_rebuild/rebuild.py) |
+| `mu_curve.csv` | `mu1y, mu2y, mu3y, mu5y, mu7y, mu10y, mu20y, mu30y` | [mu repair](../../../../src/RWA/calibration/curves/mu.py) |
+| `theta_curve.csv` | `theta1y, theta2y, theta3y, theta5y, theta7y, theta10y, theta20y, theta30y` | [theta repair](../../../../src/RWA/calibration/curves/theta.py) |
+| `sigma_curve.csv` | `sigma1y, sigma2y, sigma3y, sigma5y, sigma7y, sigma10y, sigma20y, sigma30y` | [parameter rebuild](../../../../src/RWA/data/parameters/rebuild.py) |
 
 Each date must occur at most once in each table. Align maturities by date, never
 by CSV row position: the stored DGS files can have different date coverage and
@@ -73,7 +73,7 @@ legacy RAW exports. It preserves missing values and sorts output dates ascending
 It does not infer a shared calibration provenance from filenames or remove
 unreliable estimates; review the run settings and subsequent repair diagnostics.
 
-The [new parameter hierarchy](../../../../src/RWA/parameter_hierarchy/readme.md) also
+The [new parameter hierarchy](../../../../src/RWA/models/parameter_hierarchy/readme.md) also
 exports `CURVE/` inside its own selected output directory. Those panels come
 from its coupled stabilization. Do not mix them into an older NS/NSS run without
 explicitly choosing that methodology and a consistent set of RAW inputs.
@@ -81,14 +81,14 @@ explicitly choosing that methodology and a consistent set of RAW inputs.
 ## Run the consumers
 
 ```bash
-python3 src/RWA/curve_repair/mu.py
-python3 src/RWA/curve_repair/theta.py
+python3 src/RWA/calibration/curves/mu.py
+python3 src/RWA/calibration/curves/theta.py
 ```
 
 Read the [NSS guide](../NSS/readme.md) and review its audits before continuing:
 
 ```bash
-python3 src/RWA/parameter_rebuild/rebuild.py
+python3 src/RWA/data/parameters/rebuild.py
 ```
 
 The rebuild takes mu/theta from `../NSS/` and sigma from this directory. It joins

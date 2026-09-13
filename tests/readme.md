@@ -45,3 +45,10 @@ test count or result with its revision and command in the journal.
 The [component-organization checkpoint](../.codex-engineering/runs/2026-09-13-layout/readme.md)
 passed **149 tests** after relocation, including the two additional entry-point
 and shared-data-root checks. Its recorded log covers the full repository suite.
+
+
+The yield-acquisition milestone adds 37 tests for parser failures, gap/freshness
+rules, bounded HTTP behavior, immutable output, verified raw-to-clean provenance
+and the actual model CLI. The complete suite passed **186 tests**; the live manager
+also completed acquisition through simulation. See the
+[acquisition evidence](../.codex-engineering/runs/2026-09-13-yield-acquisition/readme.md).

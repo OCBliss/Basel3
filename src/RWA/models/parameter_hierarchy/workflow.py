@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
@@ -17,7 +18,11 @@ else:
                                innovation_correlation, step_hierarchy)
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from src.RWA.data.yields.acquire import verify_snapshot
+
 TENORS = (1, 2, 3, 5, 7, 10, 20, 30)
 PARAMETERS = ("mu", "theta", "sigma")
 
@@ -324,6 +329,7 @@ def write_outputs(output, yields, first, second, manifest, forecast=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", default="RWA/FRED")
+    parser.add_argument("--input-manifest", help="verify an acquired snapshot before reading its input series")
     parser.add_argument("--output", required=True, help="new directory inside Basel3_repo")
     parser.add_argument("--maturities", type=int, nargs="+", default=list(TENORS))
     parser.add_argument("--as-of")
@@ -353,6 +359,8 @@ def main(argv=None):
             raise ValueError("noise_replicates must be zero or at least two")
         integer(args.parameter_window, "parameter_window", 5)
         positive_number(args.dt, "dt")
+        acquisition = (verify_snapshot(args.input_manifest, args.input, args.maturities)
+                       if args.input_manifest else None)
         yields, sources = read_yield_panel(args.input, args.maturities, args.as_of)
         # Sort maturities consistently with parameter-panel pivot ordering.
         yields = yields.reindex(sorted(yields.columns), axis=1)
@@ -373,6 +381,7 @@ def main(argv=None):
                 args.nll_budget, args.fallback_theta, args.shrinkage)
         manifest = {"schema_version": 1, "status": "complete", "settings": vars(args),
                     "source_files": sources, "units": "FRED percentage points",
+                    "yield_acquisition": acquisition,
                     "history_start": str(yields.index[0].date()),
                     "forecast_origin": str(yields.index[-1].date()),
                     "first_stage_rows": len(first), "second_stage_rows": len(second),

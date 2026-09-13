@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT/'src/RWA'))
-from parameter_hierarchy import workflow as h
+sys.path.insert(0, str(ROOT))
+from src.RWA.models.parameter_hierarchy import workflow as h
 
 HERE = Path(__file__).resolve().parent
 started = time.perf_counter()

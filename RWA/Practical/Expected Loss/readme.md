@@ -7,7 +7,7 @@ an executable stage in the current repository.
 
 The existing [Practical CMT workflow](../Constant%20Maturity%20Treasury/readme.md)
 prepares yield-shock, drift and coupon calculations. The separate
-[endogenous parameter hierarchy](../../../src/RWA/parameter_hierarchy/readme.md) produces
+[endogenous parameter hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md) produces
 rate/parameter scenarios. Neither output alone is a portfolio expected-loss or
 regulatory capital calculation.
 

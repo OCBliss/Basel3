@@ -1,3 +1,12 @@
+# Treasury yield data
+
+The top-level DGS CSVs are preserved historical research inputs. To retrieve a
+current snapshot, use the [yield-data component](../../src/RWA/data/yields/readme.md)
+or [live retrieval-to-model pipeline](../../pipeline/rwa_live/readme.md).
+New snapshots go under `RWA/FRED/snapshots/<run>/` and are ignored by Git by default;
+each contains the raw response, original and cleaned series, and a provenance
+manifest. The existing CSVs are not overwritten.
+
 ## 📘 Methodological Appendix: Description of Treasury Nominal and Inflation-Indexed Constant Maturity Series
 
 Yields on nominal U.S. Treasury securities with **constant maturity** (**CMT**) are interpolated by the U.S. Treasury from the daily yield curve of non-inflation-indexed Treasury securities. This curve, which relates a bond’s yield to its remaining time to maturity, is based on closing bid yields for actively traded securities in the over-the-counter (OTC) market. These market yields are derived from compilations of price quotations obtained by the **Federal Reserve Bank of New York**.

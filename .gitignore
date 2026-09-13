@@ -28,3 +28,4 @@ data/.ffiec-*/
 # Ad hoc hierarchy scenarios stay local; selected research evidence is retained
 # explicitly under .codex-engineering/runs/.
 /RWA/Experimental/HIERARCHY/
+/RWA/FRED/snapshots/

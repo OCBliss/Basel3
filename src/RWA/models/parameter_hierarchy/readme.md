@@ -18,7 +18,7 @@ establish a new economic risk factor.
 exports, scenario generation and the completion manifest. It imports `core.py`,
 which implements the estimator, coupled stabilization, dependence calculations and
 simulation step. They share one numerical and file contract within this package.
-The companion [reconstruction component](../parameter_rebuild/readme.md) consumes
+The companion [reconstruction component](../../data/parameters/readme.md) consumes
 compatible RAW/CURVE exports when explicitly directed to the same run.
 
 The implemented stage is parameter calibration and simulation. Exposure valuation
@@ -30,14 +30,14 @@ Python 3.8+, NumPy and pandas are required; the existing environment is supporte
 From `Basel3_repo`, either entry form can display the CLI:
 
 ```bash
-python3 src/RWA/parameter_hierarchy/workflow.py --help
-python3 -m src.RWA.parameter_hierarchy.workflow --help
+python3 src/RWA/models/parameter_hierarchy/workflow.py --help
+python3 -m src.RWA.models.parameter_hierarchy.workflow --help
 ```
 
 Run a calibration and simulation:
 
 ```sh
-python3 src/RWA/parameter_hierarchy/workflow.py \
+python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/my-run \
   --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
   --paths 256 --steps 20 --substeps 4 --noise-replicates 16
@@ -256,3 +256,16 @@ pathwise recursive calibration and covariance updates, wider held-out evaluation
 and the exposure/cash-flow valuation and capital mapping required to complete
 the duration-sensitive RWA objective. No VaR or regulatory capital result is
 claimed by this implementation.
+
+
+## Verified acquired inputs
+
+The [live pipeline](../../../../pipeline/rwa_live/readme.md) supplies both `--input`
+and `--input-manifest`. Before fitting, the model checks snapshot completion,
+series identity, raw/processed hashes, and reproduces the recorded cleaning from
+the raw response. Its result manifest includes `yield_acquisition` with the input
+manifest hash, source coverage, retrieval time and imputation policy. With no
+`--input-manifest`, standalone historical-file use remains available.
+
+`--as-of` limits observation dates after the whole snapshot is verified; it does
+not turn a current-revision download into a historical real-time vintage.

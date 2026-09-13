@@ -474,3 +474,45 @@ throughout the run rather than waiting until the end.
   paths. Broader review retains the upstream FRED acquisition/freshness gap and
   the unimplemented valuation stages as explicit unfinished work. The two-hour
   schedule discrepancy remains unresolved and was not reported as fixed.
+
+
+### 2026-09-13T15:37:56-07:00 — supporting live yield acquisition completed
+
+- User requested an immediate independent engineering run. Implemented public FRED
+  HTTPS retrieval, preserved raw bytes and quote missingness, bounded causal fills,
+  explicit genuine-quote freshness, immutable per-run outputs and acquisition
+  provenance verified before the hierarchy fits. Connected the stages in the
+  actual live YAML pipeline; no historical research CSV was overwritten.
+- User corrected the flat folder design. Reorganized source under stable data,
+  calibration and models domains. Moved existing components, imports, root
+  discovery, tests, YAML and guides together. New work belongs within a domain.
+- Actual live manager completed eight tenors/4,354 rows through 2026-09-10, 4,040
+  first-stage rows, 6,096 second-stage rows, 256 paths/20 steps/32 joint components.
+  Full regression: 186 tests passed in 44.087 s. Independent review and 37 new
+  acquisition tests cover malformed records, stale/gapped data, retries, output
+  protection, snapshot tampering, provenance regeneration and actual model CLI.
+- Compared filled and observed-only increment distributions with square-root JSD
+  at 50/100/200 bins. The 10-year zero-increment mass rises from 7.76% to 11.56%
+  with filling; JSD distance about 0.0455. This motivates explicit elapsed-time and
+  imputation treatment in subsequent model research, not a superiority claim.
+- Iterations: corrected a reversed new YAML dependency edge before any model ran;
+  rejected malformed short CSV rows and NUL-corrupted tokens; hardened schema
+  types and regenerated processed data from raw source during verification.
+  Initial use of a 2010-start raw response to assess 1994 history was invalid.
+  A separate historical download showed 994 genuine quotes during the noted
+  2002–2006 discontinuation, contradicting the assumed actual gap. Preserved that
+  result; long-gap rejection is tested synthetically. No cause/vintage guessed.
+- Evidence and commands: runs/2026-09-13-yield-acquisition/readme.md. Raw historical
+  comparison, source/model manifests, alternative-distribution results, full logs
+  and live configuration are retained. Documentation distinguishes public CSV
+  retrieval from the keyed REST API and current revisions from historical vintages.
+- Schedule verified independently: exactly one ACTIVE automation every two hours,
+  next stored run approximately 17:01 PDT today at inspection. Latest saved state
+  was preserved; no replacement or duplicate and no schedule mutation were needed.
+- Publish this completed milestone immediately, pull and verify GitHub contents.
+
+- **User scope correction:** Acquisition, cleaning, guides and organization are
+  supporting work and never count as the substantive task. Saved this explicitly
+  in AGENTS.md. Continue this same run with pathwise recursive parameter-dynamics
+  and dependence recalibration; compare with the frozen scenario engine, validate
+  and harden it, then immediately publish the implemented feature.

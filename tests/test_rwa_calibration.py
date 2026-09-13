@@ -27,10 +27,10 @@ def load_rwa_module(name, filename):
     return module
 
 
-calibration = load_rwa_module("rwa_calibration", "yield_calibration/calibrate.py")
-mu_repair = load_rwa_module("rwa_mu_repair", "curve_repair/mu.py")
-theta_repair = load_rwa_module("rwa_theta_repair", "curve_repair/theta.py")
-rebuild = load_rwa_module("rwa_rebuild", "parameter_rebuild/rebuild.py")
+calibration = load_rwa_module("rwa_calibration", "calibration/yields/calibrate.py")
+mu_repair = load_rwa_module("rwa_mu_repair", "calibration/curves/mu.py")
+theta_repair = load_rwa_module("rwa_theta_repair", "calibration/curves/theta.py")
+rebuild = load_rwa_module("rwa_rebuild", "data/parameters/rebuild.py")
 
 
 def frame(values):

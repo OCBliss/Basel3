@@ -32,8 +32,8 @@ def load_module(name, relative_path):
     return module
 
 
-core = importlib.import_module("src.RWA.parameter_hierarchy.core")
-workflow = importlib.import_module("src.RWA.parameter_hierarchy.workflow")
+core = importlib.import_module("src.RWA.models.parameter_hierarchy.core")
+workflow = importlib.import_module("src.RWA.models.parameter_hierarchy.workflow")
 
 
 def rates(n=160, seed=8, d=3):
@@ -297,7 +297,7 @@ class HierarchyWorkflowTests(unittest.TestCase):
         self.assertEqual(workflow.ROOT, ROOT)
         self.assertEqual(workflow.repository_path('RWA/FRED'), ROOT/'RWA/FRED')
         result = subprocess.run(
-            [sys.executable, '-B', '-m', 'src.RWA.parameter_hierarchy.workflow', '--help'],
+            [sys.executable, '-B', '-m', 'src.RWA.models.parameter_hierarchy.workflow', '--help'],
             cwd=ROOT, capture_output=True, text=True,
             env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
         )
@@ -306,7 +306,7 @@ class HierarchyWorkflowTests(unittest.TestCase):
 
     def test_real_cli_exports_complete_hierarchy_and_existing_first_stage_schema(self):
         out = self.directory/'result'
-        command = [sys.executable,'-B',str(ROOT/'src/RWA/parameter_hierarchy/workflow.py'),
+        command = [sys.executable,'-B',str(ROOT/'src/RWA/models/parameter_hierarchy/workflow.py'),
                    '--input',str(self.input),'--output',str(out),'--maturities','1','2',
                    '--yield-window','64','--parameter-window','32','--paths','8','--steps','3']
         # An absolute script entry point must also work from another directory;
@@ -325,7 +325,7 @@ class HierarchyWorkflowTests(unittest.TestCase):
             self.assertEqual(data['states'].shape,(8,4,4,2))
             self.assertEqual(data['correlation'].shape,(8,8))
         # Exercise the actual existing rebuild consumer, not just CSV headers.
-        rebuild = load_module('rwa_hierarchy_rebuild', 'parameter_rebuild/rebuild.py')
+        rebuild = load_module('rwa_hierarchy_rebuild', 'data/parameters/rebuild.py')
         target = self.directory/'rebuilt'
         target.mkdir()
         curves = [pd.read_csv(out/'CURVE'/(p+'_curve.csv'),parse_dates=['observation_date'])

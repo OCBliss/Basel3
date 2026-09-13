@@ -51,7 +51,7 @@ def _sample(values, dt):
 
 
 def fit_cir(values, dt=1 / 252, fixed_theta=None):
-    """Minimize the same conditional Gaussian Euler NLL as the yield_calibration/calibrate.py stage.
+    """Minimize the same conditional Gaussian Euler NLL as the calibration/yields/calibrate.py stage.
 
     Solve the two-variable weighted least-squares problem including its active
     boundaries, then profile sigma. At theta=0, mu is undefined, not enormous.

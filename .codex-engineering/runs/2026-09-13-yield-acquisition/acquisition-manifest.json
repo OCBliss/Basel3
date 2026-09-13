@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "retrieved_at": "2026-09-13T22:29:39.185815+00:00",
+  "provider": "FRED graph CSV HTTPS GET",
+  "vintage": "current revision at retrieval; not a historical real-time vintage",
+  "requested_start": "2010-01-01",
+  "requested_end": "2026-09-13",
+  "maturities": [
+    1,
+    2,
+    3,
+    5,
+    7,
+    10,
+    20,
+    30
+  ],
+  "quality": {
+    "common_start": "2010-01-04",
+    "common_end": "2026-09-10",
+    "rows": 4354,
+    "max_fill_days": 7,
+    "max_age_days": 7,
+    "units": "percentage points",
+    "series": {
+      "DGS1": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS2": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS3": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS5": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS7": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS10": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS20": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      },
+      "DGS30": {
+        "first_observed": "2010-01-04",
+        "last_observed": "2026-09-10",
+        "leading_rows_excluded": 1,
+        "rows": 4354,
+        "filled_quotes": 179,
+        "trailing_rows_excluded": 0,
+        "oldest_fill_days": 3
+      }
+    }
+  },
+  "raw": {
+    "path": "raw/fred.csv",
+    "sha256": "b02a7e83c4d1fff473605f7e151739bc6eb9df845f8cbd25885132842236c5f0",
+    "bytes": 755809,
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1%2CDGS2%2CDGS3%2CDGS5%2CDGS7%2CDGS10%2CDGS20%2CDGS30&cosd=2010-01-01&coed=2026-09-13"
+  },
+  "sources": [
+    {
+      "maturity": 1,
+      "series_id": "DGS1",
+      "path": "series/DGS1.csv",
+      "sha256": "0e3312b48842fb5d475ca5d61c3ba72e89625a0c90e867a2b15b406a8b0eefaa"
+    },
+    {
+      "maturity": 2,
+      "series_id": "DGS2",
+      "path": "series/DGS2.csv",
+      "sha256": "63ed56c1ed4727b9dbb8d98d52333f22dd3298af949f7d29a36afbe9eea2ec25"
+    },
+    {
+      "maturity": 3,
+      "series_id": "DGS3",
+      "path": "series/DGS3.csv",
+      "sha256": "266d0371447df2014df2011c95eeeec1c55a4a00bd36065d17ad8f27433f9ffa"
+    },
+    {
+      "maturity": 5,
+      "series_id": "DGS5",
+      "path": "series/DGS5.csv",
+      "sha256": "5e16e5cce926b298603fb6cff33301eb5f9a3801fe23a2f0fd9da87ce85d86a7"
+    },
+    {
+      "maturity": 7,
+      "series_id": "DGS7",
+      "path": "series/DGS7.csv",
+      "sha256": "e0b1fd9cbe58041bc9fae1c8b2a4e4c1c44a8d8f21e6c8a9e2eb6d3f1aca0a65"
+    },
+    {
+      "maturity": 10,
+      "series_id": "DGS10",
+      "path": "series/DGS10.csv",
+      "sha256": "13697af31091253a44f847f34460a00c7cd7d4fab7daa290a6fff2c176ac6e13"
+    },
+    {
+      "maturity": 20,
+      "series_id": "DGS20",
+      "path": "series/DGS20.csv",
+      "sha256": "fdf435e32a37ce57960a105062a0bd4717a4131e10b8a79dabe135d665ae0d7f"
+    },
+    {
+      "maturity": 30,
+      "series_id": "DGS30",
+      "path": "series/DGS30.csv",
+      "sha256": "58dba4c5115a06d5cac1fee7d465fea678082833cf87db8309abf3dffaac23c7"
+    }
+  ]
+}

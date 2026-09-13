@@ -270,13 +270,14 @@ Explanation of the RWA module mathematical foundation [Here](PDF/readme.md)
 
 The [RWA source map](src/RWA/readme.md) groups the working implementation by role:
 
-- [Yield calibration](src/RWA/yield_calibration/readme.md): causal rolling estimates from local FRED yield histories.
-- [Curve repair](src/RWA/curve_repair/readme.md): NS/NSS repair with parameter-domain checks and explicit diagnostics.
-- [Parameter reconstruction](src/RWA/parameter_rebuild/readme.md): date-aligned outputs for downstream parameter models.
-- [Parameter hierarchy](src/RWA/parameter_hierarchy/readme.md): coupled ridge stabilization, endogenous mu/theta/sigma dynamics and joint parameter/yield scenarios.
+- [Yield data](src/RWA/data/yields/readme.md): live FRED retrieval, preserved quotes, bounded causal cleaning and verified snapshot provenance.
+- [Yield calibration](src/RWA/calibration/yields/readme.md): causal rolling estimates from local FRED yield histories.
+- [Curve repair](src/RWA/calibration/curves/readme.md): NS/NSS repair with parameter-domain checks and explicit diagnostics.
+- [Parameter reconstruction](src/RWA/data/parameters/readme.md): date-aligned outputs for downstream parameter models.
+- [Parameter hierarchy](src/RWA/models/parameter_hierarchy/readme.md): coupled ridge stabilization, endogenous mu/theta/sigma dynamics and joint parameter/yield scenarios.
 
-The [separate workflow configuration](pipeline/rwa_hierarchy/readme.md) runs the
-hierarchy. [RWA data and experiments](RWA/README.md) document existing inputs,
+The [live workflow](pipeline/rwa_live/readme.md) retrieves yields and runs the hierarchy.
+The [offline workflow](pipeline/rwa_hierarchy/readme.md) uses existing local yield files. [RWA data and experiments](RWA/README.md) document existing inputs,
 legacy Practical scripts and output schemas. These implementations support
 interest-rate calibration and simulation; they do not yet calculate exposure-level
 losses or duration-adjusted RWA.

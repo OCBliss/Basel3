@@ -1,7 +1,7 @@
 # RWA hierarchy pipeline
 
 [config.yaml](config.yaml) runs the
-[endogenous parameter hierarchy](../../src/RWA/parameter_hierarchy/readme.md)
+[endogenous parameter hierarchy](../../src/RWA/models/parameter_hierarchy/readme.md)
 through the repository's YAML task manager. It is a separate one-task workflow;
 the [default Call Report/JSD configuration](../pipeline_config_dynamic.yaml)
 retains its own execution plan.
@@ -47,7 +47,7 @@ The model's other defaults include `dt = 1/252`, all eight maturities, likelihoo
 repair budget `2`, fallback theta `0.25` and correlation shrinkage `0.05`.
 Changing `substeps` refines the numerical approximation while keeping each
 reported increment's duration unchanged. The
-[model guide](../../src/RWA/parameter_hierarchy/readme.md) explains the settings,
+[model guide](../../src/RWA/models/parameter_hierarchy/readme.md) explains the settings,
 minimum history, units, diagnostics and Python interface.
 
 ## YAML path and execution contract
@@ -55,7 +55,7 @@ minimum history, units, diagnostics and Python interface.
 The single step is `rwa_hierarchy`, with this source path:
 
 ```yaml
-path: RWA/parameter_hierarchy/workflow.py
+path: RWA/models/parameter_hierarchy/workflow.py
 ```
 
 Script paths resolve relative to `src/`, so this value deliberately omits a
@@ -92,7 +92,7 @@ The current finite hierarchy simulates yield, mu, theta and sigma jointly while
 holding second-level calibration fixed. Estimated parameter volatility includes
 estimation noise. It does not yet recalibrate each simulated path, value
 exposures or calculate RWA capital. Use the output contracts and validation
-limits in the [model guide](../../src/RWA/parameter_hierarchy/readme.md) when
+limits in the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) when
 building a downstream consumer.
 
 ## Verification

@@ -11,8 +11,8 @@ The file looks for a `CODE` ancestor and loads `Basel3_Global_Filepath.py` from
 it before defining its workflow. This does not match the current repository
 layout. It also imports `statsmodels`, which is not part of the root requirements.
 These are historical defaults, not a working setup command for a fresh clone.
-The active [yield calibration](../../../../src/RWA/yield_calibration/readme.md)
-and [parameter simulation](../../../../src/RWA/parameter_hierarchy/readme.md)
+The active [yield calibration](../../../../src/RWA/calibration/yields/readme.md)
+and [parameter simulation](../../../../src/RWA/models/parameter_hierarchy/readme.md)
 guides provide current commands, prerequisites and independently tested behavior.
 
 ## Legacy inputs and fitting

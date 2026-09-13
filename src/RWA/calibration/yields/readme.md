@@ -3,16 +3,16 @@
 [calibrate.py](calibrate.py) estimates CIR mean reversion (`theta`), mean level
 (`mu`) and diffusion (`sigma`) for eight Treasury maturity histories. It is the
 first stage of the established RAW → CURVE → NSS → reconstruction workflow.
-The separate [parameter hierarchy](../parameter_hierarchy/readme.md) extends
+The separate [parameter hierarchy](../../models/parameter_hierarchy/readme.md) extends
 calibration to the estimated parameter histories and has its own entry point.
 
 ## Run
 
-Install the [repository requirements](../../../requirements.txt) in your active
+Install the [repository requirements](../../../../requirements.txt) in your active
 Python environment. Run this command from `Basel3_repo`:
 
 ```bash
-python3 src/RWA/yield_calibration/calibrate.py
+python3 src/RWA/calibration/yields/calibrate.py
 ```
 
 This program has no command-line settings or preview mode. Its settings are
@@ -27,7 +27,7 @@ and replaces existing output files of the same names. It does not download data.
 | `RWA/FRED/DGS{1,2,3,5,7,10,20,30}.csv` | Each file needs `observation_date` and its named yield column, such as `DGS10`. At least 2,520 observations are required with the default window. |
 | `RWA/Experimental/MLE YIELD/RAW/DGS*_with_parameters.csv` | Original input columns and row order, a one-based CSV index, and added `yield_clean`, `theta`, `mu`, `sigma` columns. |
 
-See the [RAW output guide](../../../RWA/Experimental/MLE%20YIELD/RAW/readme.md)
+See the [RAW output guide](../../../../RWA/Experimental/MLE%20YIELD/RAW/readme.md)
 for the exported files. Keep FRED yields in their existing percentage-point
 units; the program does not convert percentages into decimal rates.
 
@@ -55,9 +55,9 @@ have been written if a worker subsequently fails; inspect the complete run.
 ## Continue the workflow
 
 Assemble the date-keyed `mu_curve.csv`, `theta_curve.csv` and `sigma_curve.csv`
-using the [CURVE preparation instructions](../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
-Then run [cross-maturity repair](../curve_repair/readme.md) followed by
-[parameter reconstruction](../parameter_rebuild/readme.md). Curve assembly is
+using the [CURVE preparation instructions](../../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
+Then run [cross-maturity repair](../curves/readme.md) followed by
+[parameter reconstruction](../../data/parameters/readme.md). Curve assembly is
 a separate preparation step, not an output automatically produced here.
 
 Earlier versions calibrated newest-first histories in the wrong transition
@@ -70,7 +70,7 @@ resolve weak parameter identification or establish the risk model's validity.
 ## Verification
 
 Use the repository-local temporary-file setup in the
-[test guide](../../../tests/readme.md), then run:
+[test guide](../../../../tests/readme.md), then run:
 
 ```bash
 python3 -B -m unittest discover -s tests -p test_rwa_calibration.py -v

@@ -7,14 +7,14 @@ experiments. It performs date-based reconstruction, not another calibration.
 
 ## Prepare and run
 
-Install the [repository requirements](../../../requirements.txt). Complete
-[yield calibration](../yield_calibration/readme.md),
-[CURVE assembly](../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md), and
-[mu/theta repair](../curve_repair/readme.md) first. Review the repair audit fields
+Install the [repository requirements](../../../../requirements.txt). Complete
+[yield calibration](../../calibration/yields/readme.md),
+[CURVE assembly](../../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md), and
+[mu/theta repair](../../calibration/curves/readme.md) first. Review the repair audit fields
 before carrying their values downstream. Run from `Basel3_repo`:
 
 ```bash
-python3 src/RWA/parameter_rebuild/rebuild.py
+python3 src/RWA/data/parameters/rebuild.py
 ```
 
 There are no command-line settings or preview mode. Paths and the eight-tenor
@@ -64,11 +64,11 @@ the repaired source curves alongside the results.
 
 ## Next consumer
 
-The [MLE VOL/RAW guide](../../../RWA/Experimental/MLE%20VOL/RAW/readme.md)
+The [MLE VOL/RAW guide](../../../../RWA/Experimental/MLE%20VOL/RAW/readme.md)
 describes the reconstructed files. The
-[MLE VOL overview](../../../RWA/Experimental/MLE%20VOL/readme.md) distinguishes
+[MLE VOL overview](../../../../RWA/Experimental/MLE%20VOL/readme.md) distinguishes
 the historical sigma-only experiment from the active
-[endogenous parameter hierarchy](../parameter_hierarchy/readme.md). The active
+[endogenous parameter hierarchy](../../models/parameter_hierarchy/readme.md). The active
 hierarchy reads FRED inputs directly, calibrates mu/theta/sigma histories, and
 also exports compatible first-stage RAW and CURVE tables; it does not require
 this legacy reconstruction command as a preceding pipeline task.
@@ -76,7 +76,7 @@ this legacy reconstruction command as a preceding pipeline task.
 ## Verification
 
 Use the repository-local temporary-file setup in the
-[test guide](../../../tests/readme.md), then run:
+[test guide](../../../../tests/readme.md), then run:
 
 ```bash
 python3 -B -m unittest discover -s tests -p test_rwa_calibration.py -v

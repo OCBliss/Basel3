@@ -29,8 +29,8 @@ source reorganization.
 ## Current executable interest-rate workflow
 
 For current commands, prerequisites, inputs and outputs, use the
-[yield calibration](../../src/RWA/yield_calibration/readme.md),
-[curve repair](../../src/RWA/curve_repair/readme.md) and
-[parameter simulation](../../src/RWA/parameter_hierarchy/readme.md) guides.
+[yield calibration](../../src/RWA/calibration/yields/readme.md),
+[curve repair](../../src/RWA/calibration/curves/readme.md) and
+[parameter simulation](../../src/RWA/models/parameter_hierarchy/readme.md) guides.
 These implement calibration and simulation; they do not complete the proposed
 valuation and duration-adjusted RWA stages above.

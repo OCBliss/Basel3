@@ -11,8 +11,8 @@ The script searches the entire filesystem for `Basel3_Global_Filepath.py`, impor
 it, and uses its `ROOT_DIR`. It executes while being imported. These defaults do
 not satisfy the current repository-only path boundary, so it is retained as a
 historical experiment, not an active entry point. For current data handling and
-calibration commands, use [yield calibration](../../../../src/RWA/yield_calibration/readme.md)
-or [parameter simulation](../../../../src/RWA/parameter_hierarchy/readme.md).
+calibration commands, use [yield calibration](../../../../src/RWA/calibration/yields/readme.md)
+or [parameter simulation](../../../../src/RWA/models/parameter_hierarchy/readme.md).
 Do not import the legacy file merely to inspect it.
 
 ## Inputs and output

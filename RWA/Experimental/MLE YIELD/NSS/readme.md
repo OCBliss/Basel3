@@ -12,8 +12,8 @@ Run from `Basel3_repo`, with the root requirements installed:
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 src/RWA/curve_repair/mu.py
-python3 src/RWA/curve_repair/theta.py
+python3 src/RWA/calibration/curves/mu.py
+python3 src/RWA/calibration/curves/theta.py
 ```
 
 These scripts have no command-line path options. `INPUT_FILE`, `OUTPUT_FILE` and
@@ -39,8 +39,8 @@ values are converted to missing values.
 
 | Script | Actual finite-value trigger | Boundary behavior |
 | --- | --- | --- |
-| [mu repair source](../../../../src/RWA/curve_repair/mu.py) | `abs(mu) > 9` | Exactly +9 or -9 is not flagged |
-| [theta repair source](../../../../src/RWA/curve_repair/theta.py) | `abs(theta) < 0.01` | Exactly +0.01 or -0.01 is not flagged; zero is flagged |
+| [mu repair source](../../../../src/RWA/calibration/curves/mu.py) | `abs(mu) > 9` | Exactly +9 or -9 is not flagged |
+| [theta repair source](../../../../src/RWA/calibration/curves/theta.py) | `abs(theta) < 0.01` | Exactly +0.01 or -0.01 is not flagged; zero is flagged |
 
 Missing and infinite values are excluded from fitting and are not reconstruction
 targets. Only flagged finite nodes are replaced. Nonflagged values are preserved,
@@ -90,15 +90,15 @@ After reviewing the repaired curves and ensuring mu/theta/sigma come from a
 consistent calibration run, execute:
 
 ```bash
-python3 src/RWA/parameter_rebuild/rebuild.py
+python3 src/RWA/data/parameters/rebuild.py
 ```
 
-The [rebuild](../../../../src/RWA/parameter_rebuild/rebuild.py) joins repaired
+The [rebuild](../../../../src/RWA/data/parameters/rebuild.py) joins repaired
 mu and theta, plus the unrepaired sigma curve, to each original yield file by
 `observation_date`. It writes [MLE VOL/RAW](../../MLE%20VOL/RAW/readme.md).
 Those six-column exports omit these audit fields, so retain the NSS files too.
 
-The separate [endogenous hierarchy](../../../../src/RWA/parameter_hierarchy/readme.md)
+The separate [endogenous hierarchy](../../../../src/RWA/models/parameter_hierarchy/readme.md)
 uses coupled likelihood-budgeted ridge stabilization and fits processes to all
 three parameter histories. Independent NS/NSS smoothing here is not that coupled
 procedure and does not establish that weakly identified parameters were recovered.

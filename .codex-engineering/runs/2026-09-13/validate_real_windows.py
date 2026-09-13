@@ -14,7 +14,7 @@ EVIDENCE = Path(__file__).resolve().parent
 TEMP = EVIDENCE / "tmp"
 TEMP.mkdir(exist_ok=True)
 tempfile.tempdir = str(TEMP)
-SOURCE = ROOT / "src/RWA/yield_calibration/calibrate.py"
+SOURCE = ROOT / "src/RWA/calibration/yields/calibrate.py"
 BASE_REVISION = "269f9487975d03e93bdea3b869785258e4972da5"
 
 spec = importlib.util.spec_from_file_location("rwa_current", SOURCE)
@@ -95,9 +95,9 @@ with tempfile.TemporaryDirectory(dir=str(TEMP)) as directory:
         module_spec.loader.exec_module(module)
         return module
 
-    mu_repair = load_module("rwa_real_mu", "curve_repair/mu.py")
-    theta_repair = load_module("rwa_real_theta", "curve_repair/theta.py")
-    rebuild = load_module("rwa_real_rebuild", "parameter_rebuild/rebuild.py")
+    mu_repair = load_module("rwa_real_mu", "calibration/curves/mu.py")
+    theta_repair = load_module("rwa_real_theta", "calibration/curves/theta.py")
+    rebuild = load_module("rwa_real_rebuild", "data/parameters/rebuild.py")
     curves = {key: pd.concat(series, axis=1) for key, series in parameter_series.items()}
     # Compare tenors on the same actual date, never by row number or by merging
     # their different latest dates. DGS20 has two additional source dates.
