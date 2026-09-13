@@ -516,3 +516,44 @@ throughout the run rather than waiting until the end.
   in AGENTS.md. Continue this same run with pathwise recursive parameter-dynamics
   and dependence recalibration; compare with the frozen scenario engine, validate
   and harden it, then immediately publish the implemented feature.
+
+
+### 2026-09-13T15:53:13-07:00 — B3-20260913-03 recursive scenario engine
+
+- **Completed implementation:** Added pathwise rolling recalibration of all
+  mu/theta/sigma process coefficients and joint innovation dependence. Each path
+  keeps its own circular state history and prior calibration anchors. Updates
+  occur before later shocks, with simultaneous left-point Euler substeps. Xi is
+  learned again from the sigma history. Simulated parameter states are retained.
+  Disabled recalibration exactly reproduces the prior frozen simulation.
+- **Integration:** Added forecast mode/cadence to the actual CLI, preserved CSV
+  and NPZ output shapes, and stored per-path calibration diagnostics in the model
+  manifest. Both RWA YAML workflows select recursive mode. Code remains in the
+  existing models/parameter_hierarchy component, within the three-domain layout.
+- **Independent verification:** Final full suite: 198 tests passed in 45.096 seconds.
+  Twelve new tests check frozen equivalence, causal timing, path isolation,
+  branch/tenor coverage, standardized residual formulas, full buffer rollover,
+  input preservation, reproducibility, workload guards and the actual model CLI.
+- **Hardening iteration:** Initial giant-horizon test exposed list allocation
+  before the bound check. Replaced it with integer work counts checked before
+  allocation and matrix operations; added explicit path/substep and fit limits.
+  Nonfinite fitted likelihoods/audits and unusable boundary histories abort with
+  path/step context. No failed paths are discarded, replaced or silently frozen.
+- **Empirical alternatives:** Latest and held-out origins, 32 paths/10 steps with
+  cadences 0/1/5; every-step updates generated 288 path/origin refits, cadence 5
+  generated 32. All states positive, zero projections, NLL costs<=2, all three branch
+  diffusions and full joint dependence changed. Actual runtime 16.08 seconds for
+  the bounded comparison; latest cadence 1=6.19 seconds,cadence 5=0.75 seconds.
+  JSD at 30/50/100 shared bins and independent frozen draws shows histogram/Monte
+  Carlo sensitivity. Single held-out energy-score intervals include zero; no
+  forecast-superiority conclusion is supported by this limited comparison.
+- **Evidence:** runs/2026-09-13-recursive/ contains executable reproduction,
+  original comparison arrays/audits/results and test logs. A full live configured
+  acquisition-to-recursive-simulation run also verifies the user-facing pipeline.
+- **Supporting publication:**119b928 was pushed and pulled, and GitHub served the
+  actual data/calibration/models hierarchy plus live acquisition source/config.
+  Its retrieval/cleaning/docs work is explicitly supporting work, not this task.
+  The existing every-two-hour schedule was verified and preserved.
+- **Completion cycle:** Publish the verified recursive source/tests/config/docs
+  and evidence immediately; pull and independently retrieve affected GitHub
+  files before reporting completion. Record exact publication verification next.

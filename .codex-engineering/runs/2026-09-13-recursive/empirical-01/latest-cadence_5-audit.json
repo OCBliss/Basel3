@@ -1,0 +1,1010 @@
+{
+  "closure": "pathwise rolling finite-depth parameter calibration",
+  "rolling_window": 252,
+  "recalibrate_every": 5,
+  "recalibrated_origins": [
+    5
+  ],
+  "recalibration_count": 32,
+  "work_units": 193536,
+  "scalar_fits": 768,
+  "path_substeps": 1280,
+  "max_nll_cost": 2.0,
+  "max_coefficient_change_from_origin": 6.993811185960279,
+  "max_correlation_change_from_origin": 0.0700770779825336,
+  "projection_count": 0,
+  "updates": [
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05003833642445094,
+      "constant_innovation_columns": [],
+      "path": 0,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.889013591935061,
+      "correlation_max_change": 0.058055276767500316,
+      "coefficient_max_change_from_origin": 4.889013591935061,
+      "correlation_max_change_from_origin": 0.058055276767500316,
+      "parameter_coefficient_max_changes": [
+        1.8766752520512924,
+        4.889013591935061,
+        0.32015105037152547
+      ],
+      "parameter_diffusion_max_changes": [
+        0.015374326551456763,
+        0.008822691206117061,
+        0.00020267219686457422
+      ],
+      "xi_min": 0.004024194810091785,
+      "xi_max": 0.005047394190023923
+    },
+    {
+      "max_nll_cost": 1.9999999999993179,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "unmodified": 21,
+        "tenor_anchors": 3
+      },
+      "min_correlation_eigenvalue": 0.050067416839476846,
+      "constant_innovation_columns": [],
+      "path": 1,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 6.066991012556667,
+      "correlation_max_change": 0.06293147167167779,
+      "coefficient_max_change_from_origin": 6.066991012556667,
+      "correlation_max_change_from_origin": 0.06293147167167779,
+      "parameter_coefficient_max_changes": [
+        4.924864207366657,
+        6.066991012556667,
+        0.2735768470974709
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01341348996728714,
+        0.008861112611588118,
+        0.00014446671060030884
+      ],
+      "xi_min": 0.0040301984815388475,
+      "xi_max": 0.005059904592686894
+    },
+    {
+      "max_nll_cost": 1.9999999999990905,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05007434816505577,
+      "constant_innovation_columns": [],
+      "path": 2,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.00058618801409,
+      "correlation_max_change": 0.055771871754366265,
+      "coefficient_max_change_from_origin": 5.00058618801409,
+      "correlation_max_change_from_origin": 0.055771871754366265,
+      "parameter_coefficient_max_changes": [
+        4.9051952339715275,
+        5.00058618801409,
+        0.3435205052711532
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01732628597307867,
+        0.009021848049359987,
+        0.00017184775816104104
+      ],
+      "xi_min": 0.0040279637402926335,
+      "xi_max": 0.00512173831824171
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.050019731343932845,
+      "constant_innovation_columns": [],
+      "path": 3,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.118594291202463,
+      "correlation_max_change": 0.05385066112688819,
+      "coefficient_max_change_from_origin": 5.118594291202463,
+      "correlation_max_change_from_origin": 0.05385066112688819,
+      "parameter_coefficient_max_changes": [
+        2.1274510054413094,
+        5.118594291202463,
+        0.09282720665514432
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01627341493615475,
+        0.009101428390006244,
+        0.00018699337679379483
+      ],
+      "xi_min": 0.004024514235221191,
+      "xi_max": 0.005046160401656933
+    },
+    {
+      "max_nll_cost": 1.9999999999998863,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.050133044520064556,
+      "constant_innovation_columns": [],
+      "path": 4,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 6.321511209958665,
+      "correlation_max_change": 0.058123633724926654,
+      "coefficient_max_change_from_origin": 6.321511209958665,
+      "correlation_max_change_from_origin": 0.058123633724926654,
+      "parameter_coefficient_max_changes": [
+        2.2316734477599516,
+        6.321511209958665,
+        0.15015767498412713
+      ],
+      "parameter_diffusion_max_changes": [
+        0.012396247773134472,
+        0.007409952776036954,
+        0.0001762144417787534
+      ],
+      "xi_min": 0.00402595421016479,
+      "xi_max": 0.005092802589706886
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.0500660955663992,
+      "constant_innovation_columns": [],
+      "path": 5,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.511530205614342,
+      "correlation_max_change": 0.05279768882960878,
+      "coefficient_max_change_from_origin": 5.511530205614342,
+      "correlation_max_change_from_origin": 0.05279768882960878,
+      "parameter_coefficient_max_changes": [
+        1.9223859317263798,
+        5.511530205614342,
+        0.3048108804480034
+      ],
+      "parameter_diffusion_max_changes": [
+        0.014789815612226642,
+        0.009650974984367677,
+        0.00017925678172511957
+      ],
+      "xi_min": 0.004006965420087747,
+      "xi_max": 0.0050598567337462545
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.050070066430550876,
+      "constant_innovation_columns": [],
+      "path": 6,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.27531367157389,
+      "correlation_max_change": 0.04730391278983642,
+      "coefficient_max_change_from_origin": 5.27531367157389,
+      "correlation_max_change_from_origin": 0.04730391278983642,
+      "parameter_coefficient_max_changes": [
+        4.832979144359654,
+        5.27531367157389,
+        0.22687945353056538
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016413392471150923,
+        0.009854205301063984,
+        0.00016590578385955197
+      ],
+      "xi_min": 0.004024525615832108,
+      "xi_max": 0.005108818533327278
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "unmodified": 21,
+        "tenor_anchors": 3
+      },
+      "min_correlation_eigenvalue": 0.05010332013931069,
+      "constant_innovation_columns": [],
+      "path": 7,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.277515547918334,
+      "correlation_max_change": 0.05230286525348654,
+      "coefficient_max_change_from_origin": 5.277515547918334,
+      "correlation_max_change_from_origin": 0.05230286525348654,
+      "parameter_coefficient_max_changes": [
+        4.8178820278536385,
+        5.277515547918334,
+        0.30905913481748604
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016621228812694067,
+        0.009899754938070382,
+        0.00018414359506089238
+      ],
+      "xi_min": 0.004010375585939814,
+      "xi_max": 0.005069594913141744
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05028212849762394,
+      "constant_innovation_columns": [],
+      "path": 8,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.20427110321851,
+      "correlation_max_change": 0.05287726695883743,
+      "coefficient_max_change_from_origin": 5.20427110321851,
+      "correlation_max_change_from_origin": 0.05287726695883743,
+      "parameter_coefficient_max_changes": [
+        4.744406531662694,
+        5.20427110321851,
+        0.37992138046727053
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01564754398667928,
+        0.009026978894984522,
+        0.00020242154386538105
+      ],
+      "xi_min": 0.004032018609027741,
+      "xi_max": 0.005055560618221914
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05023307798489349,
+      "constant_innovation_columns": [],
+      "path": 9,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.020351230810114,
+      "correlation_max_change": 0.0569080442559434,
+      "coefficient_max_change_from_origin": 5.020351230810114,
+      "correlation_max_change_from_origin": 0.0569080442559434,
+      "parameter_coefficient_max_changes": [
+        2.008256062621971,
+        5.020351230810114,
+        0.06930930097993171
+      ],
+      "parameter_diffusion_max_changes": [
+        0.015211082527037179,
+        0.009324618747331148,
+        0.0001711361618012561
+      ],
+      "xi_min": 0.0040065789510138295,
+      "xi_max": 0.005077691152529398
+    },
+    {
+      "max_nll_cost": 1.9999999999995453,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05010670746079796,
+      "constant_innovation_columns": [],
+      "path": 10,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.995425733238989,
+      "correlation_max_change": 0.05108467287429552,
+      "coefficient_max_change_from_origin": 4.995425733238989,
+      "correlation_max_change_from_origin": 0.05108467287429552,
+      "parameter_coefficient_max_changes": [
+        4.846345404584768,
+        4.995425733238989,
+        0.14211914514236934
+      ],
+      "parameter_diffusion_max_changes": [
+        0.0165290673742855,
+        0.008473171682360281,
+        0.0001927975741437488
+      ],
+      "xi_min": 0.004017299341151712,
+      "xi_max": 0.005092699267218179
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05006092485239494,
+      "constant_innovation_columns": [],
+      "path": 11,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.401535667213672,
+      "correlation_max_change": 0.05584402185769518,
+      "coefficient_max_change_from_origin": 5.401535667213672,
+      "correlation_max_change_from_origin": 0.05584402185769518,
+      "parameter_coefficient_max_changes": [
+        1.9794624522556399,
+        5.401535667213672,
+        0.29681403323344013
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01733038482395366,
+        0.010050534745369044,
+        0.00020060922991369402
+      ],
+      "xi_min": 0.004043559663377,
+      "xi_max": 0.005071968965810305
+    },
+    {
+      "max_nll_cost": 1.9999999999993179,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "unmodified": 21,
+        "tenor_anchors": 3
+      },
+      "min_correlation_eigenvalue": 0.050040143175988094,
+      "constant_innovation_columns": [],
+      "path": 12,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.884261500612595,
+      "correlation_max_change": 0.05538483696481053,
+      "coefficient_max_change_from_origin": 5.884261500612595,
+      "correlation_max_change_from_origin": 0.05538483696481053,
+      "parameter_coefficient_max_changes": [
+        4.9104244300176,
+        5.884261500612595,
+        0.37832869308814243
+      ],
+      "parameter_diffusion_max_changes": [
+        0.015893177782785428,
+        0.009422062718468016,
+        0.00020974906082092508
+      ],
+      "xi_min": 0.0040843895722413644,
+      "xi_max": 0.0050782573850215555
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05005383843141709,
+      "constant_innovation_columns": [],
+      "path": 13,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.276471295223544,
+      "correlation_max_change": 0.059859441188938864,
+      "coefficient_max_change_from_origin": 5.276471295223544,
+      "correlation_max_change_from_origin": 0.059859441188938864,
+      "parameter_coefficient_max_changes": [
+        1.9447756418397493,
+        5.276471295223544,
+        0.36506452333612893
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016226710054722704,
+        0.008199446147519468,
+        0.00020143204752443543
+      ],
+      "xi_min": 0.003998798610959909,
+      "xi_max": 0.005054980100694932
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05005811825445433,
+      "constant_innovation_columns": [],
+      "path": 14,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.250353402742675,
+      "correlation_max_change": 0.06532442170841561,
+      "coefficient_max_change_from_origin": 5.250353402742675,
+      "correlation_max_change_from_origin": 0.06532442170841561,
+      "parameter_coefficient_max_changes": [
+        4.434982896128609,
+        5.250353402742675,
+        0.1260652504094799
+      ],
+      "parameter_diffusion_max_changes": [
+        0.012845692284844223,
+        0.008857599813018452,
+        0.00021140713724640027
+      ],
+      "xi_min": 0.004020192683798992,
+      "xi_max": 0.005042067382855897
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05019425591446968,
+      "constant_innovation_columns": [],
+      "path": 15,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.5778708036979765,
+      "correlation_max_change": 0.06766130601644516,
+      "coefficient_max_change_from_origin": 5.5778708036979765,
+      "correlation_max_change_from_origin": 0.06766130601644516,
+      "parameter_coefficient_max_changes": [
+        4.477628095954405,
+        5.5778708036979765,
+        0.1616827605233775
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016811410472905464,
+        0.008593631247667016,
+        0.00018914411245135772
+      ],
+      "xi_min": 0.004078554836331768,
+      "xi_max": 0.005142907890033041
+    },
+    {
+      "max_nll_cost": 1.9999999999988631,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "unmodified": 21,
+        "tenor_anchors": 3
+      },
+      "min_correlation_eigenvalue": 0.050367557139250375,
+      "constant_innovation_columns": [],
+      "path": 16,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.927681097603273,
+      "correlation_max_change": 0.056787152127694085,
+      "coefficient_max_change_from_origin": 4.927681097603273,
+      "correlation_max_change_from_origin": 0.056787152127694085,
+      "parameter_coefficient_max_changes": [
+        4.927681097603273,
+        4.512140278939221,
+        0.257092634094245
+      ],
+      "parameter_diffusion_max_changes": [
+        0.011008411974945564,
+        0.007656592856623234,
+        0.00020698024771923732
+      ],
+      "xi_min": 0.004011208780612873,
+      "xi_max": 0.0050530205629519985
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05019081976790951,
+      "constant_innovation_columns": [],
+      "path": 17,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.824327007898127,
+      "correlation_max_change": 0.061645769999790594,
+      "coefficient_max_change_from_origin": 4.824327007898127,
+      "correlation_max_change_from_origin": 0.061645769999790594,
+      "parameter_coefficient_max_changes": [
+        4.613460558527104,
+        4.824327007898127,
+        0.45020639859653877
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01326006790538653,
+        0.007547033803620706,
+        0.00014161436296409625
+      ],
+      "xi_min": 0.004019536023344337,
+      "xi_max": 0.0050707039968479195
+    },
+    {
+      "max_nll_cost": 1.9999999999998863,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.050109315241923844,
+      "constant_innovation_columns": [],
+      "path": 18,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.292262390862959,
+      "correlation_max_change": 0.06285806536591071,
+      "coefficient_max_change_from_origin": 5.292262390862959,
+      "correlation_max_change_from_origin": 0.06285806536591071,
+      "parameter_coefficient_max_changes": [
+        2.267331910995983,
+        5.292262390862959,
+        0.34407138259330483
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01201611447319334,
+        0.009830054002384209,
+        0.00020343633774695061
+      ],
+      "xi_min": 0.004003191264331676,
+      "xi_max": 0.00505541784796031
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.050119720973607,
+      "constant_innovation_columns": [],
+      "path": 19,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.309771171494525,
+      "correlation_max_change": 0.06783363326598602,
+      "coefficient_max_change_from_origin": 5.309771171494525,
+      "correlation_max_change_from_origin": 0.06783363326598602,
+      "parameter_coefficient_max_changes": [
+        2.007091832611982,
+        5.309771171494525,
+        0.34497038124978996
+      ],
+      "parameter_diffusion_max_changes": [
+        0.014617485369691818,
+        0.009138189313543293,
+        0.00017446392525690465
+      ],
+      "xi_min": 0.0040702328040714475,
+      "xi_max": 0.005063681466992128
+    },
+    {
+      "max_nll_cost": 1.9999999999998863,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.050155894893484446,
+      "constant_innovation_columns": [],
+      "path": 20,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.714242864469966,
+      "correlation_max_change": 0.05910798223232705,
+      "coefficient_max_change_from_origin": 5.714242864469966,
+      "correlation_max_change_from_origin": 0.05910798223232705,
+      "parameter_coefficient_max_changes": [
+        1.8767222009172393,
+        5.714242864469966,
+        0.463507777220584
+      ],
+      "parameter_diffusion_max_changes": [
+        0.01248865042980507,
+        0.006273635316725229,
+        0.0001684363740297413
+      ],
+      "xi_min": 0.004030085035225192,
+      "xi_max": 0.005046070885179768
+    },
+    {
+      "max_nll_cost": 1.9999999999990905,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "unmodified": 21,
+        "tenor_anchors": 3
+      },
+      "min_correlation_eigenvalue": 0.05002796175551235,
+      "constant_innovation_columns": [],
+      "path": 21,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.4942427731546815,
+      "correlation_max_change": 0.06499018996483309,
+      "coefficient_max_change_from_origin": 5.4942427731546815,
+      "correlation_max_change_from_origin": 0.06499018996483309,
+      "parameter_coefficient_max_changes": [
+        4.894179856690842,
+        5.4942427731546815,
+        0.21762812478388271
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016305865237582262,
+        0.009851578333362143,
+        0.00018900453853151148
+      ],
+      "xi_min": 0.0040078034222993855,
+      "xi_max": 0.005072043423984755
+    },
+    {
+      "max_nll_cost": 1.9999999999998863,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.0501752085602917,
+      "constant_innovation_columns": [],
+      "path": 22,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.6862716488087415,
+      "correlation_max_change": 0.056404211135875834,
+      "coefficient_max_change_from_origin": 4.6862716488087415,
+      "correlation_max_change_from_origin": 0.056404211135875834,
+      "parameter_coefficient_max_changes": [
+        2.144591101907703,
+        4.6862716488087415,
+        0.2922085758580568
+      ],
+      "parameter_diffusion_max_changes": [
+        0.012466145112462856,
+        0.006795426739078458,
+        0.00019321565512177633
+      ],
+      "xi_min": 0.004081949261304196,
+      "xi_max": 0.005076881974454231
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05014206573747934,
+      "constant_innovation_columns": [],
+      "path": 23,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.788774453588665,
+      "correlation_max_change": 0.06356107075334799,
+      "coefficient_max_change_from_origin": 4.788774453588665,
+      "correlation_max_change_from_origin": 0.06356107075334799,
+      "parameter_coefficient_max_changes": [
+        1.9233923389500402,
+        4.788774453588665,
+        0.33755696679200753
+      ],
+      "parameter_diffusion_max_changes": [
+        0.014165575762889793,
+        0.008134205754952162,
+        0.00016343214509689351
+      ],
+      "xi_min": 0.004032708767764825,
+      "xi_max": 0.005078545853485549
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.050410691713724344,
+      "constant_innovation_columns": [],
+      "path": 24,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.312297392569157,
+      "correlation_max_change": 0.0700770779825336,
+      "coefficient_max_change_from_origin": 5.312297392569157,
+      "correlation_max_change_from_origin": 0.0700770779825336,
+      "parameter_coefficient_max_changes": [
+        1.9948131197006305,
+        5.312297392569157,
+        0.12173467302178942
+      ],
+      "parameter_diffusion_max_changes": [
+        0.015278022853719486,
+        0.00991118693490789,
+        0.00013042805483551734
+      ],
+      "xi_min": 0.004038654015534316,
+      "xi_max": 0.005076038748699938
+    },
+    {
+      "max_nll_cost": 1.999999999999659,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.050132264042365725,
+      "constant_innovation_columns": [],
+      "path": 25,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.0444891259089175,
+      "correlation_max_change": 0.06879532373458364,
+      "coefficient_max_change_from_origin": 5.0444891259089175,
+      "correlation_max_change_from_origin": 0.06879532373458364,
+      "parameter_coefficient_max_changes": [
+        1.9334947941368714,
+        5.0444891259089175,
+        0.32559947557637536
+      ],
+      "parameter_diffusion_max_changes": [
+        0.013575569393210973,
+        0.00790667783715715,
+        0.00015685115150929768
+      ],
+      "xi_min": 0.004027602881189911,
+      "xi_max": 0.005099870640563922
+    },
+    {
+      "max_nll_cost": 1.9999999999998863,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05032575944758788,
+      "constant_innovation_columns": [],
+      "path": 26,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.251363235881733,
+      "correlation_max_change": 0.05317261745011048,
+      "coefficient_max_change_from_origin": 5.251363235881733,
+      "correlation_max_change_from_origin": 0.05317261745011048,
+      "parameter_coefficient_max_changes": [
+        1.9502254975705098,
+        5.251363235881733,
+        0.5189262834335413
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016926513964102274,
+        0.009727886392704,
+        0.0001887410344910351
+      ],
+      "xi_min": 0.004024515316698662,
+      "xi_max": 0.0050494338916673
+    },
+    {
+      "max_nll_cost": 2.0,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.050046893445725354,
+      "constant_innovation_columns": [],
+      "path": 27,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 6.993811185960279,
+      "correlation_max_change": 0.05475336951088769,
+      "coefficient_max_change_from_origin": 6.993811185960279,
+      "correlation_max_change_from_origin": 0.05475336951088769,
+      "parameter_coefficient_max_changes": [
+        2.553121154206589,
+        6.993811185960279,
+        0.09848905463952162
+      ],
+      "parameter_diffusion_max_changes": [
+        0.013671696307003323,
+        0.007747730675757153,
+        0.00015006400470055168
+      ],
+      "xi_min": 0.004020559656734631,
+      "xi_max": 0.005061815440479135
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 4,
+      "regularized_fits": 4,
+      "anchor_sources": {
+        "tenor_anchors": 4,
+        "unmodified": 20
+      },
+      "min_correlation_eigenvalue": 0.050081773151570946,
+      "constant_innovation_columns": [],
+      "path": 28,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.252268354771694,
+      "correlation_max_change": 0.05310090144179913,
+      "coefficient_max_change_from_origin": 5.252268354771694,
+      "correlation_max_change_from_origin": 0.05310090144179913,
+      "parameter_coefficient_max_changes": [
+        1.9480877623718884,
+        5.252268354771694,
+        0.3003326281890948
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016666714358496648,
+        0.009707029898992914,
+        0.0001875645381468104
+      ],
+      "xi_min": 0.0040557269829658875,
+      "xi_max": 0.005064949876768513
+    },
+    {
+      "max_nll_cost": 1.9999999999995453,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.050054103913441415,
+      "constant_innovation_columns": [],
+      "path": 29,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.254598467434086,
+      "correlation_max_change": 0.0682856862493676,
+      "coefficient_max_change_from_origin": 5.254598467434086,
+      "correlation_max_change_from_origin": 0.0682856862493676,
+      "parameter_coefficient_max_changes": [
+        4.402313464811053,
+        5.254598467434086,
+        0.18536892197955646
+      ],
+      "parameter_diffusion_max_changes": [
+        0.017199739619098042,
+        0.009915540013033214,
+        0.00014688204968587963
+      ],
+      "xi_min": 0.004009347004465397,
+      "xi_max": 0.005097522695333081
+    },
+    {
+      "max_nll_cost": 1.9999999999990905,
+      "weak_fits": 2,
+      "regularized_fits": 2,
+      "anchor_sources": {
+        "unmodified": 22,
+        "tenor_anchors": 2
+      },
+      "min_correlation_eigenvalue": 0.05007174972425546,
+      "constant_innovation_columns": [],
+      "path": 30,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 5.464940584587701,
+      "correlation_max_change": 0.05820067197130052,
+      "coefficient_max_change_from_origin": 5.464940584587701,
+      "correlation_max_change_from_origin": 0.05820067197130052,
+      "parameter_coefficient_max_changes": [
+        4.640851441790202,
+        5.464940584587701,
+        0.282665099028905
+      ],
+      "parameter_diffusion_max_changes": [
+        0.015548889269943578,
+        0.009239931753690644,
+        0.00021670550691565114
+      ],
+      "xi_min": 0.004004252855065769,
+      "xi_max": 0.005049533202612925
+    },
+    {
+      "max_nll_cost": 1.9999999999997726,
+      "weak_fits": 3,
+      "regularized_fits": 3,
+      "anchor_sources": {
+        "tenor_anchors": 3,
+        "unmodified": 21
+      },
+      "min_correlation_eigenvalue": 0.05011000243264575,
+      "constant_innovation_columns": [],
+      "path": 31,
+      "origin_step": 5,
+      "observed_history_rows": 247,
+      "simulated_history_rows": 5,
+      "coefficient_max_change": 4.925206334920851,
+      "correlation_max_change": 0.058585519085884524,
+      "coefficient_max_change_from_origin": 4.925206334920851,
+      "correlation_max_change_from_origin": 0.058585519085884524,
+      "parameter_coefficient_max_changes": [
+        1.9063951354874575,
+        4.925206334920851,
+        0.21960932481496354
+      ],
+      "parameter_diffusion_max_changes": [
+        0.016107166949220597,
+        0.008322294776562378,
+        0.00020260313244901355
+      ],
+      "xi_min": 0.004007248168685609,
+      "xi_max": 0.005058461285665148
+    }
+  ]
+}

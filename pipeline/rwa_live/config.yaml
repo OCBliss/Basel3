@@ -13,6 +13,8 @@ parameters:
   steps: 20
   substeps: 4
   seed: 1234
+  forecast_mode: recursive
+  recalibrate_every: 1
 
 scripts:
   acquire_yields:
@@ -53,6 +55,10 @@ scripts:
       - "{substeps}"
       - --seed
       - "{seed}"
+      - --forecast-mode
+      - "{forecast_mode}"
+      - --recalibrate-every
+      - "{recalibrate_every}"
     inputs:
       - "{snapshot_dir}/snapshot.json"
       - "{snapshot_dir}/series/DGS*.csv"

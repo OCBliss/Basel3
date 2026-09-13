@@ -88,10 +88,10 @@ mean-reversion speed for the chosen step requires more substeps. Inspect the
 task log and any partial output, correct the cause, and choose a new output
 directory before rerunning; existing results are not overwritten.
 
-The current finite hierarchy simulates yield, mu, theta and sigma jointly while
-holding second-level calibration fixed. Estimated parameter volatility includes
-estimation noise. It does not yet recalibrate each simulated path, value
-exposures or calculate RWA capital. Use the output contracts and validation
+The finite hierarchy simulates yield, mu, theta and sigma jointly, recalibrating
+parameter dynamics and dependence within each path when recursive mode is selected.
+Estimated parameter volatility includes estimation noise. Exposure valuation and
+RWA capital calculation are separate stages. Use the output contracts and validation
 limits in the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) when
 building a downstream consumer.
 
@@ -110,3 +110,14 @@ isolated two-tenor fixtures and reduced numerical settings, then check
 completion. They also exercise direct CLI output, downstream reconstruction,
 causality, numerical behavior and path boundaries. The manager suite verifies
 configuration parsing, argument expansion, dependency ordering and failures.
+
+
+## Forecast mode and update cadence
+
+The configuration selects `forecast_mode: recursive` and `recalibrate_every: 1`.
+Each path recalibrates mu/theta/sigma dynamics and full joint dependence from its
+own rolling history before its next reported step. Set `forecast_mode: frozen`
+for the origin-calibration benchmark, or increase `recalibrate_every` to compare
+less frequent updates. Changes to a path's calibration cannot use future draws
+or another path's simulated observations. The model guide specifies numerical
+bounds, failure behavior and per-path diagnostics in `recursive_calibration`.

@@ -105,8 +105,8 @@ For a fresh full run, choose two new paths and run the manager again.
 
 Retrieved history reflects revisions available at download time. Restricting
 observation dates is not historical real-time-vintage retrieval. The model still
-uses a finite closure with second-level coefficients fixed at the forecast origin;
-pathwise recursive recalibration and valuation remain future work.
+uses a finite parameter hierarchy with pathwise recalibration of the second-level
+coefficients and full joint dependence. Exposure valuation is a separate stage.
 
 ## Verification
 
@@ -131,3 +131,14 @@ freshness, publication and provenance verification; hierarchy checks cover model
 contracts and actual manager execution on isolated inputs. The live log provides
 the separate evidence that these two configured stages worked together on the
 retrieved data.
+
+
+## Forecast mode and update cadence
+
+The configuration selects `forecast_mode: recursive` and `recalibrate_every: 1`.
+Each path recalibrates mu/theta/sigma dynamics and full joint dependence from its
+own rolling history before its next reported step. Set `forecast_mode: frozen`
+for the origin-calibration benchmark, or increase `recalibrate_every` to compare
+less frequent updates. Changes to a path's calibration cannot use future draws
+or another path's simulated observations. The model guide specifies numerical
+bounds, failure behavior and per-path diagnostics in `recursive_calibration`.

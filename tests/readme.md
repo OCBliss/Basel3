@@ -52,3 +52,10 @@ rules, bounded HTTP behavior, immutable output, verified raw-to-clean provenance
 and the actual model CLI. The complete suite passed **186 tests**; the live manager
 also completed acquisition through simulation. See the
 [acquisition evidence](../.codex-engineering/runs/2026-09-13-yield-acquisition/readme.md).
+
+
+The recursive engine adds 12 independent tests and brings the full suite to
+**198 passing tests**. They check exact frozen-mode equivalence, each path's
+causal history, rolling-window replacement, all parameter branches, correlation
+inputs, resource guards and the actual CLI. See the
+[recursive evidence](../.codex-engineering/runs/2026-09-13-recursive/readme.md).

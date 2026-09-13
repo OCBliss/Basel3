@@ -13,9 +13,11 @@ import pandas as pd
 if __package__:
     from .core import (integer, positive_number, stabilize_panel,
                                innovation_correlation, step_hierarchy)
+    from .recursive import simulate_recursive
 else:
     from core import (integer, positive_number, stabilize_panel,
                                innovation_correlation, step_hierarchy)
+    from recursive import simulate_recursive
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -144,6 +146,21 @@ def calibrate_parameters(first_stage, window, dt=1 / 252, nll_budget=2., fallbac
         ["observation_date", "maturity", "parameter"]).reset_index(drop=True)
 
 
+def forecast_history(yields, first_stage, window):
+    """Assemble one causal trailing state window shared by both forecast modes."""
+    integer(window, "window", 5)
+    panels = parameter_panels(first_stage)
+    dates = panels["mu"].index
+    tenors = panels["mu"].columns.to_numpy()
+    if len(dates) < window:
+        raise ValueError("insufficient parameter history for joint dependence")
+    history = np.stack([yields.reindex(index=dates[-window:], columns=tenors).to_numpy()] +
+                       [panels[p].iloc[-window:].to_numpy() for p in PARAMETERS], axis=1)
+    if not np.isfinite(history).all() or (history < 0).any():
+        raise ValueError("forecast history contains missing or inadmissible states")
+    return history
+
+
 def forecast_inputs(yields, first_stage, second_stage, window, dt, shrinkage=.05):
     """Use only the origin's trailing observed/estimated history to fit dependence."""
     integer(window, "window", 5)
@@ -160,8 +177,7 @@ def forecast_inputs(yields, first_stage, second_stage, window, dt, shrinkage=.05
         if len(rows) != len(tenors) or not {"theta", "mu", "sigma"}.issubset(rows):
             raise ValueError("missing second-stage origin parameters")
         coeff[k] = rows[["theta", "mu", "sigma"]].to_numpy().T
-    history = np.stack([yields.reindex(index=dates[-window:], columns=tenors).to_numpy()] +
-                       [panels[p].iloc[-window:].to_numpy() for p in PARAMETERS], axis=1)
+    history = forecast_history(yields, first_stage, window)
     if not np.isfinite(history).all() or not np.isfinite(coeff).all() or (history < 0).any() or (coeff < 0).any():
         raise ValueError("forecast inputs contain missing or inadmissible states/parameters")
     earlier = history[:-1]
@@ -348,6 +364,9 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--noise-replicates", type=int, default=0,
                         help="zero disables the constant-parameter estimation-noise benchmark")
+    parser.add_argument("--forecast-mode", choices=("frozen", "recursive"), default="frozen")
+    parser.add_argument("--recalibrate-every", type=int, default=1,
+                        help="recursive mode: reported-step interval for pathwise refits; zero is the frozen benchmark")
     args = parser.parse_args(argv)
     try:
         output = repository_path(args.output)
@@ -358,6 +377,7 @@ def main(argv=None):
         if args.noise_replicates == 1:
             raise ValueError("noise_replicates must be zero or at least two")
         integer(args.parameter_window, "parameter_window", 5)
+        integer(args.recalibrate_every, "recalibrate_every", 0)
         positive_number(args.dt, "dt")
         acquisition = (verify_snapshot(args.input_manifest, args.input, args.maturities)
                        if args.input_manifest else None)
@@ -372,8 +392,16 @@ def main(argv=None):
                                       args.nll_budget, args.fallback_theta)
         initial, coefficients, corr, factor, diagnostics = forecast_inputs(
             yields, first, second, args.parameter_window, args.dt, args.shrinkage)
-        samples, projections = simulate(initial, coefficients, factor, args.paths,
-                                        args.steps, args.dt, args.seed, args.substeps)
+        recursive_diagnostics = None
+        if args.forecast_mode == "recursive":
+            history = forecast_history(yields, first, args.parameter_window)
+            samples, projections, recursive_diagnostics = simulate_recursive(
+                history, coefficients, factor, yields.columns.to_numpy(), args.paths,
+                args.steps, args.dt, args.seed, args.substeps, args.recalibrate_every,
+                args.nll_budget, args.fallback_theta, args.shrinkage)
+        else:
+            samples, projections = simulate(initial, coefficients, factor, args.paths,
+                                            args.steps, args.dt, args.seed, args.substeps)
         noise = None
         if args.noise_replicates:
             noise = parameter_noise_diagnostic(yields, first, second, args.yield_window,
@@ -394,10 +422,14 @@ def main(argv=None):
                     "joint_dependence": diagnostics,
                     "estimation_noise": noise,
                     "boundary_projections": projections.tolist(),
-                    "forecast_mode": "stochastic parameters; frozen second-level calibration",
+                    "forecast_mode": ("pathwise recursive parameter calibration and dependence"
+                                      if args.forecast_mode == "recursive" else
+                                      "stochastic parameters; frozen second-level calibration"),
+                    "recursive_calibration": recursive_diagnostics,
                     "limitations": ["Estimated parameter dynamics include estimation noise.",
                                     "Regularization does not identify weak parameters.",
-                                    "No pathwise recalibration, valuation or RWA capital mapping yet."]}
+                                    "No exposure valuation or RWA capital mapping.",
+                                    "Finite parameter hierarchy; no additional independently simulated xi level."]}
         write_outputs(output, yields, first, second, manifest, (samples, projections, corr))
         print(json.dumps({"output": str(output), "first_stage_rows": len(first),
                           "second_stage_rows": len(second),

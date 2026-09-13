@@ -1,0 +1,12 @@
+{
+  "status": "complete",
+  "forecast_origin": "2026-09-10",
+  "paths": 256,
+  "steps": 20,
+  "joint_dimensions": 32,
+  "pathwise_recalibrations": 4864,
+  "max_nll_cost": 2.0,
+  "max_coefficient_change": 14.694724781109734,
+  "max_correlation_change": 0.17375568122639654,
+  "boundary_projections": 0
+}

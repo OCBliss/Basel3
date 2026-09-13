@@ -285,7 +285,7 @@ losses or duration-adjusted RWA.
 ### Remaining research
 
 The PDF objective still requires separating estimation noise from latent parameter
-dynamics, specifying and validating recursive pathwise recalibration, valuing
+dynamics, extending evaluation of recursive pathwise recalibration, valuing
 exposures under those scenarios, and establishing the resulting risk/capital mapping.
 The [research checkpoint](.codex-engineering/CURRENT_TASK.md) and
 [journal](.codex-engineering/JOURNAL.md) record evidence and the next milestone.

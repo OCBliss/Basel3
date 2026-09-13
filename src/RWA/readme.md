@@ -92,6 +92,6 @@ python3 -m unittest discover -s tests -p 'test_rwa_*.py' -v
 Tests exercise chronology, causal cleaning, calibration recovery, whole-row repair
 rejection, all eight maturity file contracts, direct/package invocation and the
 actual YAML manager on isolated fixtures. The [research evidence](../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
-records statistical findings and limitations. The finite hierarchy currently
-freezes second-level coefficients at the forecast origin; simulated-path recursive
-recalibration and exposure-level valuation are unfinished.
+records statistical findings and limitations. The model supports both frozen and
+pathwise recursive parameter/dependence calibration. The YAML workflows select
+recursive mode; exposure-level valuation is a separate downstream stage.

@@ -10,6 +10,8 @@ parameters:
   substeps: 4
   seed: 1234
   noise_replicates: 0
+  forecast_mode: recursive
+  recalibrate_every: 1
 
 scripts:
   rwa_hierarchy:
@@ -33,6 +35,10 @@ scripts:
       - "{seed}"
       - --noise-replicates
       - "{noise_replicates}"
+      - --forecast-mode
+      - "{forecast_mode}"
+      - --recalibrate-every
+      - "{recalibrate_every}"
     inputs: ["RWA/FRED/DGS*.csv"]
     outputs:
       - "{output_dir}/manifest.json"

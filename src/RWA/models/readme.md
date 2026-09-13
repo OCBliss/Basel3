@@ -28,9 +28,10 @@ entry point. Choose new run directories and preserve source/provenance records.
 
 ## Implemented boundary
 
-The current hierarchy simulates stochastic parameters with second-level
-coefficients frozen at the forecast origin. It does not yet recalibrate every
-simulated path, price an exposure portfolio or calculate duration-adjusted RWA.
+The hierarchy supports a frozen benchmark and a recursive engine that refits
+parameter dynamics and dependence within each simulated path. The pipeline
+configurations select recursive mode. Exposure pricing and capital mapping are
+subsequent model components.
 Estimated parameter dynamics can include calibration noise; simulation alone
 does not establish an additional economic risk factor or forecasting superiority.
 

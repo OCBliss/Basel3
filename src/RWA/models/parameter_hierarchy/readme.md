@@ -15,7 +15,8 @@ establish a new economic risk factor.
 ## Component layout
 
 `workflow.py` handles the command-line interface, both calibration passes, aligned
-exports, scenario generation and the completion manifest. It imports `core.py`,
+exports, scenario generation and the completion manifest. It imports `recursive.py`
+for pathwise rolling recalibration and `core.py` for numerical primitives,
 which implements the estimator, coupled stabilization, dependence calculations and
 simulation step. They share one numerical and file contract within this package.
 The companion [reconstruction component](../../data/parameters/readme.md) consumes
@@ -91,12 +92,15 @@ interval is `sigma_p**2 * p * dt`, not `sigma_p**2`. The two other branches desc
 stochastic drift parameters. A single maturity has four simulated states and
 nine second-level coefficients. Eight maturities have 32 joint state components.
 
-The current closure freezes the nine second-level coefficients and the joint
-correlation at the forecast origin. X, mu, theta and sigma themselves all evolve.
-Historical calibration is rolling and causal. **Pathwise recalibration on
-simulated histories is not yet implemented.** A separately evolving xi state
-would require another explicit estimation level. These distinctions prevent a
-finite hierarchy from being presented as the completed recursive PDF model.
+Two forecast modes share this state representation. `--forecast-mode frozen`
+keeps the second-level coefficients and correlation at their origin values.
+`--forecast-mode recursive` recalibrates them independently within each simulated
+path from its trailing history. In both modes X, mu, theta and sigma evolve.
+The YAML workflows select recursive mode; the direct CLI defaults to frozen for
+compatibility with existing commands and comparison runs.
+
+The hierarchy has a finite depth: xi is recomputed as the sigma branch's fitted
+diffusion coefficient. It is not an additional independently simulated state.
 
 ## Coupled stabilization at likelihood ridges
 
@@ -232,6 +236,66 @@ each series is forward-filled only from earlier quotes before the join. Filled
 quotes are counted. The fixed dt convention treats successive retained rows as
 equally spaced and does not implement irregular-calendar transition durations.
 
+
+## Recursive forecast operation
+
+Run with an acquired snapshot and a new output directory:
+
+```bash
+python3 src/RWA/models/parameter_hierarchy/workflow.py \
+  --input RWA/FRED/snapshots/my-run/series \
+  --input-manifest RWA/FRED/snapshots/my-run/snapshot.json \
+  --output RWA/Experimental/HIERARCHY/my-recursive-run \
+  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
+  --forecast-mode recursive --recalibrate-every 1 \
+  --paths 32 --steps 10 --substeps 8
+```
+
+The first reported step uses the calibrated origin coefficients and factor.
+Each path then appends its own simulated `[X, mu, theta, sigma]` state and removes
+its oldest history row. At the selected cadence, before drawing the next shock:
+
+1. Fit the mu, theta and sigma histories across all maturities using the existing
+   conditional likelihood and coupled ridge stabilization. Prior anchors belong
+   to that path's preceding fit.
+2. Recompute standardized joint innovations from its complete trailing state
+   window. Estimate and shrink the full correlation matrix, then factor it.
+3. Advance that path with those coefficients and factor. Euler drift and diffusion
+   use the state from the start of each substep. An updated future state cannot
+   affect a preceding shock or another path's calibration.
+
+`--recalibrate-every 1` updates before every subsequent reported step; `5` updates
+at origins 5, 10, and so on. Zero disables updates and exactly reproduces the
+frozen engine's states and projection counts for identical inputs and settings.
+No unused recalibration is performed after the final forecast step. History is
+updated at the reported observation interval; numerical substeps do not become
+extra calibration observations with a different sampling interval.
+
+The simulated first-level parameter states are retained. Recalibration learns
+their process coefficients—including xi from the sigma history—and their joint
+dependence. It does not overwrite simulated mu/theta/sigma with another estimate
+from simulated X, which would impose a different state-observation model.
+
+The result manifest's `recursive_calibration` records each path/origin update,
+observed versus simulated history counts, branch/diffusion changes, xi range,
+correlation changes, likelihood costs and numerical diagnostics. Existing CSV and
+NPZ shapes remain compatible; `scenarios.npz`'s `correlation` is the **origin**
+correlation. Later pathwise changes are reported in the manifest, not presented
+as a single common future correlation matrix.
+
+The [implementation](recursive.py) uses separate circular buffers and checks
+resource bounds before allocating them: 20 million numeric elements, 50 million
+window-by-fit work units, 150,000 scalar fits, 10,000 audit records and 250,000
+path/substep advances. These are computation limits, not runtime guarantees.
+Mixed zero/positive histories requiring a boundary-aware fit, unusable fits or
+excessive mean reversion abort the run with path/step context. Failed paths are
+never silently dropped or replaced. Choose a new output destination for a retry.
+
+[Recorded comparisons](../../../../.codex-engineering/runs/2026-09-13-recursive/readme.md)
+compare frozen and recursive modes using shared random draws, cadence alternatives,
+JSD sensitivity, held-out outcomes and runtime. Tests independently verify update
+timing, full-window rollover, path isolation, residual formulas and frozen equivalence.
+
 ## Verification and remaining RWA work
 
 ```sh
@@ -252,7 +316,7 @@ moment checks. These are initial validation evidence, not a demonstration of
 superior forecasts or economic novelty.
 
 Remaining milestones include measurement-error-aware parameter dynamics,
-pathwise recursive calibration and covariance updates, wider held-out evaluation,
+wider held-out evaluation,
 and the exposure/cash-flow valuation and capital mapping required to complete
 the duration-sensitive RWA objective. No VaR or regulatory capital result is
 claimed by this implementation.
