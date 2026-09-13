@@ -64,6 +64,14 @@ commands from the repository root, inputs, outputs and significant limitations.
 Update affected guides whenever behavior changes. Use relative Markdown links
 inside repository documents so they work in GitHub and a fresh clone.
 
+Documentation coverage requires reading the contents, including READMEs in affected
+data and output folders. A filename, title or placeholder is not usable coverage.
+Explain settings, processing order, audit/failure behavior and the next consumer;
+validate examples and remove stale instructions. Inspect navigation and presentation
+as a repository user would, and fix material problems without waiting for the user
+to identify them. After publication, revisit the wider repository and its interfaces
+before recording or selecting the next capability.
+
 Append dated journal entries for substantive attempts, failures, revisions,
 validation and accomplishments. Update the current checkpoint after meaningful
 progress or interruption. Retain useful evidence and exact reproduction commands.

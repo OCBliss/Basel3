@@ -1,0 +1,14 @@
+{
+  "changed_markdown_files": 11,
+  "relative_links_checked": 66,
+  "shell_blocks_checked": 14,
+  "issues": [],
+  "recipe_and_consumer_checks": [
+    "Exact documented recipe: all three parameters/eight tenors, date alignment, original row index ignored, missing warmup retained",
+    "Actual rebuild consumer accepts assembled curves; eight current output names, six-column schema, dates and warmup preserved; NSS inputs are unchanged synthetic fixture curves",
+    "duplicate-date: recipe rejects before any curve output",
+    "missing-date: recipe rejects before any curve output",
+    "missing-column: recipe rejects before any curve output"
+  ],
+  "production_data_written": false
+}

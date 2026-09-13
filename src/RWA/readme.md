@@ -84,6 +84,12 @@ and generated outputs are not automatically migrated by this code change.
 
 ## Downstream file contracts
 
+The corresponding output folders have their own operational guides:
+[RAW](../../RWA/Experimental/MLE%20YIELD/RAW/readme.md),
+[CURVE assembly](../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md),
+[NS/NSS repair](../../RWA/Experimental/MLE%20YIELD/NSS/readme.md), and
+[MLE VOL/RAW reconstruction](../../RWA/Experimental/MLE%20VOL/RAW/readme.md).
+
 1. Assemble `mu_curve.csv`, `theta_curve.csv`, and `sigma_curve.csv` in
    `RWA/Experimental/MLE YIELD/CURVE/`. Each table needs unique
    `observation_date` keys and eight tenor columns, for example `mu1y`, `mu2y`,

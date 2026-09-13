@@ -135,3 +135,11 @@ Persistent SSH is now configured in ~/.ssh/config on this Mac. The earlier
 repository-local core.sshCommand override has been removed. Fresh-shell, no-agent
 authentication and ordinary Git fetch/push/pull all passed. The existing identity
 is a write-enabled Basel3 deploy key; browser login is a separate session.
+
+RWA documentation correction: the seven unfinished data/output-folder guides
+were replaced, with source-grounded commands and an exercised curve-assembly
+recipe. Read the NSS and CURVE folder guides as well as src/RWA documentation.
+README filename presence is not content completeness; review all affected folders.
+The daily scheduling prompt now includes the global repository perspective,
+professional presentation, complete folder documentation and immediate
+push/pull/review requirements. See the latest journal entry and readme validation.
