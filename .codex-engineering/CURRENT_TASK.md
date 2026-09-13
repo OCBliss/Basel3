@@ -126,3 +126,12 @@ Publication verified: source fc52dd5 and documentation/evidence f112dfe are on
 GitHub main. Root and RWA READMEs were retrieved from GitHub after the push.
 The saved automation was verified ACTIVE at daily 1:00 a.m. with standing GitHub
 synchronization instructions. The Git/SSH/documentation follow-up is complete.
+
+Latest user requirement: push each completed verified change immediately, pull
+from GitHub, then review the synchronized code and README contents. Correct
+findings and repeat. This is mandatory before reporting completion.
+
+Persistent SSH is now configured in ~/.ssh/config on this Mac. The earlier
+repository-local core.sshCommand override has been removed. Fresh-shell, no-agent
+authentication and ordinary Git fetch/push/pull all passed. The existing identity
+is a write-enabled Basel3 deploy key; browser login is a separate session.

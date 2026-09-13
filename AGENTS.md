@@ -42,6 +42,14 @@ checkpoints to `origin/main` and verify the remote commit. A local commit alone
 does not meet the synchronization requirement. Do not force-push or rewrite shared
 history. Do not stage credentials, private keys, caches or unrelated artifacts.
 
+Required completion cycle: finish the change and relevant tests, commit and push
+immediately, pull from GitHub, then review the synchronized code and documentation.
+Do not hold completed work for a later batch or scheduled run. After pushing,
+use git pull --ff-only origin main when history permits. Review incoming changes,
+confirm local/remote revisions match, and retrieve affected files and READMEs
+from GitHub. Correct review findings and repeat the cycle before reporting
+completion. Resolve divergence without discarding work or force-pushing.
+
 All existing `refactor` work has been integrated into `main`. Keep developing on
 `main`; after a capability is stable and verified, integrate it into `refactor`
 with a normal merge or fast-forward, resolve conflicts and verify both branches,
