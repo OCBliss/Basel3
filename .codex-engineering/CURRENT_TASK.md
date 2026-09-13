@@ -121,3 +121,8 @@ been integrated into main. Transfer subsequent stable verified milestones back
 to refactor using the workflow in GIT_WORKFLOW.md, then return to main. Read
 AGENTS.md at the repository root before continuing. The current Mac has a working
 repository-local SSH identity selection; fetching and pushing main were verified.
+
+Publication verified: source fc52dd5 and documentation/evidence f112dfe are on
+GitHub main. Root and RWA READMEs were retrieved from GitHub after the push.
+The saved automation was verified ACTIVE at daily 1:00 a.m. with standing GitHub
+synchronization instructions. The Git/SSH/documentation follow-up is complete.

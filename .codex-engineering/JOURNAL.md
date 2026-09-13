@@ -385,3 +385,11 @@ throughout the run rather than waiting until the end.
   estimation-noise findings.
 
 - **Archive formatting correction:** Staged whitespace checks found trailing spaces in two original assertion logs and an extra final blank line in the new command log. Removed trailing whitespace only; retained every substantive diagnostic and failure.
+
+### 2026-09-13T12:40:41-07:00 — publication verified and scheduled instructions saved
+
+- Code commit fc52dd58fbc23062bb5d47b974fb18088aaae836 and documentation/evidence commit f112dfee5ea4f58263f962a1cc4159ed4c52f75f are published on origin/main. Fetch confirmed local main and origin/main matched with a clean working tree. GitHub connector reads independently returned the new root README and RWA command guide from main.
+- SSH fetch and push both succeed using the existing repository-specific identity. No additional GitHub credential setup or repeated user authorization is needed for the already authorized repository synchronization workflow.
+- The automation update was reapplied explicitly for daily 1:00 a.m. and immediately verified from the saved record: ACTIVE, daily hour 1/minute 0, with the new standing GitHub instructions present. This resolves the earlier persistence uncertainty at verification time.
+- GitHub still uses refactor as its default landing branch. Open the explicit main branch link to see ongoing work; the app was directed to https://github.com/OCBliss/Basel3/tree/main.
+- Status: GitHub synchronization, SSH repair, README publication and journal publication completed. The next engineering run reads CURRENT_TASK.md and resumes substantive RWA research; these supporting changes are not counted as an additional analytical discovery.
