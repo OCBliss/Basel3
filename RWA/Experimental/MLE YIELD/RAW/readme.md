@@ -9,10 +9,10 @@ From `Basel3_repo`, after installing the root requirements:
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 src/RWA/quasi-MLE-Euler.py
+python3 src/RWA/yield_calibration/calibrate.py
 ```
 
-The [source](../../../../src/RWA/quasi-MLE-Euler.py) reads the corresponding
+The [source](../../../../src/RWA/yield_calibration/calibrate.py) reads the corresponding
 `RWA/FRED/DGS<n>.csv` files with `observation_date` and `DGS<n>` columns. The
 script creates this directory and replaces each maturity's output. Settings are
 source constants (`WINDOW_SIZE = 2520`, `DT = 1/252`); it has no CLI overrides.

@@ -27,10 +27,10 @@ def load_rwa_module(name, filename):
     return module
 
 
-calibration = load_rwa_module("rwa_calibration", "quasi-MLE-Euler.py")
-mu_repair = load_rwa_module("rwa_mu_repair", "mu_curve_nss_repair.py")
-theta_repair = load_rwa_module("rwa_theta_repair", "theta_curve_nss_repair*.py")
-rebuild = load_rwa_module("rwa_rebuild", "CMT_data_parameters_rebuild.py")
+calibration = load_rwa_module("rwa_calibration", "yield_calibration/calibrate.py")
+mu_repair = load_rwa_module("rwa_mu_repair", "curve_repair/mu.py")
+theta_repair = load_rwa_module("rwa_theta_repair", "curve_repair/theta.py")
+rebuild = load_rwa_module("rwa_rebuild", "parameter_rebuild/rebuild.py")
 
 
 def frame(values):
@@ -53,6 +53,12 @@ class RollingCIRTests(unittest.TestCase):
         self.root = Path(self.directory.name)
         (self.root / "FRED").mkdir()
         self.output = self.root / "parameters"
+
+    def test_relocated_stages_resolve_the_same_repository_and_data_root(self):
+        for module in (calibration, mu_repair, theta_repair, rebuild):
+            with self.subTest(stage=module.__name__):
+                self.assertEqual(Path(module.ROOT_DIR).resolve(), PROJECT_ROOT)
+                self.assertEqual(Path(module.RWA_DIR).resolve(), PROJECT_ROOT / "RWA")
 
     def run_frame(self, source, window=3, estimator=window_marker):
         source.to_csv(self.root / "FRED/DGS1.csv", index=False)

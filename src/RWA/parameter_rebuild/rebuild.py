@@ -9,19 +9,19 @@ import pandas as pd
 ###############################################################################
 #                           1) PATH SETUP & MODULE IMPORT
 ###############################################################################
-# --- Step 1: Find the CODE Directory ---
+# --- Step 1: Find the src Directory ---
 def find_code_dir():
     current_dir = os.path.abspath(os.path.dirname(__file__))  # Start from the script's directory
-    while current_dir and os.path.basename(current_dir) != "src":  # Traverse up until "CODE" is found
+    while current_dir and os.path.basename(current_dir) != "src":  # Traverse up until "src" is found
         parent_dir = os.path.dirname(current_dir)
         if parent_dir == current_dir:  # Reached the root directory
-            raise FileNotFoundError("Could not locate 'CODE' directory.")
+            raise FileNotFoundError("Could not locate 'src' directory.")
         current_dir = parent_dir
-    return current_dir  # CODE directory is located
+    return current_dir  # src directory is located
 
-# --- Step 2: Locate CODE and Add to sys.path ---
+# --- Step 2: Locate src and Add to sys.path ---
 CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)  # Ensure CODE directory is in the import path
+sys.path.append(CODE_DIR)  # Ensure src directory is in the import path
 
 # --- Step 3: Import Basel3_Global_Filepath Dynamically ---
 filepath = os.path.join(CODE_DIR, "Basel3_Global_Filepath.py")

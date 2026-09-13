@@ -1,4 +1,4 @@
-# pipeline_config.yaml
+# pipeline_config_dynamic.yaml
 
 # One selection is expanded into both argv and expected artifact paths.
 parameters:

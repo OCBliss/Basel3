@@ -1,0 +1,46 @@
+test_admissible_reconstruction_changes_only_target_nodes (test_rwa_calibration.CIRCurveDomainTests) ... ok
+test_inadmissible_extrapolation_rejects_entire_repair_and_records_reason (test_rwa_calibration.CIRCurveDomainTests) ... ok
+test_real_short_tenor_theta_extrapolation_cannot_publish_negative_parameters (test_rwa_calibration.CIRCurveDomainTests) ... ok
+test_all_maturities_flow_through_nss_files_and_parameter_rebuild (test_rwa_calibration.RollingCIRTests) ... ok
+test_appending_future_data_does_not_change_any_past_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_ascending_input_assigns_each_fit_to_last_date_in_its_window (test_rwa_calibration.RollingCIRTests) ... ok
+test_exact_window_retains_schema_row_labels_and_metadata (test_rwa_calibration.RollingCIRTests) ... ok
+test_failed_fit_resets_warm_start_without_moving_results_to_another_date (test_rwa_calibration.RollingCIRTests) ... ok
+test_invalid_dates_fail_before_fitting_or_overwriting_output (test_rwa_calibration.RollingCIRTests) ... ok
+test_likelihood_matches_independent_forward_transition_calculation (test_rwa_calibration.RollingCIRTests) ... ok
+test_missing_yields_use_only_earlier_observations_in_any_order (test_rwa_calibration.RollingCIRTests) ... ok
+test_newest_first_input_uses_forward_time_transitions (test_rwa_calibration.RollingCIRTests) ... ok
+test_nonpositive_and_infinite_yields_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_real_optimizer_is_invariant_to_row_order_and_future_observations (test_rwa_calibration.RollingCIRTests) ... ok
+test_relocated_stages_resolve_the_same_repository_and_data_root (test_rwa_calibration.RollingCIRTests) ... ok
+test_row_order_does_not_change_date_keyed_estimates (test_rwa_calibration.RollingCIRTests) ... ok
+test_short_input_and_invalid_window_size_fail_before_writing (test_rwa_calibration.RollingCIRTests) ... ok
+test_single_nonfinite_fit_does_not_contaminate_later_windows (test_rwa_calibration.RollingCIRTests) ... ok
+test_unknown_initial_yield_is_not_filled_from_the_future (test_rwa_calibration.RollingCIRTests) ... ok
+test_constant_parameter_histories_have_no_manufactured_volatility (test_rwa_hierarchy.EndogenousHierarchyTests) ... ok
+test_known_parameter_histories_match_direct_cir_fits (test_rwa_hierarchy.EndogenousHierarchyTests) ... ok
+test_noise_benchmark_replays_both_passes_and_reports_estimator_variation (test_rwa_hierarchy.EndogenousHierarchyTests) ... ok
+test_second_pass_does_not_fill_missing_or_duplicate_parameter_states (test_rwa_hierarchy.EndogenousHierarchyTests) ... ok
+test_three_branches_date_alignment_order_and_no_future_influence (test_rwa_hierarchy.EndogenousHierarchyTests) ... ok
+test_dates_causal_filling_and_as_of (test_rwa_hierarchy.HierarchyWorkflowTests) ... ok
+test_paths_cannot_escape_repository_including_symlinks (test_rwa_hierarchy.HierarchyWorkflowTests) ... ok
+test_pipeline_manager_executes_the_new_config_against_isolated_inputs (test_rwa_hierarchy.HierarchyWorkflowTests) ... ok
+test_real_cli_exports_complete_hierarchy_and_existing_first_stage_schema (test_rwa_hierarchy.HierarchyWorkflowTests) ... ok
+test_relocated_package_entry_point_and_repository_boundary (test_rwa_hierarchy.HierarchyWorkflowTests) ... ok
+test_conditional_drift_covariance_and_cross_layer_dependence (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_large_mean_reversion_requires_a_smaller_step (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_reproducibility_projection_accounting_and_memory_limit (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_singular_and_constant_residuals_have_a_valid_joint_factor (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_time_refinement_converges_to_known_deterministic_cir_mean (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_updated_volatility_would_introduce_the_predicted_drift (test_rwa_hierarchy.JointSimulationTests) ... ok
+test_bad_inputs_are_rejected (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+test_constant_and_zero_histories_are_explicitly_unidentified (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+test_independent_optimizer_and_original_likelihood_agree (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+test_ridge_detection_and_repair_apply_to_every_maturity_position (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+test_ridge_repair_is_coupled_and_likelihood_budgeted (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+test_scale_equivariance_including_ridge_repair (test_rwa_hierarchy.ProfileLikelihoodTests) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 11.499s
+
+OK

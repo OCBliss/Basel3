@@ -1,84 +1,43 @@
-# Merge and Clean FRED Constant Maturity Treasury Data
+# Historical date alignment of Treasury yields
 
-## Purpose
+The [legacy source](Constant_Treasury_Maturity_Cleaned2a.py) merges six FRED
+Constant Maturity Treasury series into a wide date-indexed table. This produces
+yield observations for research; it does not calculate security duration, losses,
+or duration-adjusted RWA.
 
-This step consolidates multiple **Constant Maturity Treasury (CMT)** series from the FRED database into a single unified time series file. It ensures all rates are aligned by date, missing values are forward-filled, and the result is ready for use in duration-sensitive Basel III modeling.
+## Execution status
 
-- Use `Constant_Maturity_Treasury_Cleaned2a.py` first
-- 
----
+The script searches the entire filesystem for `Basel3_Global_Filepath.py`, imports
+it, and uses its `ROOT_DIR`. It executes while being imported. These defaults do
+not satisfy the current repository-only path boundary, so it is retained as a
+historical experiment, not an active entry point. For current data handling and
+calibration commands, use [yield calibration](../../../../src/RWA/yield_calibration/readme.md)
+or [parameter simulation](../../../../src/RWA/parameter_hierarchy/readme.md).
+Do not import the legacy file merely to inspect it.
 
-## Input
+## Inputs and output
 
-Daily Treasury yield data (downloaded from FRED):
+The legacy code expects `RWA/FRED/DGS<n>.csv` for maturities 1, 3, 5, 10, 20 and
+30 years, each with `observation_date` and its `DGS<n>` yield column. DGS1 is
+required; other missing files or files without the date key are printed and
+skipped. It outer-joins the available series by date and writes:
 
-| Maturity | Filename |
-|----------|----------|
-| 1 Year   | `DGS1.csv` |
-| 3 Year   | `DGS3.csv` |
-| 5 Year   | `DGS5.csv` |
-| 10 Year  | `DGS10.csv` |
-| 20 Year  | `DGS20.csv` |
-| 30 Year  | `DGS30.csv` |
+```text
+RWA/Practical/Constant Maturity Treasury/Cleaned/combined_fred_treasury_data.csv
+```
 
-These files are expected in:
+The output has one date column and the available maturity columns. Dates are
+parsed and sorted **descending** before missing values are filled with `bfill`.
+Because rows are descending, the row below is an **older observation**. This is
+not a fill from a chronologically future rate. The script performs no maturity
+interpolation, unit conversion, rate-model fit or provenance validation.
+Existing same-named output is replaced when the script runs.
 
-`/RWA/FRED/`
+## Interpretation and next consumer
 
-### `observation_date` currently not formatted correctly
-Each file must contain:
-- A `observation_date` column (e.g., `12/31/23`)
-- A yield value column (e.g., `DGS10`)
-
----
-
-## Output
-
-The script produces:
-
-`/RWA/Practical/Constant Maturity Treasury/Cleaned/combined_fred_treasury_data.csv`
-
-
-This output:
-- Has one row per `observation_date`
-- Contains columns for each maturity’s yield
-- Is sorted in **reverse chronological order**
-- Fills in missing values via **backward fill** (`bfill`)
-
----
-
-## Methodology
-
-1. **Load `Basel3_Global_Filepath.py`** to dynamically resolve filepaths
-2. Read all CMT series using `'observation_date'` as the key
-3. Join all series horizontally on date
-4. Convert `observation_date` to datetime and sort descending
-5. Backfill missing yields using the next available future value
-6. Write output to `combined_fred_treasury_data.csv`
-
----
-
-## Example Output (Head)
-
-| observation_date | DGS1 | DGS3 | DGS5 | DGS10 | DGS20 | DGS30 |
-|------------------|------|------|------|-------|-------|-------|
-| 12/29/23       | 4.85 | 4.63 | 4.52 | 4.12  | 4.05  | 4.00  |
-| 12/28/23       | 4.82 | 4.60 | 4.50 | 4.10  | 4.03  | 3.98  |
-| ...              | ...  | ...  | ...  | ...   | ...   | ...   |
-
----
-
-## Use Case
-
-This unified Treasury dataset is used for:
-- **Interest rate term structure modeling**
-- **Risk-weight calibration**
-- **Yield curve interpolation**
-- **Scenario generation in `RWA/Theoretical` and `RWA/Practical`**
-
----
-
-## Next Step
-
-Proceed to **Differencing**: `Constant_Maturity_Treasury_Differenced5a.py`
-- Currently fixing directory setup
+Checked-in CSVs are historical artifacts; this documentation update did not
+regenerate them. The downstream [Differenced stage](../Differenced/README.md)
+subtracts rows at a 252-observation offset without sorting dates, so its sign and
+date interpretation must be reviewed against this descending ordering. A merged
+yield table alone is not a validated input to the unfinished
+[valuation stage](../readme.md).

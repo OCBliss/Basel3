@@ -122,7 +122,7 @@ The processing programs are listed in the table above. The remaining source comp
 - `Basel3_Global_Filepath.py`: shared paths rooted at this repository.
 - `call reports/Call_Report.py`: bank, historical-quarter and ratio-domain code imported by the ratio stages.
 - `measures/intergroup/JSD_intergroup_call_reports.py`: intergroup analysis, not scheduled in the current YAML.
-- `RWA/`: the separate RWA work, including `CMT_data_parameters_rebuild.py`, `mu_curve_nss_repair.py`, `quasi-MLE-Euler.py` and `theta_curve_nss_repair*.py`. The asterisk is part of the last file's current name. See the [RWA source guide](RWA/readme.md).
+- `RWA/`: interest-rate research grouped into `yield_calibration/`, `curve_repair/`, `parameter_rebuild/` and `parameter_hierarchy/`. See the [RWA component map](RWA/readme.md) for entry points and their data flow.
 
 Generated Call Report files follow this directory structure:
 

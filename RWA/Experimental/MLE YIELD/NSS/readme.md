@@ -12,11 +12,10 @@ Run from `Basel3_repo`, with the root requirements installed:
 
 ```bash
 python3 -m pip install -r requirements.txt
-python3 src/RWA/mu_curve_nss_repair.py
-python3 'src/RWA/theta_curve_nss_repair*.py'
+python3 src/RWA/curve_repair/mu.py
+python3 src/RWA/curve_repair/theta.py
 ```
 
-The `*` is literally part of the theta script's filename; keep that path quoted.
 These scripts have no command-line path options. `INPUT_FILE`, `OUTPUT_FILE` and
 `MAX_WORKERS` are settings in each source file. Each command creates this output
 directory if needed and replaces its corresponding output CSV. It does not
@@ -40,8 +39,8 @@ values are converted to missing values.
 
 | Script | Actual finite-value trigger | Boundary behavior |
 | --- | --- | --- |
-| [mu repair source](../../../../src/RWA/mu_curve_nss_repair.py) | `abs(mu) > 9` | Exactly +9 or -9 is not flagged |
-| [theta repair source](../../../../src/RWA/theta_curve_nss_repair%2A.py) | `abs(theta) < 0.01` | Exactly +0.01 or -0.01 is not flagged; zero is flagged |
+| [mu repair source](../../../../src/RWA/curve_repair/mu.py) | `abs(mu) > 9` | Exactly +9 or -9 is not flagged |
+| [theta repair source](../../../../src/RWA/curve_repair/theta.py) | `abs(theta) < 0.01` | Exactly +0.01 or -0.01 is not flagged; zero is flagged |
 
 Missing and infinite values are excluded from fitting and are not reconstruction
 targets. Only flagged finite nodes are replaced. Nonflagged values are preserved,
@@ -91,15 +90,15 @@ After reviewing the repaired curves and ensuring mu/theta/sigma come from a
 consistent calibration run, execute:
 
 ```bash
-python3 src/RWA/CMT_data_parameters_rebuild.py
+python3 src/RWA/parameter_rebuild/rebuild.py
 ```
 
-The [rebuild](../../../../src/RWA/CMT_data_parameters_rebuild.py) joins repaired
+The [rebuild](../../../../src/RWA/parameter_rebuild/rebuild.py) joins repaired
 mu and theta, plus the unrepaired sigma curve, to each original yield file by
 `observation_date`. It writes [MLE VOL/RAW](../../MLE%20VOL/RAW/readme.md).
 Those six-column exports omit these audit fields, so retain the NSS files too.
 
-The separate [endogenous hierarchy](../../../../src/RWA/parameter_hierarchy.md)
+The separate [endogenous hierarchy](../../../../src/RWA/parameter_hierarchy/readme.md)
 uses coupled likelihood-budgeted ridge stabilization and fits processes to all
 three parameter histories. Independent NS/NSS smoothing here is not that coupled
 procedure and does not establish that weakly identified parameters were recovered.

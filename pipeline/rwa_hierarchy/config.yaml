@@ -13,7 +13,7 @@ parameters:
 
 scripts:
   rwa_hierarchy:
-    path: RWA/parameter_hierarchy.py
+    path: RWA/parameter_hierarchy/workflow.py
     args:
       - --output
       - "{output_dir}"

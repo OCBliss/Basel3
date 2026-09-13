@@ -12,10 +12,10 @@ and file contracts are documented in [MLE YIELD](MLE%20YIELD/readme.md):
 
 | Order | Command or preparation | Output guide |
 | --- | --- | --- |
-| 1 | `python3 src/RWA/quasi-MLE-Euler.py` | [First-pass RAW](MLE%20YIELD/RAW/readme.md) |
+| 1 | `python3 src/RWA/yield_calibration/calibrate.py` | [First-pass RAW](MLE%20YIELD/RAW/readme.md) |
 | 2 | Run the Python assembly recipe | [Date-aligned CURVE panels](MLE%20YIELD/CURVE/readme.md) |
-| 3 | `python3 src/RWA/mu_curve_nss_repair.py` and the quoted theta script | [NSS repairs and audits](MLE%20YIELD/NSS/readme.md) |
-| 4 | `python3 src/RWA/CMT_data_parameters_rebuild.py` | [Reconstructed MLE VOL/RAW](MLE%20VOL/RAW/readme.md) |
+| 3 | `python3 src/RWA/curve_repair/mu.py` and `python3 src/RWA/curve_repair/theta.py` | [NSS repairs and audits](MLE%20YIELD/NSS/readme.md) |
+| 4 | `python3 src/RWA/parameter_rebuild/rebuild.py` | [Reconstructed MLE VOL/RAW](MLE%20VOL/RAW/readme.md) |
 
 The first pass uses 2,520 observations, `dt = 1/252`, and chronological trailing
 windows across eight maturities. The repair stage uses finite-value threshold
@@ -26,7 +26,7 @@ historical checked-in files are not automatically refreshed by code changes.
 ## Active endogenous parameter hierarchy
 
 ```bash
-python3 src/RWA/parameter_hierarchy.py \
+python3 src/RWA/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/my-run \
   --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
   --paths 256 --steps 20 --substeps 4 --noise-replicates 16
@@ -37,8 +37,15 @@ stabilization to yield fits and models the histories of **mu, theta and sigma**.
 It produces joint rate/parameter scenarios, RAW/CURVE exports and a completion
 manifest; the optional benchmark evaluates estimation-induced parameter dynamics.
 It uses its own consistent FRED-to-scenarios run and does not read old NSS outputs
-automatically. See [the model and CLI guide](../../src/RWA/parameter_hierarchy.md)
+automatically. See [the model and CLI guide](../../src/RWA/parameter_hierarchy/readme.md)
 and [the real-data/synthetic results](../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md).
+
+The separate [pipeline configuration](../../pipeline/rwa_hierarchy/config.yaml)
+points to the same `parameter_hierarchy/workflow.py` entry point. Set its
+`output_dir` to a new repository-local run directory before execution. Its
+default `noise_replicates` is zero; the explicit CLI example above enables that
+diagnostic with 16 replicates. The main Call Report/JSD configuration does not
+run this workflow automatically.
 
 ## Historical experiment status
 

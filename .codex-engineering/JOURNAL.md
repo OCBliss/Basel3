@@ -411,3 +411,50 @@ throughout the run rather than waiting until the end.
 - **Validation:** Executed the exact documented curve recipe on isolated eight-tenor fixtures, checking all three parameter panels, date alignment, original row-label exclusion and missing warmup preservation. Exercised the actual rebuild against those curves and checked all eight filenames, six-column schemas, original row order and retained missingness. Invalid/duplicate dates and missing columns each failed before curve output. All 66 relative links and 14 shell examples checked passed. No production CSV changed. Evidence: runs/2026-09-13-readmes/validation.json and rebuild-fixture.log. Analytical source did not change, so the unchanged full regression suite was not rerun.
 - **Scheduling prompt:** Updated the existing daily 1 a.m. automation, preserving cadence and ACTIVE status. Saved and verified requirements for independent global repository review, substantive capability development, professional and complete documentation in affected folders, immediate commit/push followed by pull and published-content review, and another wider-repository review before selecting the next capability. The user does not need to supply an exhaustive prompt or manually identify routine omissions.
 - **Completion workflow:** Commit and push this coherent documentation repair immediately, pull and review the published guides, and verify local/remote revisions match before reporting completion. This is a documentation correction supporting the research workflow, not an additional analytical capability milestone.
+
+
+### 2026-09-13T14:15:06-07:00 — coherent component layout, integration and documentation
+
+- **Request:** Research, form and implement a hypothesis, compare alternatives,
+  validate and harden it, then commit/push, pull and review globally. Organize
+  purposeful nested folders with one component README, maintain YAML/interfaces,
+  and label the present capability accurately. These standing objectives now
+  appear in AGENTS.md; supporting cleanup is not a new analytical discovery.
+- **Starting state:** main at 9da305e, clean and initially synchronized. Moved the
+  RWA yield calibration, NS/NSS repairs, reconstruction and parameter hierarchy
+  into four named component folders. The hierarchy core and workflow share a
+  package. Moved its independent YAML into pipeline/rwa_hierarchy, and moved the
+  ratio-variable catalogue into its own directory. See the exact migration map
+  in runs/2026-09-13-layout/readme.md. Algorithms and research data are preserved.
+- **Integration:** Updated package imports, hierarchy repository-root depth,
+  YAML script target, regression paths, archived validation imports and all live
+  documentation links. Kept the historical Git baseline's old path intentionally.
+  The default 20-task pipeline has only a corrected filename comment.
+- **Documentation:** Created four component/configuration guides; updated 15 RWA
+  data and research guides, the hierarchy guide, parent navigation and root
+  presentation. Read actual Practical scripts and removed claims about missing
+  bond-pricing functions and expected-loss outputs. Current implementation is
+  interest-rate calibration and parameter simulation, with exposure valuation
+  and duration-adjusted RWA still future research. One component has one README.
+- **Validation:** 149 full-suite tests passed in 41.191 s, including actual
+  manager execution, package/direct invocation from different working directories,
+  all-eight-maturity contracts and real downstream reconstruction on isolated
+  inputs. Both actual YAML dry runs passed. Documentation navigation/shell checks
+  and logs are retained in the layout evidence directory. No production CSV changed.
+- **Attempt and correction:** An initial parent documentation-edit script failed
+  to parse before executing. Split it into smaller edits, then validated links
+  and examples. README discovery also encountered downloaded FFIEC Readme.txt
+  notices alongside tracked historical readme.md notices; those external source
+  documents are preserved and excluded from authored-component duplication claims.
+- **Upstream gap:** No yield API retrieval was implemented. Existing loaders
+  clean local FRED files causally and validate dates/rates. Seven files end
+  2025-03-10, DGS20 ends 2025-03-12; common coverage ends March 10. No freshness or
+  refresh task exists. Recorded this gap instead of claiming end-to-end acquisition.
+- **Schedule control:** The latest user instruction is every two hours and may
+  change at will. Two updates of the existing automation returned success but
+  stored daily 02:00. A read-only audit confirmed the active app's TOML and DB
+  agreed on that old schedule. Root cause remains unproven. No direct DB/TOML
+  changes, duplicate jobs or restoration of obsolete daily 1 a.m. settings.
+- **Publication:** Complete review and publish this coherent change immediately,
+  pull and inspect the published source/guides. Record the verified commit after
+  that cycle; do not treat local completion as GitHub publication.

@@ -10,14 +10,14 @@ import numpy as np
 import pandas as pd
 
 if __package__:
-    from .cir_hierarchy import (integer, positive_number, stabilize_panel,
+    from .core import (integer, positive_number, stabilize_panel,
                                innovation_correlation, step_hierarchy)
 else:
-    from cir_hierarchy import (integer, positive_number, stabilize_panel,
+    from core import (integer, positive_number, stabilize_panel,
                                innovation_correlation, step_hierarchy)
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 TENORS = (1, 2, 3, 5, 7, 10, 20, 30)
 PARAMETERS = ("mu", "theta", "sigma")
 

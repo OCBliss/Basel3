@@ -1,64 +1,44 @@
-# Step 11 — Compute Expected Drift of Treasury Yields (Forward Differences)
+# Historical average of retained Treasury yield changes
 
-## Purpose
+The [legacy source](Constant_Maturity_Treasury_exp_drift_v3.py) computes a column
+mean from a selected differenced file. When the upstream threshold is zero, this
+is the average of retained positive row differences, not an unconditional yield
+drift, simulated rate path or duration-adjusted RWA calculation.
 
-This step processes forward-differenced Treasury rate data (from previous differencing steps) and computes the **expected drift**—that is, the **average positive yield change**—for each constant maturity term (1Y, 3Y, 5Y, etc.).
+## Execution status
 
-These expected drifts can be used to:
-- **Calibrate forward-looking interest rate scenarios**
-- **Anchor regulatory stress parameters**
-- **Generate realistic forward rate paths for RWA modeling**
+The entry point searches the entire filesystem for `Basel3_Global_Filepath.py`
+and uses its `ROOT_DIR`. It is retained for research history; it is not an active
+repository-root command with verified path isolation. Current interest-rate
+calibration and simulation commands are in [the source guide](../../../../src/RWA/readme.md).
 
----
+## Inputs, selection and output
 
-## Input
+The script lists `differenced_*.csv` under
+`RWA/Practical/Constant Maturity Treasury/Differenced/` and selects the **first**
+match in filesystem listing order. It does not process every match or sort them.
+No matches raise an error. The selected file must contain all six columns:
 
-Differenced files from the previous pipeline step (e.g., Step 9 or prior Step 10):
-- `/RWA/Constant Maturity Treasury/Differenced/differenced_<source_file>.csv`
+```text
+DGS1,DGS3,DGS5,DGS10,DGS20,DGS30
+```
 
+All six columns are converted to numeric with invalid values made missing. The
+script calculates each mean with missing values excluded, rounds to ten decimal
+places and writes one row to `expected_drift_summary.csv` in this directory.
+The output schema is `file,DGS1,DGS3,DGS5,DGS10,DGS20,DGS30`; the `file` field
+records the selected input name. Existing same-named output is replaced.
 
-Each file contains:
-- A `observation_date` column
-- Forward-difference columns like `DGS1`, `DGS3`, `DGS5`, `DGS10`, `DGS20`, `DGS30`
-- Cells with either a float value or blank (if difference ≤ 0)
+## Interpretation and future use
 
----
+The [Differenced guide](../Differenced/README.md) explains that the subtraction
+is based on row position and inherits descending ordering from the old cleaning
+stage. Consequently the retained positive values must not automatically be
+interpreted as chronological yield increases. Missing/filtered changes are not
+included in the mean, so this result is conditional on that selection.
 
-## Output
-
-A single CSV summarizing average (non-zero) forward yield changes:
-
-
-| file                  | DGS1  | DGS3  | DGS5  | DGS10 | DGS20 | DGS30 |
-|-----------------------|-------|-------|-------|-------|-------|-------|
-| differenced_DGS.csv   | 0.18  | 0.22  | 0.25  | 0.19  | 0.15  | 0.14  |
-
-Only columns present in each file will be averaged. Missing or blank values are skipped.
-
----
-
-## Methodology
-
-1. Load each column in `differenced_*.csv` file from the differenced directory
-2. Coerce all values to numeric (ignore blanks)
-3. Compute `mean(skipna=True)` for each maturity column:
-
-E[ΔRate] = average of all positive 1-year forward changes
-
-4. Write a summary table where each row corresponds to a file, and columns are expected drifts
-
----
-
-## Use Case
-
-Expected drifts computed here can be:
-- Used as **mean shocks** in stochastic rate simulations
-- Embedded into **forward-looking Basel III capital scenarios**
-- Input into gamma distribution fitting, stress test thresholds, or portfolio loss estimators
-
----
-
-## Next Step
-
-Proceed to **Step 12**:
-- Fit parameters to models (e.g., CIR, AR, etc.) to the differenced curves
+Using these summaries for stress scenarios, portfolio repricing or capital
+assessment is a proposed extension requiring a validated chronological contract
+and a valuation implementation. None is performed by this averaging script.
+Historical CSVs were not regenerated during the current documentation changes.
+See [the valuation proposal](../readme.md) and [Expected Loss status](../../Expected%20Loss/readme.md).

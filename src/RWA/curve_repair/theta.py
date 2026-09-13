@@ -29,19 +29,19 @@ import multiprocessing as mp
 ###############################################################################
 #                           1) PATH SETUP & MODULE IMPORT
 ###############################################################################
-# --- Step 1: Find the CODE Directory ---
+# --- Step 1: Find the src Directory ---
 def find_code_dir():
     current_dir = os.path.abspath(os.path.dirname(__file__))  # Start from the script's directory
-    while current_dir and os.path.basename(current_dir) != "src":  # Traverse up until "CODE" is found
+    while current_dir and os.path.basename(current_dir) != "src":  # Traverse up until "src" is found
         parent_dir = os.path.dirname(current_dir)
         if parent_dir == current_dir:  # Reached the root directory
-            raise FileNotFoundError("Could not locate 'CODE' directory.")
+            raise FileNotFoundError("Could not locate 'src' directory.")
         current_dir = parent_dir
-    return current_dir  # CODE directory is located
+    return current_dir  # src directory is located
 
-# --- Step 2: Locate CODE and Add to sys.path ---
+# --- Step 2: Locate src and Add to sys.path ---
 CODE_DIR = find_code_dir()
-sys.path.append(CODE_DIR)  # Ensure CODE directory is in the import path
+sys.path.append(CODE_DIR)  # Ensure src directory is in the import path
 
 # --- Step 3: Import Basel3_Global_Filepath Dynamically ---
 filepath = os.path.join(CODE_DIR, "Basel3_Global_Filepath.py")
@@ -58,25 +58,25 @@ EXP_DIR = os.path.join(RWA_DIR, "Experimental")
 #                    2) DEFINE CIR MODEL ESTIMATION FUNCTIONS
 ###############################################################################
 
-INPUT_FILE = os.path.join(EXP_DIR, "MLE YIELD", "CURVE", "mu_curve.csv")
-OUTPUT_FILE = os.path.join(EXP_DIR, "MLE YIELD", "NSS", "mu_curve_nss_repaired.csv")
+INPUT_FILE = os.path.join(EXP_DIR, "MLE YIELD", "CURVE", "theta_curve.csv")
+OUTPUT_FILE = os.path.join(EXP_DIR, "MLE YIELD", "NSS", "theta_curve_nss_repaired.csv")
 
 DATE_COLUMN = "observation_date"
 
-MU_COLUMNS = {
-    "mu1y": 1.0,
-    "mu2y": 2.0,
-    "mu3y": 3.0,
-    "mu5y": 5.0,
-    "mu7y": 7.0,
-    "mu10y": 10.0,
-    "mu20y": 20.0,
-    "mu30y": 30.0,
+THETA_COLUMNS = {
+    "theta1y": 1.0,
+    "theta2y": 2.0,
+    "theta3y": 3.0,
+    "theta5y": 5.0,
+    "theta7y": 7.0,
+    "theta10y": 10.0,
+    "theta20y": 20.0,
+    "theta30y": 30.0,
 }
 
 # Any mu value whose absolute magnitude exceeds this threshold
 # is treated as an exploded CIR estimate.
-EXPLOSION_ABS_THRESHOLD = 9
+EXPLOSION_ABS_THRESHOLD = 0.01
 
 # Use all logical CPU cores by default. Set to a smaller integer if desired.
 MAX_WORKERS = min(28, max(1, (os.cpu_count() or 1)))
@@ -197,7 +197,7 @@ def identify_anomalies(
     # reconstruction targets. They are simply excluded from the curve fit.
     return (
         np.isfinite(values)
-        & (np.abs(values) > EXPLOSION_ABS_THRESHOLD)
+        & (np.abs(values) < EXPLOSION_ABS_THRESHOLD)
     )
 
 
@@ -358,8 +358,8 @@ def fit_nss(
             -20.0 * scale,
             -20.0 * scale,
             -20.0 * scale,
-            0.05,
-            0.05,
+            0.01,
+            0.01,
         ],
         dtype=float,
     )
@@ -451,7 +451,7 @@ def fit_ns(
             -10.0 * scale,
             -20.0 * scale,
             -20.0 * scale,
-            0.05,
+            0.01,
         ],
         dtype=float,
     )
@@ -532,9 +532,9 @@ def repair_mu_row(
     """
     output = row.copy()
 
-    columns = list(MU_COLUMNS)
+    columns = list(THETA_COLUMNS)
     maturities = np.array(
-        [MU_COLUMNS[column] for column in columns],
+        [THETA_COLUMNS[column] for column in columns],
         dtype=float,
     )
 
@@ -679,7 +679,7 @@ def repair_mu_file(
 
     required_columns = [
         DATE_COLUMN,
-        *MU_COLUMNS.keys(),
+        *THETA_COLUMNS.keys(),
     ]
 
     missing_columns = [
@@ -694,19 +694,19 @@ def repair_mu_file(
             + ", ".join(missing_columns)
         )
 
-    for column in MU_COLUMNS:
+    for column in THETA_COLUMNS:
         dataframe[column] = pd.to_numeric(
             dataframe[column],
             errors="coerce",
         )
 
-    columns = list(MU_COLUMNS)
+    columns = list(THETA_COLUMNS)
     mu_values = dataframe[columns].to_numpy(dtype=float)
     # Submit only rows containing finite exploded values. Missing historical
     # maturities are excluded from fitting but are not treated as repair targets.
     anomaly_matrix = (
         np.isfinite(mu_values)
-        & (np.abs(mu_values) > EXPLOSION_ABS_THRESHOLD)
+        & (np.abs(mu_values) < EXPLOSION_ABS_THRESHOLD)
     )
     anomalous_positions = np.flatnonzero(anomaly_matrix.any(axis=1))
     anomalous_position_set = set(anomalous_positions.tolist())
@@ -802,7 +802,7 @@ def main() -> None:
 
     total_repaired_nodes = sum(
         int(repaired[f"{column}_repaired"].sum())
-        for column in MU_COLUMNS
+        for column in THETA_COLUMNS
     )
 
     # print(f"Input:  {INPUT_FILE.resolve()}")

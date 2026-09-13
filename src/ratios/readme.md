@@ -1,6 +1,6 @@
 # Dynamic Call Report ratios
 
-The [variable catalogue](variables.md) lists all 76 ratio names and their
+The [variable catalogue](variables/readme.md) lists all 76 ratio names and their
 current calculations, including the form and date rules.
 
 Pipeline step 4.0 runs `Dynamic_Ratios.py` after the numeric Call Report and

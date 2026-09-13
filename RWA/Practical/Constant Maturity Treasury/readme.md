@@ -1,88 +1,47 @@
-# Step 13 — Bond Pricing and Expected Return Under Yield Shift
+# Proposed bond pricing and horizon-return stage
 
-⚠️ ATTENTION: Start with **Step 09** [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/Cleaned)
+This directory groups the historical Treasury preparation experiments. The
+bond-pricing functions described below are a proposed interface: no implementation
+of these functions or executable bond-valuation entry point is currently present
+in the repository. The previous README's numeric YTM, bond-price and return
+examples were not verified outputs of current code and have been removed.
 
-## Purpose
+The current executable work is
+[interest-rate calibration and parameter simulation](../../../src/RWA/readme.md).
+Portfolio valuation and duration-adjusted RWA remain unfinished research goals.
 
-This step calculates the **expected return** of a fixed-coupon bond over a defined forward horizon, accounting for:
+## Intended inputs
 
-- **Accrued coupon interest**
-- **Yield-to-maturity (YTM) recalibration**
-- **Interest rate shifts**
-- **Price impact due to forward rate shocks**
+A valuation implementation needs a security's current price, coupon rate and
+payment frequency, coupon dates, valuation date, horizon date and maturity date.
+It also needs an explicit scenario discounting or repricing convention and
+scenario probabilities. Historical [yield changes](EXP_DRIFT/readme.md) and
+[parameter estimates](EXP_COUPON/readme.md) alone do not supply that full contract.
+The latter are CIR/AR(1) estimates, not calculated coupon cash flows.
 
-This framework supports Basel III RWA modeling by allowing precise loss estimation under simulated yield curve changes.
+## Proposed calculations
 
-- From **Step 11** we pull the expected non-parallel shift from [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/EXP_DRIFT)
-- From **Step 12** we pull the expected coupons from [here](https://github.com/OCBliss/Basel3/tree/main/RWA/Practical/Constant%20Maturity%20Treasury/EXP_COUPON)
+| Proposed function | Intended responsibility |
+| --- | --- |
+| `years_to_maturity()` | Remaining life under a specified day-count convention |
+| `generate_payment_dates()` | Coupon and principal payment schedule |
+| `bond_price()` | Discounted cash flows under the selected yield/curve convention |
+| `calculate_ytm()` | Yield consistent with a price and cash-flow schedule |
+| `accrued_coupon_interest()` | Accrued interest under the chosen convention |
+| `expected_return()` | Aggregate scenario holding-period returns with explicit weights |
 
----
+The earlier research outline reprices a bond from an initial yield under a
+specified horizon yield shift and combines its price change with received or
+accrued coupon amounts. The implementation must settle cash-flow timing and clean
+versus dirty prices before that outline becomes a valid return calculation.
+A single deterministic yield shift does not itself establish a path-dependent
+interest-rate model or an expected return across scenarios.
 
-## Inputs
+## Historical preparation and next implementation
 
-Bond and scenario parameters:
-
-- **Current bond price** (e.g., $1000.00)
-- **Coupon rate** (e.g., 2%)
-- **Payment frequency** (e.g., semiannual = 2)
-- **Pricing date** and **interest rate change date**
-- **Maturity date**
-- **Simulated yield change** (e.g., +1%)
-
----
-
-## Core Functions
-
-| Function                       | Description                                                                 |
-|-------------------------------|-----------------------------------------------------------------------------|
-| `years_to_maturity()`         | Computes remaining time in years between pricing and maturity              |
-| `generate_payment_dates()`    | Creates all future payment dates from start to maturity                    |
-| `bond_price()`                | Prices the bond using discounted cash flow model                           |
-| `calculate_ytm()`             | Solves for internal rate of return (YTM) given price                       |
-| `accrued_coupon_interest()`   | Estimates pro-rata interest earned between coupon periods                  |
-| `expected_return()`           | Computes return as: (accrued + price change) ÷ initial price               |
-
----
-
-## Output
-
-Console output displays:
-
-- Calculated YTM: **2.0000%**
-- Future Bond Price on `pricing_date`: **$877.84**
-- Expected Return from `pricing_date` to `interest_rate_change_date`: **-12.2155%**
-
-
-
-You can repurpose this output into shock-response plots or integrate it into scenario-based capital loss estimation matrices.
-
----
-
-## Methodology
-
-Given a bond priced on `t_j` and revalued at `t_{j+k}` under a yield shift:
-
-1. Compute `YTM(t_j)` via root-finding
-2. Simulate `YTM(t_{j+k}) = YTM(t_j) + Δy`
-3. Reprice bond at `t_{j+k}` under new yield
-
-
-This framework isolates **interest rate path dependency** while accounting for timing of payments and discounting.
-
----
-
-## Use Case
-
-- **Stress testing bond portfolios under yield shock scenarios**
-- **Duration-based risk attribution**
-- **Simulated market value loss under Basel III stress matrices**
-- **Coupon-driven return decomposition for capital adequacy metrics**
-
----
-
-## Next Step
-
-Proceed to **Step 14**:
-- Integrate bond-level return impacts into aggregated loss forecasts
-- Match forward drift-adjusted scenarios with PDMM-Heston dynamics
-
+The existing preparation sequence is [Cleaned](Cleaned/README.md),
+[Differenced](Differenced/README.md), [EXP_DRIFT](EXP_DRIFT/readme.md), and
+[EXP_COUPON](EXP_COUPON/readme.md). Their guides describe actual legacy behavior
+and execution limitations. No command is provided here for nonexistent pricing
+code. The [Expected Loss status](../Expected%20Loss/readme.md) records the missing
+exposure, valuation, loss-measure and capital-mapping decisions.

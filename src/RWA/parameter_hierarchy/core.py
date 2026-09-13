@@ -3,7 +3,7 @@
 The fitted drift is a - theta*x, a=theta*mu. Profiling a and sigma at a
 chosen theta lets us regularize a weak mean-reversion fit without separately
 interpolating two parameters whose product determines the observed drift.
-See parameter_hierarchy.md for assumptions, derivations and validation limits.
+See readme.md for assumptions, derivations and validation limits.
 """
 
 from dataclasses import dataclass, replace
@@ -51,7 +51,7 @@ def _sample(values, dt):
 
 
 def fit_cir(values, dt=1 / 252, fixed_theta=None):
-    """Minimize the same conditional Gaussian Euler NLL as quasi-MLE-Euler.py.
+    """Minimize the same conditional Gaussian Euler NLL as the yield_calibration/calibrate.py stage.
 
     Solve the two-variable weighted least-squares problem including its active
     boundaries, then profile sigma. At theta=0, mu is undefined, not enormous.

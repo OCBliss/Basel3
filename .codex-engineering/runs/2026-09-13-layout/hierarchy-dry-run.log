@@ -1,0 +1,10 @@
+Dry run only; no directories, logs, or subprocesses will be created.
+
+== pipeline phase 1 (sequential) ==
+[01] rwa_hierarchy
+     cwd: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo
+     command: /Library/Frameworks/Python.framework/Versions/3.8/bin/python3 -u /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/src/RWA/parameter_hierarchy/workflow.py --output RWA/Experimental/HIERARCHY/run --yield-window 2520 --parameter-window 252 --recent-rows 3024 --paths 256 --steps 20 --substeps 4 --seed 1234 --noise-replicates 0
+     inputs: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/RWA/FRED/DGS*.csv
+     outputs: /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/RWA/Experimental/HIERARCHY/run/manifest.json, /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/RWA/Experimental/HIERARCHY/run/parameter_dynamics.csv, /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/RWA/Experimental/HIERARCHY/run/scenario_summary.csv, /Users/johnnywaller/Desktop/Basel_III/Basel3_repo/RWA/Experimental/HIERARCHY/run/scenarios.npz
+
+Dry-run plan complete: 1 unique steps.

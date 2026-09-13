@@ -38,7 +38,7 @@ python3 -m pip install -r requirements.txt
 python3 pipeline/Task_manager_Global_yaml_driven.py
 ```
 
-The [pipeline guide](../../pipeline/readme.md) describes the execution order. The [ratio catalogue](../ratios/variables.md) lists the calculated columns.
+The [pipeline guide](../../pipeline/readme.md) describes the execution order. The [ratio catalogue](../ratios/variables/readme.md) lists the calculated columns.
 
 ## Ratio API and caller
 

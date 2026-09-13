@@ -4,7 +4,7 @@ The first yield calibration produces mu, theta and sigma histories. Applying a
 second rolling calibration to those histories estimates dynamics of the
 parameters themselves. For the sigma branch, the second-pass diffusion coefficient
 supplies xi under the model's stated identification of the volatility state.
-The [model guide](../../../src/RWA/parameter_hierarchy.md) specifies the notation,
+The [model guide](../../../src/RWA/parameter_hierarchy/readme.md) specifies the notation,
 finite hierarchy, units and limitations.
 
 ## Active executable workflow
@@ -13,7 +13,10 @@ Run from `Basel3_repo` with the root requirements installed. Choose a new output
 directory each time:
 
 ```bash
-python3 src/RWA/parameter_hierarchy.py   --output RWA/Experimental/HIERARCHY/parameter-run   --yield-window 2520 --parameter-window 252 --recent-rows 3024   --paths 256 --steps 20 --substeps 4 --noise-replicates 16
+python3 src/RWA/parameter_hierarchy/workflow.py \
+  --output RWA/Experimental/HIERARCHY/parameter-run \
+  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
+  --paths 256 --steps 20 --substeps 4 --noise-replicates 16
 ```
 
 This reads all eight FRED maturities, fits and stabilizes first-pass yield
@@ -30,7 +33,7 @@ Use `--noise-replicates 0` to omit that diagnostic when it is not needed for a r
 files. The current reconstruction command is:
 
 ```bash
-python3 src/RWA/CMT_data_parameters_rebuild.py
+python3 src/RWA/parameter_rebuild/rebuild.py
 ```
 
 That command joins repaired curves; it does not estimate second-pass parameters.

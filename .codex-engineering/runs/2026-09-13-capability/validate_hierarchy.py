@@ -9,7 +9,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT/'src/RWA'))
-import parameter_hierarchy as h
+from parameter_hierarchy import workflow as h
 
 HERE = Path(__file__).resolve().parent
 started = time.perf_counter()

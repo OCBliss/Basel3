@@ -1,5 +1,6 @@
 """Independent statistical, causal, numerical and file-contract hierarchy checks."""
 
+import importlib
 import importlib.util
 import json
 import os
@@ -19,18 +20,20 @@ from scipy.optimize import minimize
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
-def load_module(name):
-    spec = importlib.util.spec_from_file_location(name, ROOT / "src/RWA" / (name + ".py"))
+def load_module(name, relative_path):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "src/RWA" / relative_path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
 
-core = load_module("cir_hierarchy")
-workflow = load_module("parameter_hierarchy")
+core = importlib.import_module("src.RWA.parameter_hierarchy.core")
+workflow = importlib.import_module("src.RWA.parameter_hierarchy.workflow")
 
 
 def rates(n=160, seed=8, d=3):
@@ -290,12 +293,25 @@ class HierarchyWorkflowTests(unittest.TestCase):
             frame = self.source[[tenor]].rename(columns={tenor:'DGS%d'%tenor}).reset_index()
             frame.iloc[::-1].to_csv(self.input/('DGS%d.csv'%tenor),index=False)
 
+    def test_relocated_package_entry_point_and_repository_boundary(self):
+        self.assertEqual(workflow.ROOT, ROOT)
+        self.assertEqual(workflow.repository_path('RWA/FRED'), ROOT/'RWA/FRED')
+        result = subprocess.run(
+            [sys.executable, '-B', '-m', 'src.RWA.parameter_hierarchy.workflow', '--help'],
+            cwd=ROOT, capture_output=True, text=True,
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('--parameter-window', result.stdout)
+
     def test_real_cli_exports_complete_hierarchy_and_existing_first_stage_schema(self):
         out = self.directory/'result'
-        command = [sys.executable,'-B',str(ROOT/'src/RWA/parameter_hierarchy.py'),
+        command = [sys.executable,'-B',str(ROOT/'src/RWA/parameter_hierarchy/workflow.py'),
                    '--input',str(self.input),'--output',str(out),'--maturities','1','2',
                    '--yield-window','64','--parameter-window','32','--paths','8','--steps','3']
-        result = subprocess.run(command,cwd=ROOT,capture_output=True,text=True,
+        # An absolute script entry point must also work from another directory;
+        # moving the source must not make data resolution depend on the caller.
+        result = subprocess.run(command,cwd=self.directory,capture_output=True,text=True,
                                 env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'))
         self.assertEqual(result.returncode,0,result.stderr)
         manifest = json.loads((out/'manifest.json').read_text())
@@ -309,7 +325,7 @@ class HierarchyWorkflowTests(unittest.TestCase):
             self.assertEqual(data['states'].shape,(8,4,4,2))
             self.assertEqual(data['correlation'].shape,(8,8))
         # Exercise the actual existing rebuild consumer, not just CSV headers.
-        rebuild = load_module('CMT_data_parameters_rebuild')
+        rebuild = load_module('rwa_hierarchy_rebuild', 'parameter_rebuild/rebuild.py')
         target = self.directory/'rebuilt'
         target.mkdir()
         curves = [pd.read_csv(out/'CURVE'/(p+'_curve.csv'),parse_dates=['observation_date'])
@@ -343,7 +359,11 @@ class HierarchyWorkflowTests(unittest.TestCase):
             workflow.read_yield_panel(self.input,[1,2])
 
     def test_pipeline_manager_executes_the_new_config_against_isolated_inputs(self):
-        config = yaml.safe_load((ROOT/'pipeline/pipeline_config_rwa_hierarchy.yaml').read_text())
+        config = yaml.safe_load((ROOT/'pipeline/rwa_hierarchy/config.yaml').read_text())
+        self.assertEqual(
+            (ROOT/'src'/config['scripts']['rwa_hierarchy']['path']).resolve(),
+            Path(workflow.__file__).resolve(),
+        )
         config['parameters'].update(output_dir=str(self.directory/'managed'),
                                     yield_window=64,parameter_window=32,recent_rows=0,
                                     paths=8,steps=3)

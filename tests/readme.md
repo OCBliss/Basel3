@@ -30,8 +30,18 @@ likelihood comparisons, causality, ridge budgets, all maturity/parameter branche
 joint simulation, numerical boundaries and actual downstream file consumers on
 isolated fixtures. Test success does not establish the economic model's validity.
 
+The RWA checks also verify the component layout under `src/RWA`: the yield
+calibrator, curve repairs and parameter rebuild resolve the same repository data
+root, and the hierarchy works both as a Python module and as a script invoked
+from another directory. The manager test reads the real hierarchy YAML, checks
+its relocated script target and runs it against isolated inputs.
+
 The implementation published in `fc52dd5` passed **147 tests**. The [recorded
 log](../.codex-engineering/runs/2026-09-13-capability/verified-suite.log) and
 [research results](../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
 separate regression evidence from empirical model assessment. Document any later
 test count or result with its revision and command in the journal.
+
+The [component-organization checkpoint](../.codex-engineering/runs/2026-09-13-layout/readme.md)
+passed **149 tests** after relocation, including the two additional entry-point
+and shared-data-root checks. Its recorded log covers the full repository suite.

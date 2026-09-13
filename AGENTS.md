@@ -10,6 +10,13 @@ symlinks before executing scripts. Preserve existing user edits and source data.
 
 ## Research and implementation
 
+The standing objectives are to research the problem, form an explicit hypothesis,
+implement it, test credible alternatives, validate and harden the result, commit
+and synchronize it, then review the repository globally for integration, clarity,
+cleanliness and professional organization. Treat these as one engineering cycle.
+Check upstream acquisition and data preparation as well as downstream consumers;
+an existing input file is not proof that a reproducible retrieval stage exists.
+
 Read `.codex-engineering/CURRENT_TASK.md`, `.codex-engineering/JOURNAL.md`, recent
 commits and the relevant complete execution paths before choosing work. Resume
 an unfinished capability first. Select one substantive analytical or engineering
@@ -64,6 +71,15 @@ commands from the repository root, inputs, outputs and significant limitations.
 Update affected guides whenever behavior changes. Use relative Markdown links
 inside repository documents so they work in GitHub and a fresh clone.
 
+Use exactly one README per directory, case-insensitively. Group code into named
+component folders when their responsibilities, interfaces or usage warrant it;
+nest related components where that makes navigation clearer. Do not collect
+unrelated scripts or competing README files in a flat directory. Keep shared
+implementation and its entry point together and explain their relationship.
+When moving code, inspect all affected YAML, imports, root discovery, test paths,
+examples and consumers; update and verify them in the same change. Describe
+current implemented capabilities accurately, separately from research objectives.
+
 Documentation coverage requires reading the contents, including READMEs in affected
 data and output folders. A filename, title or placeholder is not usable coverage.
 Explain settings, processing order, audit/failure behavior and the next consumer;
@@ -78,3 +94,13 @@ progress or interruption. Retain useful evidence and exact reproduction commands
 Check existing regression evidence before repeating expensive unchanged tests;
 run checks appropriate to each actual change. Never report an unrun test or an
 unpublished commit as complete.
+
+## User control of scheduling
+
+The latest explicit requested cadence is every two hours, superseding daily
+1 a.m. and daily 2 a.m. The user may change the cadence or pause/resume at will.
+Do not restore an older schedule when editing the engineering brief. Read and
+preserve the current recurrence and status unless the user requests their change.
+Use the automation tool for schedule changes and verify the saved state before
+claiming success; a successful tool response alone previously disagreed with
+persistent storage. Do not edit scheduler databases or create duplicate jobs.

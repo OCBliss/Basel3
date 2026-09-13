@@ -1,102 +1,55 @@
-# Step 12 — Estimate Mean Reversion Dynamics via CIR Model
+# Historical CIR and AR(1) parameter-estimation experiment
 
-## Purpose
+Despite the `EXP_COUPON` directory name, the
+[legacy source](autoregressive_fitting_v3a.py) estimates rate-process parameters.
+It does not calculate coupon cash flows, expected bond returns, portfolio losses
+or duration-adjusted RWA.
 
-This step fits a **Cox-Ingersoll-Ross (CIR)** model to historical yield data for each constant maturity Treasury series. The CIR model is commonly used in financial modeling due to its:
+## Execution status and current alternative
 
-- **Mean-reverting behavior**
-- Non-negativity constraint on rates
-- Usefulness in forward drift calibration under Basel III scenarios
+The file looks for a `CODE` ancestor and loads `Basel3_Global_Filepath.py` from
+it before defining its workflow. This does not match the current repository
+layout. It also imports `statsmodels`, which is not part of the root requirements.
+These are historical defaults, not a working setup command for a fresh clone.
+The active [yield calibration](../../../../src/RWA/yield_calibration/readme.md)
+and [parameter simulation](../../../../src/RWA/parameter_hierarchy/readme.md)
+guides provide current commands, prerequisites and independently tested behavior.
 
-This output can be used to simulate yield paths or calculate expected coupons under stochastic dynamics.
+## Legacy inputs and fitting
 
----
+The experiment targets DGS1, DGS3, DGS5, DGS10, DGS20 and DGS30. For each name it
+selects the most recently modified matching CSV in `RWA/FRED/`, sorts observations
+ascending, drops missing rates and divides percent yields by 100. A prefix match
+is used for filenames, so historical input selection also needs review.
 
-## Input
+Its CIR branch uses a Gaussian Euler approximation to:
 
-Constant Maturity Treasury rate CSVs downloaded from FRED:
+```text
+dr = theta * (mu - r) * dt + sigma * sqrt(r) * dW
+```
 
-- `RWA/`
-  - `/FRED/`
-    - DGS1.csv
-    - DGS3.csv
-    - DGS5.csv
-    - DGS10.csv
-    - DGS20.csv
-    - DGS30.csv
+Here `dt = 1/252`; bounded `scipy.optimize.minimize` estimates theta, mu and sigma
+with lower bounds of 0.001. The optional AR(1) branch uses a fitted lag-one
+coefficient and residual dispersion. AR(1) is selected explicitly with
+`model_type="AR1"`; it is not an automatic fallback after a failed CIR fit.
+The worker pool is limited to the smaller of series count and available CPUs.
+Series failures are printed and leave blank result columns.
 
+## Output and interpretation
 
-Each file must contain:
-- `observation_date` (datetime)
-- The rate column (e.g., `DGS10`) as a percentage
+The legacy output is `CIR_parameters_summary.csv` in this folder. It has a
+`Parameters` index with rows `Mean Reversion Speed`, `Long-Term Mean` and
+`Volatility`, plus the six series columns. Values are rounded to four decimal
+places. Same-named output is replaced by a run. The checked-in CSV is a historical
+artifact; this documentation update does not establish that it was regenerated
+or validated against current source.
 
----
+A fitted CIR sigma is a square-root diffusion coefficient, not a coupon estimate.
+The AR(1) residual standard deviation and CIR coefficient have different meanings.
+The current yield-calibration workflow retains FRED percent units, whereas this
+legacy experiment converts rates to decimal units; their fitted parameters must
+not be interchanged without an explicit consistent model/unit conversion.
 
-## Output
-
-A CSV file summarizing CIR parameter estimates for each term:
-
-- `/RWA/Practical/Constant Maturity Treasury/EXP_COUPON/CIR_parameters_summary.csv`
-
-
-The output has the structure:
-
-| Parameters             | DGS1  | DGS3  | DGS5  | DGS10 | DGS20 | DGS30 |
-|------------------------|-------|-------|-------|-------|-------|-------|
-| Mean Reversion Speed θ | 0.99  | 1.15  | 0.84  | 0.76  | 0.62  | 0.51  |
-| Long-Term Mean μ       | 0.03  | 0.035 | 0.04  | 0.045 | 0.05  | 0.053 |
-| Volatility σ           | 0.012 | 0.011 | 0.010 | 0.009 | 0.008 | 0.007 |
-
----
-
-## Methodology
-
-For each term (e.g., DGS10):
-
-1. Load and clean data:
-   - Sort by `observation_date`
-   - Drop NaNs
-   - Convert from percentage to decimal
-
-2. Fit the CIR model:
-
-   \[
-   dr_t = \theta (\mu - r_t) dt + \sigma \sqrt{r_t} dW_t
-   \]
-
-   via maximum likelihood estimation (`scipy.optimize.minimize`) using:
-
-   - 252 business days per year
-   - Daily observations
-
-3. Save:  
-   - **Mean Reversion Speed** `θ`  
-   - **Long-Term Mean** `μ`  
-   - **Volatility** `σ`
-
----
-
-## Configuration
-
-- **Model Type:** `"CIR"` or `"AR1"`  
-  - CIR (default) fits non-linear, mean-reverting model with square-root diffusion
-  - AR1 fits a linear autoregressive process as fallback
-
-- **Multiprocessing:** Uses all available cores for speed.
-
----
-
-## Use Cases
-
-- **Coupon drift forecasting**
-- **Yield curve simulations**
-- **Stochastic RWA and duration-adjusted loss modeling**
-- **Input to PDMM-Heston or Monte Carlo term structure engines**
-
----
-
-## Next Step
-
-Proceed to **Step 12**:
-- Generate stochastic rate paths or coupon shock matrices
-- Integrate CIR parameters into simulated capital depletion scenarios
+Using fitted dynamics for coupon forecasting, scenario valuation or a capital
+mapping remains downstream work. See [the valuation proposal](../readme.md) and
+[Expected Loss status](../../Expected%20Loss/readme.md) for that unfinished goal.

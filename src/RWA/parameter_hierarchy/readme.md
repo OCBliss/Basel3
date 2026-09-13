@@ -1,4 +1,4 @@
-# Endogenous parameter-process hierarchy
+# Interest-rate parameter hierarchy
 
 This workflow extends the existing sigma-only second pass in
 `RWA/Experimental/RWA_Heston_MLE_vol_test.py` to **mu, theta and sigma at every
@@ -12,13 +12,32 @@ produce apparent parameter volatility even when the generating parameters are
 constant. Fitting another process to that volatility does not automatically
 establish a new economic risk factor.
 
+## Component layout
+
+`workflow.py` handles the command-line interface, both calibration passes, aligned
+exports, scenario generation and the completion manifest. It imports `core.py`,
+which implements the estimator, coupled stabilization, dependence calculations and
+simulation step. They share one numerical and file contract within this package.
+The companion [reconstruction component](../parameter_rebuild/readme.md) consumes
+compatible RAW/CURVE exports when explicitly directed to the same run.
+
+The implemented stage is parameter calibration and simulation. Exposure valuation
+and duration-adjusted RWA are future milestones, not current output labels.
+
 ## Run
 
 Python 3.8+, NumPy and pandas are required; the existing environment is supported.
-From `Basel3_repo`:
+From `Basel3_repo`, either entry form can display the CLI:
+
+```bash
+python3 src/RWA/parameter_hierarchy/workflow.py --help
+python3 -m src.RWA.parameter_hierarchy.workflow --help
+```
+
+Run a calibration and simulation:
 
 ```sh
-python3 src/RWA/parameter_hierarchy.py \
+python3 src/RWA/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/my-run \
   --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
   --paths 256 --steps 20 --substeps 4 --noise-replicates 16
@@ -35,9 +54,9 @@ The manager can execute the separate configuration:
 
 ```sh
 python3 pipeline/Task_manager_Global_yaml_driven.py \
-  --config pipeline/pipeline_config_rwa_hierarchy.yaml --dry-run
+  --config pipeline/rwa_hierarchy/config.yaml --dry-run
 python3 pipeline/Task_manager_Global_yaml_driven.py \
-  --config pipeline/pipeline_config_rwa_hierarchy.yaml
+  --config pipeline/rwa_hierarchy/config.yaml
 ```
 
 Change that configuration's `output_dir` before a subsequent run. Its default

@@ -10,6 +10,7 @@ acceptance criteria, tested results and unfinished work.
 | [Git workflow](GIT_WORKFLOW.md) | Active branch, publishing, stable integration and SSH |
 | [Calibration evidence](runs/2026-09-13/readme.md) | Chronology and downstream NSS compatibility |
 | [Hierarchy evidence](runs/2026-09-13-capability/readme.md) | Endogenous parameter dynamics and model limitations |
+| [Component organization](runs/2026-09-13-layout/readme.md) | Path migration, integration checks and documentation audit |
 | [Regression commands](../tests/readme.md) | Repeat isolated verification from the repository root |
 
 Source, tests, usage guides, journal entries and selected research evidence are

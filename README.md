@@ -266,32 +266,28 @@ not reflected in regulatory risk weights.
 
 Explanation of the RWA module mathematical foundation [Here](PDF/readme.md)
 
-### Current Components
+### Implemented components
 
-- `FRED/`
-  - Constant Maturity Treasury yield data.
+The [RWA source map](src/RWA/readme.md) groups the working implementation by role:
 
-- `Practical/`
-  - Simplified non-parallel yield-shock framework.
-  - Preliminary expected-loss estimation.
-  - Exploratory risk-weight methodology.
+- [Yield calibration](src/RWA/yield_calibration/readme.md): causal rolling estimates from local FRED yield histories.
+- [Curve repair](src/RWA/curve_repair/readme.md): NS/NSS repair with parameter-domain checks and explicit diagnostics.
+- [Parameter reconstruction](src/RWA/parameter_rebuild/readme.md): date-aligned outputs for downstream parameter models.
+- [Parameter hierarchy](src/RWA/parameter_hierarchy/readme.md): coupled ridge stabilization, endogenous mu/theta/sigma dynamics and joint parameter/yield scenarios.
 
-### Research Under Development
+The [separate workflow configuration](pipeline/rwa_hierarchy/readme.md) runs the
+hierarchy. [RWA data and experiments](RWA/README.md) document existing inputs,
+legacy Practical scripts and output schemas. These implementations support
+interest-rate calibration and simulation; they do not yet calculate exposure-level
+losses or duration-adjusted RWA.
 
-  Components include:
+### Remaining research
 
-  - `FRED MLE YIELD/`
-    - Recursive estimation of yield-process parameters
-      (`μᵧ(t)`, `νᵧ(t)`, `θᵧ(t)`)
-
-  - `FRED MLE VOL/`
-    - Recursive estimation of stochastic volatility
-      (`μᵥ(t)`, `ξᵥ(t)`, `θᵥ(t)`)
-
-  - `FRED MLE CORR/`
-    - Maximum-likelihood estimation of time-varying correlation matrices
-      (`ΣX(t)`, `Σν(t)`, `Σξ(t)`)
-      using recursive Cholesky decomposition.
+The PDF objective still requires separating estimation noise from latent parameter
+dynamics, specifying and validating recursive pathwise recalibration, valuing
+exposures under those scenarios, and establishing the resulting risk/capital mapping.
+The [research checkpoint](.codex-engineering/CURRENT_TASK.md) and
+[journal](.codex-engineering/JOURNAL.md) record evidence and the next milestone.
 
 
 ---
@@ -409,7 +405,7 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
     - `Call_Reports_v4_0.py`
   - `ratios/`:
     - `Dynamic_Ratios.py`
-    - `variables.md`: ratio definitions.
+    - `variables/readme.md`: ratio definitions.
   - `material events/`:
     - `FDIC API/`:
       - `Material_events_download.py`
@@ -434,4 +430,4 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
     - `intergroup/`:
       - `JSD_intergroup_call_reports.py`
 
-The old root-level `Call Report/`, `JSD/` and `Variables/` directories are not part of a fresh clone. Call Report data is downloaded into `data/`; new JSD results are written under `Material Events/`; the [ratio catalogue](src/ratios/variables.md) is kept beside the ratio code. Historical CSVs and saved sample results remain available in [commit 176c8db](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1). Existing local copies are retained and ignored by Git.
+The old root-level `Call Report/`, `JSD/` and `Variables/` directories are not part of a fresh clone. Call Report data is downloaded into `data/`; new JSD results are written under `Material Events/`; the [ratio catalogue](src/ratios/variables/readme.md) is kept beside the ratio code. Historical CSVs and saved sample results remain available in [commit 176c8db](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1). Existing local copies are retained and ignored by Git.

@@ -30,9 +30,9 @@ it from `Basel3_repo`:
 
 ```bash
 python3 pipeline/Task_manager_Global_yaml_driven.py \
-  --config pipeline/pipeline_config_rwa_hierarchy.yaml --dry-run
+  --config pipeline/rwa_hierarchy/config.yaml --dry-run
 python3 pipeline/Task_manager_Global_yaml_driven.py \
-  --config pipeline/pipeline_config_rwa_hierarchy.yaml
+  --config pipeline/rwa_hierarchy/config.yaml
 ```
 
 Before each execution, set a new `parameters.output_dir` in that YAML. The default
@@ -45,7 +45,7 @@ small diagnostic at additional cost. Do not pre-create the output directory.
 
 The declared artifacts include the completion manifest, parameter dynamics,
 scenario summary and scenario array. See the [RWA guide](../src/RWA/readme.md)
-for direct execution and the [model specification](../src/RWA/parameter_hierarchy.md)
+for direct execution and the [model specification](../src/RWA/parameter_hierarchy/readme.md)
 for assumptions and unfinished work.
 
 ## Call Report/JSD horizon and bin settings

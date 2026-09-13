@@ -1,7 +1,7 @@
 # Endogenous parameter hierarchy evidence
 
 Read [RESULTS.md](RESULTS.md) for the implemented capability, findings, numerical
-checks and remaining limitations. The [source guide](../../../src/RWA/parameter_hierarchy.md)
+checks and remaining limitations. The [source guide](../../../src/RWA/parameter_hierarchy/readme.md)
 documents the model and output contracts.
 
 | Evidence | Contents |
@@ -16,13 +16,13 @@ documents the model and output contracts.
 
 Each real-data directory contains `RAW/`, `CURVE/`, long calibration tables,
 scenario summaries, `scenarios.npz`, and a completion `manifest.json`. See
-[the model's file contracts](../../../src/RWA/parameter_hierarchy.md#files-and-interfaces).
+[the model's file contracts](../../../src/RWA/parameter_hierarchy/readme.md#files-and-interfaces).
 
 From `Basel3_repo`, with root requirements installed, reproduce the refined
 real-data configuration in a new output directory:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -B src/RWA/parameter_hierarchy.py \
+PYTHONDONTWRITEBYTECODE=1 python3 -B src/RWA/parameter_hierarchy/workflow.py \
   --output .codex-engineering/runs/hierarchy-recheck/real-eight-tenor \
   --recent-rows 2792 --yield-window 2520 --parameter-window 252 \
   --paths 1024 --steps 20 --substeps 4 --noise-replicates 16

@@ -1,149 +1,73 @@
-# Duration-adjusted RWA
+# Interest-rate calibration and parameter simulation
 
-These programs estimate rolling yield-process parameters, repair selected
-cross-maturity parameter anomalies, and rebuild the inputs for subsequent
-volatility modeling. They are separate from the configured Call Report/JSD
-pipeline. Paths resolve from this repository's `src/Basel3_Global_Filepath.py`.
+This is the executable research code for the [RWA research area](../../RWA/README.md).
+It estimates yield-process parameters and models their dynamics. Exposure valuation,
+duration-sensitive loss and an RWA capital calculation remain downstream objectives.
 
-The new [endogenous parameter hierarchy](parameter_hierarchy.md) generalizes the
-existing sigma second pass to mu, theta and sigma for every maturity, includes
-coupled ridge stabilization, generates jointly dependent rate/parameter scenarios,
-and provides a constant-parameter benchmark for apparent estimation-induced
-volatility. Run it with `src/RWA/parameter_hierarchy.py` or the separate
-`pipeline/pipeline_config_rwa_hierarchy.yaml` configuration. The model guide
-explains its finite hierarchy and the remaining recursive RWA milestones.
+## Components
 
-## Run the endogenous hierarchy
+Each component has one guide alongside its implementation:
 
-Install the root `requirements.txt` in your active environment, then run from
-`Basel3_repo`. Choose a new output name on each run:
+| Component | Entry point | Role |
+| --- | --- | --- |
+| [Yield calibration](yield_calibration/readme.md) | `yield_calibration/calibrate.py` | Rolling, causal CIR estimates from eight FRED maturity series |
+| [Curve repair](curve_repair/readme.md) | `curve_repair/mu.py`, `curve_repair/theta.py` | NS/NSS repair of selected cross-maturity parameter anomalies |
+| [Parameter reconstruction](parameter_rebuild/readme.md) | `parameter_rebuild/rebuild.py` | Date-aligned per-maturity exports for subsequent parameter modeling |
+| [Parameter hierarchy](parameter_hierarchy/readme.md) | `parameter_hierarchy/workflow.py`, `parameter_hierarchy/core.py` | Coupled ridge stabilization, second-pass dynamics for mu/theta/sigma and joint scenarios |
+
+The hierarchy's `workflow.py` imports its numerical implementation from `core.py`.
+Its first-pass and curve exports are tested through the reconstruction consumer.
+The separate legacy NS/NSS procedure remains available for reproducibility; its
+independent interpolation and the hierarchy's coupled stabilization are different
+methods and must be identified explicitly when comparing results.
+
+## Run the hierarchy
+
+From the repository root, install [requirements](../../requirements.txt) in your
+active environment and inspect the configured task:
 
 ```bash
-python3 src/RWA/parameter_hierarchy.py \
+python3 -m pip install -r requirements.txt
+python3 pipeline/Task_manager_Global_yaml_driven.py \
+  --config pipeline/rwa_hierarchy/config.yaml --dry-run
+```
+
+Run directly with a new output directory:
+
+```bash
+python3 src/RWA/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/my-run \
   --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
   --paths 256 --steps 20 --substeps 4 --noise-replicates 16
 ```
 
-The input is the eight `RWA/FRED/DGS*.csv` series. Outputs include the first-pass
-yield parameters, second-pass dynamics for mu/theta/sigma, RAW and CURVE exports,
-joint scenarios, summary quantiles and a completion manifest. Paths must stay
-inside the repository; existing output directories are rejected. The optional
-noise benchmark repeats the complete estimation/repair procedure and adds
-runtime. Set `--noise-replicates 0` to disable it for a purely operational run.
+See the [workflow configuration guide](../../pipeline/rwa_hierarchy/readme.md)
+and [model guide](parameter_hierarchy/readme.md) for settings, contracts and limits.
+The eight input series are currently read from local `RWA/FRED/DGS*.csv` files;
+these commands do not retrieve new yields from an API.
 
-See the [model guide](parameter_hierarchy.md) for the Python interface, settings
-and file schemas, and the [archived results](../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
-for actual-data and synthetic evidence. This finite hierarchy does not yet
-recalibrate each simulated path or calculate exposure-level RWA.
+## Legacy calibration and repair sequence
 
-## Rolling CIR calibration
+1. Run [yield calibration](yield_calibration/readme.md).
+2. Assemble the three date-aligned parameter panels using the
+   [CURVE preparation recipe](../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
+3. Run [mu and theta curve repair](curve_repair/readme.md), then inspect its audit fields.
+4. Run [parameter reconstruction](parameter_rebuild/readme.md) to produce the
+   six-column inputs documented in [MLE VOL/RAW](../../RWA/Experimental/MLE%20VOL/RAW/readme.md).
 
-Run from the repository root:
+Those commands write their configured historical output locations. Existing CSVs
+are preserved by this source reorganization; old results are not evidence of a
+fresh run. Rebuild dependent outputs consistently from the same inputs and settings.
 
-```sh
-python3 "src/RWA/quasi-MLE-Euler.py"
-```
-
-The script reads `RWA/FRED/DGS{1,2,3,5,7,10,20,30}.csv` and writes the corresponding
-`DGS*_with_parameters.csv` files under `RWA/Experimental/MLE YIELD/RAW/`.
-Each input requires `observation_date` and its named yield column, such as `DGS1`.
-
-For an estimate dated **t**, the window contains the latest `WINDOW_SIZE`
-observations through **t**, ordered from oldest to newest. The likelihood
-evaluates forward transitions from one observation to the next. Calibration
-proceeds from the earliest eligible date toward the latest; an optimizer warm
-start therefore comes from a previously fitted date. A failed fit produces
-missing parameters and resets the warm start for the following window.
-
-Input rows may be newest-first, oldest-first, or unordered. Sorting is internal:
-the output retains the input row order, original columns, one-based row labels,
-and the added `yield_clean`, `theta`, `mu`, and `sigma` columns. The earliest
-`WINDOW_SIZE - 1` dates have no estimate because a complete trailing window is
-unavailable. Adding later observations does not revise earlier estimates when
-the historical input observations are unchanged.
-
-Missing or nonnumeric yield observations are filled from the most recent
-**earlier** observation. Missing yields at the start of the history are rejected
-instead of using a future quote. Missing, invalid, or duplicate dates and
-nonpositive or infinite cleaned yields are rejected before output is written.
-The window size must be an integer of at least two observations.
-
-The existing statistical settings remain `WINDOW_SIZE = 2520`, `DT = 1/252`,
-positive parameter bounds, and the Gaussian Euler CIR likelihood. Yields retain
-their input units; FRED percentage values are not converted to decimal rates.
-The fixed step treats consecutive input rows as equally spaced observations;
-this change does not introduce a calendar-gap model or remove filled holidays.
-
-**Previously generated estimates:** Older versions processed the newest-first
-FRED windows in reverse temporal order. They also used forward-looking windows
-when given oldest-first input. Estimates generated by the corrected script can
-therefore differ. Regenerate dependent curves and reconstructed parameters from
-the corrected raw estimates before using them together. Existing research data
-and generated outputs are not automatically migrated by this code change.
-
-## Downstream file contracts
-
-The corresponding output folders have their own operational guides:
-[RAW](../../RWA/Experimental/MLE%20YIELD/RAW/readme.md),
-[CURVE assembly](../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md),
-[NS/NSS repair](../../RWA/Experimental/MLE%20YIELD/NSS/readme.md), and
-[MLE VOL/RAW reconstruction](../../RWA/Experimental/MLE%20VOL/RAW/readme.md).
-
-1. Assemble `mu_curve.csv`, `theta_curve.csv`, and `sigma_curve.csv` in
-   `RWA/Experimental/MLE YIELD/CURVE/`. Each table needs unique
-   `observation_date` keys and eight tenor columns, for example `mu1y`, `mu2y`,
-   `mu3y`, `mu5y`, `mu7y`, `mu10y`, `mu20y`, and `mu30y`. Assembly is a separate
-   preparation step; these scripts do not provide an automated assembly stage.
-   Align by date and retain unavailable-history values as missing.
-2. Run `src/RWA/mu_curve_nss_repair.py` and
-   `src/RWA/theta_curve_nss_repair*.py`. The asterisk is part of the theta
-   script's filename and must be quoted in shell commands. Their repaired
-   curve files are written under `RWA/Experimental/MLE YIELD/NSS/`.
-3. Run `src/RWA/CMT_data_parameters_rebuild.py`. It joins the repaired mu and
-   theta curves and the sigma curve to each original raw yield file by date,
-   preserving its row order. The files under `RWA/Experimental/MLE VOL/RAW/`
-   contain `observation_date`, the DGS column, `yield_clean`, `theta`, `mu`,
-   and `sigma`.
-
-After assembling the legacy curve inputs described above, the commands are:
+## Verification and research status
 
 ```bash
-python3 src/RWA/mu_curve_nss_repair.py
-python3 'src/RWA/theta_curve_nss_repair*.py'
-python3 src/RWA/CMT_data_parameters_rebuild.py
+python3 -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
 
-These legacy commands write their configured historical output locations. The
-new hierarchy's coupled stabilization and CURVE exports are a separate workflow;
-do not silently mix calibrations from different dates, settings or repair methods.
-
-The CIR calibration constrains mu and theta to be positive. Both curve-repair
-scripts therefore validate **all** reconstructed nodes before accepting a row:
-nonfinite, zero, or negative candidates are rejected without changing any of its
-original parameter values. `curve_fit_success` and `curve_repair_performed`
-remain false, and `curve_fit_error` records the reason. Successful rows and rows
-with no detected anomaly have an empty error field. This prevents a fitted curve
-with small residuals from silently introducing inadmissible CIR parameters.
-
-Inspect these audit fields before interpreting repaired estimates. Rejection
-preserves the original potentially unstable estimates; it does not establish
-their statistical reliability. The rebuild retains its six-column contract and
-does not carry the NSS audit fields, so retain the repaired curve files with it.
-
-## Verification
-
-```sh
-python3 -m unittest discover -s tests -p test_rwa_calibration.py -v
-python3 -m unittest discover -s tests -p test_rwa_hierarchy.py -v
-python3 -m unittest discover -s tests -v
-```
-
-The RWA tests cover forward transition direction, trailing-window dates,
-invariance to input ordering and added future observations, causal filling,
-invalid inputs, warm-start recovery, and real-optimizer results. They also pass
-all eight maturity outputs through both NSS file consumers and parameter
-reconstruction using isolated fixtures. This verifies implementation and file
-compatibility; empirical risk-model validation is a separate research question.
-Additional tests exercise positive-domain rejection, atomic rollback of a failed
-row repair, and the short-tenor theta extrapolation observed in the real data.
+Tests exercise chronology, causal cleaning, calibration recovery, whole-row repair
+rejection, all eight maturity file contracts, direct/package invocation and the
+actual YAML manager on isolated fixtures. The [research evidence](../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
+records statistical findings and limitations. The finite hierarchy currently
+freezes second-level coefficients at the forecast origin; simulated-path recursive
+recalibration and exposure-level valuation are unfinished.

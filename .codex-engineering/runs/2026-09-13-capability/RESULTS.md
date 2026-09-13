@@ -4,9 +4,9 @@ Implemented rolling second-pass CIR calibration for mu, theta and sigma at every
 
 ## Executable result
 
-- [Implementation](../../../src/RWA/parameter_hierarchy.py)
-- [Mathematical specification and usage](../../../src/RWA/parameter_hierarchy.md)
-- [Pipeline configuration](../../../pipeline/pipeline_config_rwa_hierarchy.yaml)
+- [Implementation](../../../src/RWA/parameter_hierarchy/workflow.py)
+- [Mathematical specification and usage](../../../src/RWA/parameter_hierarchy/readme.md)
+- [Pipeline configuration](../../../pipeline/rwa_hierarchy/config.yaml)
 - [Refined real-data scenario summary](real-eight-tenor-refined/scenario_summary.csv)
 - [Real-data parameter dynamics](real-eight-tenor-refined/parameter_dynamics.csv)
 - [Noise benchmark and original run manifest](real-eight-tenor/manifest.json)

@@ -42,7 +42,7 @@ parameters; they must not all be called one xi or collapsed together.
 
 - All four PDF pages extracted to runs/2026-09-13-capability/model.txt; pages 2-4
   visually inspected from the rendered PNGs in that same evidence directory.
-- Fully read src/RWA/quasi-MLE-Euler.py and CMT_data_parameters_rebuild.py;
+- Fully read src/RWA/yield_calibration/calibrate.py and src/RWA/parameter_rebuild/rebuild.py;
   inspected both NSS fit/repair paths and their maturity thresholds. Existing
   repair scripts assess all eight maturity columns, using separate mu>9 and
   theta<0.01 triggers; positivity guards do not resolve identification.
@@ -80,9 +80,9 @@ parameters; they must not all be called one xi or collapsed together.
 
 ## Completed implementation and next action
 
-Implemented source: src/RWA/cir_hierarchy.py and parameter_hierarchy.py, with
-parameter_hierarchy.md specifying the mathematics and finite hierarchy closure.
-The standalone pipeline configuration is pipeline/pipeline_config_rwa_hierarchy.yaml.
+Implemented source: src/RWA/parameter_hierarchy/core.py and workflow.py, with
+parameter_hierarchy/readme.md specifying the mathematics and finite hierarchy closure.
+The standalone pipeline configuration is pipeline/rwa_hierarchy/config.yaml.
 The existing calibration/NSS/rebuild scripts and default Call Report/JSD pipeline
 remain intact. Source exports were tested through the actual rebuild consumer;
 the actual manager executed the new config on isolated fixtures.
@@ -143,3 +143,35 @@ README filename presence is not content completeness; review all affected folder
 The daily scheduling prompt now includes the global repository perspective,
 professional presentation, complete folder documentation and immediate
 push/pull/review requirements. See the latest journal entry and readme validation.
+
+
+## Current supporting task: component organization and integration
+
+RWA source now has yield_calibration, curve_repair, parameter_rebuild and
+parameter_hierarchy component directories; its separate YAML is
+pipeline/rwa_hierarchy/config.yaml. Each directory has one operational README.
+This organization and documentation task supports the previously completed
+finite-hierarchy milestone; it is not a new analytical discovery. Validation
+and publication are recorded in the 2026-09-13-layout evidence directory.
+
+Latest user objectives: research; hypothesis and alternatives; implementation;
+validation and hardening; immediate commit/push, pull and global review; clean,
+professional organization with interfaces and documentation maintained together.
+Use the RWA research/data organization as a guide to purposeful source grouping.
+Current output names must describe interest-rate calibration/parameter simulation,
+not claim that duration-adjusted RWA valuation is implemented.
+
+Acquisition audit: no FRED yield API GET/download implementation exists. Both
+active loaders clean existing local CSVs; no retrieval/refresh/freshness stage is
+wired into the hierarchy YAML. Seven source series end 2025-03-10, DGS20 ends
+2025-03-12, and the aligned eight-tenor history therefore ends 2025-03-10. Treat
+reproducible yield acquisition and explicit freshness as an upstream gap. The
+FFIEC and FDIC downloaders do not fill it. Preserve original quoted data and
+identify causal imputation when implementing acquisition/cleaning integration.
+
+Scheduling: the latest explicit user request is every two hours. This supersedes
+all earlier daily 1 a.m./2 a.m. instructions in historical records. The attempted
+hourly-interval tool update reported success, but independent reads still showed
+daily 02:00; the discrepancy is unresolved. Never claim a corrected schedule until
+saved recurrence is verified. Do not overwrite later user settings when updating
+the work brief. See AGENTS.md for the standing engineering and control standards.

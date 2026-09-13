@@ -9,10 +9,10 @@ second stochastic process or estimate xi.
 From `Basel3_repo`, with the root requirements installed:
 
 ```bash
-python3 src/RWA/CMT_data_parameters_rebuild.py
+python3 src/RWA/parameter_rebuild/rebuild.py
 ```
 
-The [rebuild source](../../../../src/RWA/CMT_data_parameters_rebuild.py) has fixed
+The [rebuild source](../../../../src/RWA/parameter_rebuild/rebuild.py) has fixed
 repository-relative defaults and no CLI options. It requires all eight maturities
 and reads:
 
@@ -50,7 +50,7 @@ known schema and provenance rather than assuming every CSV here is a fresh run.
 
 ## Continue to parameter dynamics
 
-The active [endogenous hierarchy](../../../../src/RWA/parameter_hierarchy.md)
+The active [endogenous hierarchy](../../../../src/RWA/parameter_hierarchy/readme.md)
 fits processes to **mu, theta and sigma**, including volatility of each parameter.
 Its CLI starts from FRED yields and produces its own consistent calibration run;
 it does not automatically scan this folder. Its documented Python interface can

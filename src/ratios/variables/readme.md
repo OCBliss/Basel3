@@ -1,10 +1,10 @@
 # Ratio variables
 
 This catalogue lists the 76 ratio columns produced by
-[Call_Reports_v4_0.py](../call%20reports/Call_Reports_v4_0.py). The names match
+[Call_Reports_v4_0.py](../../call%20reports/Call_Reports_v4_0.py). The names match
 `FEATURE_COLUMNS`; the calculations below follow the two explicit entries
 in `create_ratio_entries()` and the separate API methods in
-[Call_Report.py](../call%20reports/Call_Report.py).
+[Call_Report.py](../../call%20reports/Call_Report.py).
 
 The caller evaluates the `CallReport_031` and `CallReport_051` implementations
 and keeps the row with fewer missing values for each `IDRSSD`. Their field
@@ -210,5 +210,5 @@ For the zero-risk ratios:
   `1 - safe_divide(AdjustedZeroRiskToAugmentedRWA(), ZeroRiskToAugmentedRWA())`.
 
 `Dynamic_Ratios.py` retains each current ratio as `<variable>_q0` and adds its
-changes from `P1Q`, `P2Q` and `P3Q`. See the [dynamic-ratio description](readme.md)
+changes from `P1Q`, `P2Q` and `P3Q`. See the [dynamic-ratio description](../readme.md)
 for those suffixes, inputs and output paths.
