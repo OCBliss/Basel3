@@ -1,0 +1,46 @@
+# Independent RWA workflow; the Call Report/JSD execution list is unchanged.
+# Choose a NEW output_dir for each run. Existing results are never overwritten.
+parameters:
+  output_dir: RWA/Experimental/HIERARCHY/run
+  yield_window: 2520
+  parameter_window: 252
+  recent_rows: 3024
+  paths: 256
+  steps: 20
+  substeps: 4
+  seed: 1234
+  noise_replicates: 0
+
+scripts:
+  rwa_hierarchy:
+    path: RWA/parameter_hierarchy.py
+    args:
+      - --output
+      - "{output_dir}"
+      - --yield-window
+      - "{yield_window}"
+      - --parameter-window
+      - "{parameter_window}"
+      - --recent-rows
+      - "{recent_rows}"
+      - --paths
+      - "{paths}"
+      - --steps
+      - "{steps}"
+      - --substeps
+      - "{substeps}"
+      - --seed
+      - "{seed}"
+      - --noise-replicates
+      - "{noise_replicates}"
+    inputs: ["RWA/FRED/DGS*.csv"]
+    outputs:
+      - "{output_dir}/manifest.json"
+      - "{output_dir}/parameter_dynamics.csv"
+      - "{output_dir}/scenario_summary.csv"
+      - "{output_dir}/scenarios.npz"
+
+dependencies: {}
+
+execution:
+  - sequential: [rwa_hierarchy]

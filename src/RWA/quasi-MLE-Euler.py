@@ -74,7 +74,7 @@ CSV_FILES = [
 ###############################################################################
 
 def cir_log_likelihood(params, yields, dt):
-    """Return the negative Gaussian Euler CIR log-likelihood."""
+    """Return the negative Gaussian Euler CIR likelihood for oldest-first yields."""
     theta, mu, sigma = params
 
     xt = yields[:-1]
@@ -108,7 +108,7 @@ def make_initial_guess(yields_block):
 
 
 def estimate_theta_cir(yields_block, initial_guess):
-    """Estimate theta, mu, and sigma for one rolling window."""
+    """Estimate theta, mu, and sigma for one oldest-first rolling window."""
     bounds = ((1e-6, None), (1e-6, None), (1e-6, None))
 
     result = minimize(
@@ -130,39 +130,63 @@ def estimate_theta_cir(yields_block, initial_guess):
 
 def process_csv(file_name):
     """
-    Process all rolling windows for one maturity sequentially.
+    Fit trailing, oldest-first windows and attach each fit to its latest date.
 
-    Sequential processing within a maturity allows each window to use the
-    preceding window's fitted parameters as its optimizer starting point.
-    Different maturities are processed concurrently in separate processes.
+    Input rows may be in any order; that order and the one-based output row
+    labels are preserved. Calibration proceeds forward in time, so both the
+    window and its warm start use only information available at the output
+    date. Different maturities still run concurrently in separate processes.
     """
     csv_path = os.path.join(RWA_DIR, "FRED", file_name)
     yield_column = os.path.splitext(file_name)[0]
 
     print(f"Processing {file_name}...")
 
+    if (
+        isinstance(WINDOW_SIZE, (bool, np.bool_))
+        or not isinstance(WINDOW_SIZE, (int, np.integer))
+        or WINDOW_SIZE < 2
+    ):
+        raise ValueError("WINDOW_SIZE must be an integer of at least 2 observations.")
+
     df = pd.read_csv(csv_path)
 
-    if "observation_date" in df.columns:
-        df["observation_date"] = pd.to_datetime(
-            df["observation_date"],
-            errors="coerce",
-        )
-
+    if "observation_date" not in df.columns:
+        raise KeyError(f"observation_date column not found in {file_name}.")
     if yield_column not in df.columns:
         raise KeyError(f"{yield_column} column not found in {file_name}.")
 
+    df["observation_date"] = pd.to_datetime(df["observation_date"], errors="raise")
+    if df["observation_date"].isna().any():
+        raise ValueError(f"{file_name} contains missing observation dates.")
+    if df["observation_date"].duplicated().any():
+        raise ValueError(f"{file_name} contains duplicate observation dates.")
+
+    # Sort for estimation, not for presentation. These original zero-based
+    # positions map each window's latest date back to its input/output row.
+    chronological = df.sort_values("observation_date")
+    chronological_positions = chronological.index.to_numpy()
+
+    # In newest-first FRED files this is equivalent to bfill, but unlike a
+    # file-order bfill it also remains causal for ascending or shuffled files.
+    # Assignment aligns by original index, preserving the source row order.
     df["yield_clean"] = pd.to_numeric(
-        df[yield_column],
+        chronological[yield_column],
         errors="coerce",
-    ).bfill()
+    ).ffill()
 
     if df["yield_clean"].isna().any():
         raise ValueError(
-            f"{file_name} still contains missing yield values after backfilling."
+            f"{file_name} has missing yields at the earliest observation dates; "
+            "no prior observation is available for forward filling."
         )
 
-    yields_data = df["yield_clean"].to_numpy(dtype=np.float64, copy=True)
+    yields_data = df.loc[chronological_positions, "yield_clean"].to_numpy(
+        dtype=np.float64, copy=True
+    )
+    if not np.all(np.isfinite(yields_data)) or np.any(yields_data <= 0.0):
+        raise ValueError(f"{file_name} requires finite, strictly positive CIR yields.")
+
     row_count = yields_data.size
     total_windows = row_count - WINDOW_SIZE + 1
 
@@ -181,18 +205,20 @@ def process_csv(file_name):
 
     print(
         f"Starting {total_windows} calculations for {file_name}: "
-        f"output row {total_windows} down to row 1..."
+        "trailing windows from earliest to latest eligible observation date..."
     )
 
     previous_params = None
 
-    # Work backward exactly as the original script intended, but use valid
-    # zero-based NumPy positions and one-based DataFrame labels separately.
-    for count, start_position in enumerate(
-        range(total_windows - 1, -1, -1),
+    # Each block follows the likelihood's x_t -> x_(t+1) direction. Its fit
+    # belongs to the final observation, never the first (look-ahead) date.
+    for count, end_position in enumerate(
+        range(WINDOW_SIZE - 1, row_count),
         start=1,
     ):
-        block = yields_data[start_position:start_position + WINDOW_SIZE]
+        start_position = end_position - WINDOW_SIZE + 1
+        block = yields_data[start_position:end_position + 1]
+        output_position = chronological_positions[end_position]
 
         if previous_params is None:
             initial_guess = make_initial_guess(block)
@@ -208,12 +234,12 @@ def process_csv(file_name):
             # Do not propagate a failed fit into the next optimizer call.
             previous_params = None
 
-        theta_results[start_position] = theta
-        mu_results[start_position] = mu
-        sigma_results[start_position] = sigma
+        theta_results[output_position] = theta
+        mu_results[output_position] = mu
+        sigma_results[output_position] = sigma
 
         if count % 100 == 0 or count == total_windows:
-            output_row = start_position + 1
+            output_row = output_position + 1
             print(
                 f"Processed {count}/{total_windows} windows in {file_name}. "
                 f"Row {output_row}: theta={theta}, mu={mu}, sigma={sigma}"

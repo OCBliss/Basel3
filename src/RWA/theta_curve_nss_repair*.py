@@ -558,6 +558,7 @@ def repair_mu_row(
     # Audit columns
     output["curve_repair_performed"] = False
     output["curve_fit_success"] = False
+    output["curve_fit_error"] = ""
     output["curve_model"] = ""
     output["curve_fit_rmse"] = np.nan
     output["anomaly_count"] = int(anomaly_mask.sum())
@@ -616,16 +617,26 @@ def repair_mu_row(
 
         anomaly_indices = np.flatnonzero(anomaly_mask)
 
+        # CIR mu and theta have strictly positive bounds in calibration. A
+        # small residual on valid tenors does not ensure admissible extrapolated
+        # parameters. Validate the whole candidate before changing any node.
+        reconstructed_values = np.asarray(reconstructed_values, dtype=float)
+        invalid_mask = ~np.isfinite(reconstructed_values) | (reconstructed_values <= 0.0)
+        if invalid_mask.any():
+            invalid_columns = [
+                columns[index]
+                for index in anomaly_indices[invalid_mask]
+            ]
+            raise FloatingPointError(
+                "Curve reconstruction requires finite, strictly positive CIR "
+                "parameters; rejected nodes: " + ", ".join(invalid_columns)
+            )
+
         for index, reconstructed_value in zip(
             anomaly_indices,
             reconstructed_values,
         ):
             column = columns[index]
-
-            if not np.isfinite(reconstructed_value):
-                raise FloatingPointError(
-                    f"Curve returned a nonfinite value for {column}."
-                )
 
             output[column] = float(reconstructed_value)
             output[f"{column}_repaired"] = True
@@ -640,6 +651,7 @@ def repair_mu_row(
         RuntimeError,
         FloatingPointError,
     ) as error:
+        output["curve_fit_error"] = str(error)
         warnings.warn(
             f"Curve repair failed for "
             f"{row.get(DATE_COLUMN)}: {error}",
