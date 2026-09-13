@@ -557,3 +557,11 @@ throughout the run rather than waiting until the end.
 - **Completion cycle:** Publish the verified recursive source/tests/config/docs
   and evidence immediately; pull and independently retrieve affected GitHub
   files before reporting completion. Record exact publication verification next.
+
+
+### 2026-09-13T15:56:49-07:00 — recursive milestone publication verified
+
+- Published source commit a80297ea0b5c99200965dc965d5667c88cde1285 on origin/main, then pulled successfully. Ten independently fetched GitHub source/config/test/guide/evidence blobs matched the local committed files. Local and remote revisions matched with a clean working tree.
+- Full live workflow completed with eight maturities, 256 paths, 20 forecast steps and 4,864 pathwise recalibrations; maximum likelihood cost 2.0, maximum correlation change from origin 0.173756, zero boundary projections. The full audit manifest is retained losslessly as gzip alongside a concise JSON verification and scenario summary.
+- Final validation: 198 tests passed in 45.096 seconds; actual live acquisition/model manager, latest/held-out cadence comparisons, and 359 links/77 shell examples checked. Reviewed published component interfaces and the three stable RWA source domains: data, calibration, models.
+- This completes the substantive recursive-model milestone in the immediate run, in addition to its required supporting acquisition and organization work. The user did not need to supply further implementation instructions or approvals. The single every-two-hour automation remains as independently verified; its cadence was not overwritten.

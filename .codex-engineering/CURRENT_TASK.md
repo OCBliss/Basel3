@@ -21,7 +21,7 @@ per-path parameter diffusion and dependence changed. Held-out energy-score
 Monte Carlo intervals include zero, so no superiority conclusion is warranted.
 See runs/2026-09-13-recursive/readme.md and its original evidence. Full configured
 live acquisition plus 256-path/20-step recursive validation is recorded there.
-Publication verification follows in the journal; a local file is not publication.
+Publication verified at a80297ea0b5c99200965dc965d5667c88cde1285 on origin/main after push, pull and independent GitHub retrieval. The full configured live run completed 4,864 pathwise refits with zero boundary projections. See the journal and runs/2026-09-13-recursive/publication.json.
 
 ## Completed supporting work and architecture
 

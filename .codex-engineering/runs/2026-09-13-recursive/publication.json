@@ -1,0 +1,73 @@
+{
+  "commit": "a80297ea0b5c99200965dc965d5667c88cde1285",
+  "origin_main": "a80297ea0b5c99200965dc965d5667c88cde1285",
+  "clean": true,
+  "source_domains": [
+    "calibration",
+    "data",
+    "models",
+    "readme.md"
+  ],
+  "files": [
+    {
+      "path": "src/RWA/models/parameter_hierarchy/recursive.py",
+      "local_blob": "cbaa091796b38fce522f427f14b24edac978f648",
+      "github_blob": "cbaa091796b38fce522f427f14b24edac978f648",
+      "matches": true
+    },
+    {
+      "path": "src/RWA/models/parameter_hierarchy/workflow.py",
+      "local_blob": "c19e47e43be51e6318a9b979a85616fc6dbdc126",
+      "github_blob": "c19e47e43be51e6318a9b979a85616fc6dbdc126",
+      "matches": true
+    },
+    {
+      "path": "src/RWA/models/parameter_hierarchy/readme.md",
+      "local_blob": "4f0442bb9d0689ab559ba32085735157464dd0ae",
+      "github_blob": "4f0442bb9d0689ab559ba32085735157464dd0ae",
+      "matches": true
+    },
+    {
+      "path": "src/RWA/readme.md",
+      "local_blob": "0b27f7ae4cd28c717758b2c16b5d7566288a05b5",
+      "github_blob": "0b27f7ae4cd28c717758b2c16b5d7566288a05b5",
+      "matches": true
+    },
+    {
+      "path": "pipeline/rwa_live/config.yaml",
+      "local_blob": "000dc07fbc8878e175efb5ce850a86ecd3f22c8a",
+      "github_blob": "000dc07fbc8878e175efb5ce850a86ecd3f22c8a",
+      "matches": true
+    },
+    {
+      "path": "pipeline/rwa_hierarchy/config.yaml",
+      "local_blob": "8f34759ef8defe3d668003db537235a1d624650f",
+      "github_blob": "8f34759ef8defe3d668003db537235a1d624650f",
+      "matches": true
+    },
+    {
+      "path": "tests/test_rwa_recursive.py",
+      "local_blob": "87b23249f37e09bab0ad78ca625cbe54596c60a2",
+      "github_blob": "87b23249f37e09bab0ad78ca625cbe54596c60a2",
+      "matches": true
+    },
+    {
+      "path": ".codex-engineering/runs/2026-09-13-recursive/live-verification.json",
+      "local_blob": "497301c9f6857d15462d8c926b8dc27bcb972b7b",
+      "github_blob": "497301c9f6857d15462d8c926b8dc27bcb972b7b",
+      "matches": true
+    },
+    {
+      "path": ".codex-engineering/runs/2026-09-13-recursive/readme.md",
+      "local_blob": "b136f9651fe646ac1936ae74802373119c285e50",
+      "github_blob": "b136f9651fe646ac1936ae74802373119c285e50",
+      "matches": true
+    },
+    {
+      "path": "AGENTS.md",
+      "local_blob": "e31528bc01d777243323d8d1d049ee6e2d396d70",
+      "github_blob": "e31528bc01d777243323d8d1d049ee6e2d396d70",
+      "matches": true
+    }
+  ]
+}
