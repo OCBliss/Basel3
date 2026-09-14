@@ -1,61 +1,48 @@
-# Regression checks
+# Tests
 
-Run from `Basel3_repo` with the [project requirements](../requirements.txt)
-installed in the active Python environment. Tests use `unittest`; SciPy is needed
-for the independent optimizer and existing RWA calibration checks.
+Install the [project requirements](../requirements.txt) in the active Python
+environment. The suite uses `unittest`; SciPy supplies independent optimizers
+for the calibration checks. Run commands from the repository root.
 
-Keep test temporary files and caches inside this repository:
+## Complete suite
+
+The following environment keeps test fixtures and caches in an ignored directory:
 
 ```bash
-mkdir -p .codex-engineering/runs/local-check/tmp
-mkdir -p .codex-engineering/runs/local-check/cache/matplotlib
-export TMPDIR="$PWD/.codex-engineering/runs/local-check/tmp"
-export XDG_CACHE_HOME="$PWD/.codex-engineering/runs/local-check/cache"
-export MPLCONFIGDIR="$XDG_CACHE_HOME/matplotlib"
+mkdir -p .cache/tests/tmp .cache/tests/matplotlib
+export TMPDIR="$PWD/.cache/tests/tmp"
+export XDG_CACHE_HOME="$PWD/.cache/tests"
+export MPLCONFIGDIR="$PWD/.cache/tests/matplotlib"
 export PYTHONDONTWRITEBYTECODE=1
 python3 -B -m unittest discover -s tests -v
 ```
 
-For a focused RWA check, use the same environment:
+Tests create isolated inputs and mock network responses where needed. They do not
+require private research records or previously generated analytical outputs.
+
+## Component coverage
+
+| Tests | Behavior checked |
+| --- | --- |
+| `test_ffiec_preparation.py` | Download planning, archive verification, safe extraction, cache reuse and recovery |
+| `test_call_report*.py`, `test_dynamic_ratios.py` | Ratio definitions, missing-value handling, form/date selection and historical bank alignment |
+| `test_material_events.py`, `test_peer_groups.py` | Event flags, CLI selection, cohort membership and calendar filtering |
+| `test_jsd_binning.py`, `test_jsd_calculation.py`, `test_analysis_pipeline.py` | Histogram boundaries, PMFs, distribution comparisons and downstream filtering |
+| `test_repository_portability.py` | Checkout names, local path boundaries and interpreter handling |
+| `test_pipeline_manager.py` | Configuration validation, parameters, dependencies and task execution |
+| `test_rwa_calibration.py` | Chronological calibration, curve repair and downstream file contracts |
+| `test_rwa_hierarchy.py` | Independent likelihood comparisons, ridge budgets, all maturity/parameter branches, dependence, noise controls and simulation |
+| `test_rwa_recursive.py` | Frozen-mode equivalence, causal path histories, recalibration, correlation and resource guards |
+| `test_rwa_elapsed_time.py` | Irregular historical intervals, time units, both estimation passes, recursion and verified-input integration |
+| `test_rwa_yield_data.py` | Response failures, freshness/gap rules, immutable outputs and raw-to-clean provenance |
+
+For example, run focused model tests with the same environment:
 
 ```bash
-python3 -B -m unittest discover -s tests -p test_rwa_calibration.py -v
-python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v
+python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
 
-The suite covers Call Report preparation and ratios, material events, peer
-groups, binning, PMFs, JSD, filtering, task-manager execution, chronological RWA
-calibration and the new parameter hierarchy. RWA checks include independent
-likelihood comparisons, causality, ridge budgets, all maturity/parameter branches,
-joint simulation, numerical boundaries and actual downstream file consumers on
-isolated fixtures. Test success does not establish the economic model's validity.
-
-The RWA checks also verify the component layout under `src/RWA`: the yield
-calibrator, curve repairs and parameter rebuild resolve the same repository data
-root, and the hierarchy works both as a Python module and as a script invoked
-from another directory. The manager test reads the real hierarchy YAML, checks
-its relocated script target and runs it against isolated inputs.
-
-The implementation published in `fc52dd5` passed **147 tests**. The [recorded
-log](../.codex-engineering/runs/2026-09-13-capability/verified-suite.log) and
-[research results](../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
-separate regression evidence from empirical model assessment. Document any later
-test count or result with its revision and command in the journal.
-
-The [component-organization checkpoint](../.codex-engineering/runs/2026-09-13-layout/readme.md)
-passed **149 tests** after relocation, including the two additional entry-point
-and shared-data-root checks. Its recorded log covers the full repository suite.
-
-
-The yield-acquisition milestone adds 37 tests for parser failures, gap/freshness
-rules, bounded HTTP behavior, immutable output, verified raw-to-clean provenance
-and the actual model CLI. The complete suite passed **186 tests**; the live manager
-also completed acquisition through simulation. See the
-[acquisition evidence](../.codex-engineering/runs/2026-09-13-yield-acquisition/readme.md).
-
-
-The recursive engine adds 12 independent tests and brings the full suite to
-**198 passing tests**. They check exact frozen-mode equivalence, each path's
-causal history, rolling-window replacement, all parameter branches, correlation
-inputs, resource guards and the actual CLI. See the
-[recursive evidence](../.codex-engineering/runs/2026-09-13-recursive/readme.md).
+The [RWA execution guide](../src/RWA/readme.md) maps these contracts to the model's
+processing stages and generated artifacts. Regression success establishes the
+checked computational behavior; scientific claims require separate empirical
+validation with appropriate controls and held-out data.

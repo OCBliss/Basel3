@@ -1,41 +1,31 @@
-# Schedules Subfolder
+# Call Report reference tables and generated CSVs
 
-## Description
-This folder contains the original call report schedules formatted by the FFIEC's Central Data Repository (CDR). The schedules have been processed to remove unnecessary rows and append essential identifiers for compatibility with other datasets.
+This directory contains the tracked [quarter mapping](quarter_flag.csv) and
+reference tables [quarter_map.csv](quarter_map.csv) and [quarters.csv](quarters.csv).
+The pipeline creates the analytical subdirectories listed below; their data is
+not included in a fresh clone.
 
-## Source
-- Raw TXT data files from the FFIEC CDR located in the repository:  
-  [Basel3/data/TXT](https://github.com/OCBliss/Basel3/tree/refactor/data/TXT)
-- FDIC Material Events data downloaded from BankFind Suite:  
-  [BankFind Suite](https://banks.data.fdic.gov/bankfind-suite/oscr)  
-  Also available in the repository:  
-  [Basel3/Material Events](https://github.com/OCBliss/Basel3/tree/refactor/Material%20Events)
+| Generated location | Producer and contents | Next consumer |
+| --- | --- | --- |
+| `Schedules/YYYYMMDD/` | TXT conversion adds FDIC certificates using POR and writes each schedule under its original filename stem | Schedule merge |
+| `Cleaned/` | Schedule merge joins selected fields to ENT by `IDRSSD`; numeric cleaning adjusts selected fields | Current and historical ratio calculations |
+| `Interleaved/` | Current-quarter ratio calculation | Dynamic ratios |
+| `Dynamic_Lag/Cleaned/` | Current ratios and proportional changes against earlier quarters, aligned by `CERT` | Material-event flagging |
 
-## Data Formatting
-1. **Headers:**
-   - The first row of each schedule (MDRM code descriptions) has been removed, leaving the MDRM codes as column headers.
-2. **Key Identifiers:**
-   - FDIC Certificate Numbers have been appended to all schedules using the IDRSSD as the key.
-   - This ensures compatibility with Material Events data for cross-referencing.
+For example, conversion of `FFIEC CDR Call Schedule RC 06302024.txt` produces
+`Schedules/20240630/FFIEC CDR Call Schedule RC 06302024.csv`. Subsequent merged
+files use `Cleaned_Call_Report_20240630.csv`; the dynamic output uses
+`Dynamic_Cleaned_Call_Report_20240630.csv`.
 
-## File Structure
-- Files are organized by financial quarter and named in the format:  
-  `YYYYMMDD_schedule.csv`  
-  (e.g., `20240630_schedule.csv` for the second quarter of 2024).
+Run from the repository root after installing the requirements:
 
-## Relationship to Other Subfolders
-1. **Cleaned Folder:**  
-   - Contains merged versions of the original call report schedules.  
-   - Uses Schedule ENT as the primary key for combining data.
-2. **Interleaved Folder:**  
-   - Contains vertical analyses performed on the cleaned data.  
-   - These files are structured to facilitate temporal and peer group comparisons.
+```bash
+python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
+python3 pipeline/Task_manager_Global_yaml_driven.py
+```
 
-## Usage
-- **Schedules Folder:** Provides a detailed, unaltered view of call report schedules with minimal formatting changes.  
-- **Cleaned Folder:** Use for consolidated, horizontally merged datasets.  
-- **Interleaved Folder:** Use for vertical analyses and temporal trend studies.
-
-## Notes
-- Scripts for appending FDIC Certificate Numbers and processing MDRM codes are available in the `Scripts` folder.
-- See the [data guide](../readme.md) for the downloaded files, reference tables and generated outputs.
+The first command previews the plan. The second downloads required source
+reports and executes processing. See the [data guide](../readme.md) for archive
+and output locations, [Call Report programs](../../src/call%20reports/readme.md)
+for processing details and [ratio definitions](../../src/ratios/variables/readme.md)
+for calculated fields. Generated files can be replaced on rerun.

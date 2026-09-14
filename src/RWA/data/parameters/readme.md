@@ -11,7 +11,7 @@ Install the [repository requirements](../../../../requirements.txt). Complete
 [yield calibration](../../calibration/yields/readme.md),
 [CURVE assembly](../../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md), and
 [mu/theta repair](../../calibration/curves/readme.md) first. Review the repair audit fields
-before carrying their values downstream. Run from `Basel3_repo`:
+before carrying their values downstream. Run from the repository root:
 
 ```bash
 python3 src/RWA/data/parameters/rebuild.py
@@ -71,7 +71,12 @@ the historical sigma-only experiment from the active
 [endogenous parameter hierarchy](../../models/parameter_hierarchy/readme.md). The active
 hierarchy reads FRED inputs directly, calibrates mu/theta/sigma histories, and
 also exports compatible first-stage RAW and CURVE tables; it does not require
-this legacy reconstruction command as a preceding pipeline task.
+this legacy reconstruction command as a preceding pipeline task. Its optional
+ACT/365F/observed mode exports irregular genuine common dates with the same
+RAW/CURVE columns. Date joins remain compatible, but this six-column reconstruction
+does not carry timing settings or the model's interval audit. Preserve the
+original hierarchy manifest and `transition_intervals.csv` and pass the same time
+convention to any subsequent parameter fit; filenames alone do not encode it.
 
 ## Verification
 

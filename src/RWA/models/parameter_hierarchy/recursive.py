@@ -10,10 +10,12 @@ import numpy as np
 
 if __package__:
     from .core import (integer, positive_number, stabilize_panel,
-                       innovation_correlation, step_hierarchy)
+                       innovation_correlation, step_hierarchy,
+                       transition_steps, joint_standardized_residuals)
 else:
     from core import (integer, positive_number, stabilize_panel,
-                      innovation_correlation, step_hierarchy)
+                      innovation_correlation, step_hierarchy,
+                      transition_steps, joint_standardized_residuals)
 
 
 PARAMETERS = ("mu", "theta", "sigma")
@@ -55,20 +57,7 @@ def _refit(history, coefficients, maturities, dt, nll_budget, fallback_theta,
                                  + str(maturities[tenor]))
             updated[component, :, tenor] = fit.theta, fit.mu, fit.sigma
         audits.extend(audit)
-    earlier = history[:-1]
-    drift = np.empty_like(earlier)
-    diffusion = np.empty_like(earlier)
-    # Match forecast_inputs: historical left-point parameter states drive X;
-    # the current fitted second-level coefficients standardize parameter shocks.
-    drift[:, 0] = earlier[:, 2] * (earlier[:, 1] - earlier[:, 0])
-    diffusion[:, 0] = earlier[:, 3] * np.sqrt(earlier[:, 0])
-    drift[:, 1:] = updated[:, 0] * (updated[:, 1] - earlier[:, 1:])
-    diffusion[:, 1:] = updated[:, 2] * np.sqrt(earlier[:, 1:])
-    innovations = np.diff(history, axis=0) - drift * dt
-    if np.any((diffusion == 0) & (np.abs(innovations) > 1e-10)):
-        raise ValueError("nonzero innovations under a zero diffusion coefficient")
-    residuals = np.divide(innovations, diffusion * np.sqrt(dt),
-                          out=np.zeros_like(innovations), where=diffusion > 0)
+    residuals = joint_standardized_residuals(history, updated, dt)
     correlation, factor, dependence = innovation_correlation(
         residuals.reshape(len(residuals), -1), shrinkage)
     sources = {}
@@ -87,13 +76,18 @@ def _refit(history, coefficients, maturities, dt, nll_budget, fallback_theta,
 def simulate_recursive(history, coefficients, factor, maturities, paths=256,
                        steps=20, dt=1 / 252, seed=1234, substeps=4,
                        recalibrate_every=1, nll_budget=2., fallback_theta=.25,
-                       shrinkage=.05):
+                       shrinkage=.05, history_dt=None):
     """Return states, projection counts and JSON-compatible pathwise fit evidence.
 
     ``history`` has shape (window, 4, maturities), ordered oldest to origin with
     at least five rows. Coefficients have shape (3, 3, maturities), with parameter
     branches mu/theta/sigma and coefficient order theta/mu/sigma. ``factor`` is
     the origin's joint factor in flattened state-major order.
+
+    ``history_dt`` supplies a scalar or one year interval per historical
+    transition; omission uses ``dt`` for compatibility. Future reported steps
+    remain exactly ``dt`` years. Historical intervals leave the window with
+    their state transitions, and each appended forecast state adds one ``dt``.
 
     Supplied origin coefficients/factor drive the first reported step. Append
     only reported states to each path's fixed-size buffer. At positive multiples
@@ -128,6 +122,8 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
             or not np.isfinite(h).all() or (h < 0).any()):
         raise ValueError("history needs at least five finite nonnegative (4,maturity) rows")
     window, _, dimensions = h.shape
+    rolling_intervals = transition_steps(dt if history_dt is None else history_dt,
+                                        window - 1)
     if (tenors.ndim != 1 or len(tenors) != dimensions or not np.isfinite(tenors).all()
             or (tenors <= 0).any() or len(np.unique(tenors)) != dimensions):
         raise ValueError("maturities must be distinct positive numbers matching history")
@@ -141,6 +137,7 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
     # Include returned states, rolling buffers, path coefficients/factors, state
     # and shock arrays, plus one ordered-window scratch space used by all paths.
     elements = paths * (steps + 3) * 4 * dimensions + 2 * (4 * dimensions) ** 2
+    elements += window - 1  # one shared chronological transition clock
     if origin_count:
         elements += (paths * window * 4 * dimensions + paths * 9 * dimensions
                      + paths * (4 * dimensions) ** 2 + window * 4 * dimensions)
@@ -170,6 +167,10 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
         "recalibrated_origins": origins, "recalibration_count": 0,
         "work_units": int(work_units), "scalar_fits": int(scalar_fits),
         "path_substeps": int(path_substeps),
+        "forecast_step_years": float(dt),
+        "initial_history_elapsed_years": float(rolling_intervals.sum()),
+        "initial_history_min_transition_years": float(rolling_intervals.min()),
+        "initial_history_max_transition_years": float(rolling_intervals.max()),
         "max_nll_cost": 0., "max_coefficient_change_from_origin": 0.,
         "max_correlation_change_from_origin": 0., "projection_count": 0,
         "updates": []}
@@ -191,7 +192,7 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
                 ordered[tail:] = buffers[path, :cursor]
                 try:
                     updated, correlation, new_factor, report = _refit(
-                        ordered, path_coefficients[path], tenors, dt,
+                        ordered, path_coefficients[path], tenors, rolling_intervals,
                         nll_budget, fallback_theta, shrinkage)
                     if np.max(updated[:, 0]) * delta > 1:
                         raise ValueError("refitted parameter mean reversion exceeds the step scale; increase substeps")
@@ -203,6 +204,11 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
                     path=int(path), origin_step=int(step),
                     observed_history_rows=int(max(0, window - step)),
                     simulated_history_rows=int(min(window, step)),
+                    observed_history_transitions=int(max(0, window - step - 1)),
+                    simulated_history_transitions=int(min(window - 1, step)),
+                    history_elapsed_years=float(rolling_intervals.sum()),
+                    history_min_transition_years=float(rolling_intervals.min()),
+                    history_max_transition_years=float(rolling_intervals.max()),
                     coefficient_max_change=float(change.max()),
                     correlation_max_change=float(np.max(np.abs(correlation - previous_correlation))),
                     coefficient_max_change_from_origin=float(np.max(np.abs(updated - c))),
@@ -256,5 +262,10 @@ def simulate_recursive(history, coefficients, factor, maturities, paths=256,
         if origins:
             buffers[:, cursor] = state
             cursor = (cursor + 1) % window
+            # The clock is common to all paths, even though their states and
+            # learned coefficients differ. Keep it chronological independently
+            # of the circular state buffer so refits cannot misalign intervals.
+            rolling_intervals[:-1] = rolling_intervals[1:]
+            rolling_intervals[-1] = dt
     diagnostics["projection_count"] = int(projections.sum())
     return result, projections, diagnostics

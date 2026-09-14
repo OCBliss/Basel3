@@ -1,6 +1,6 @@
 # Result filtering and cohort aggregation
 
-Install the root requirements and run commands from `Basel3_repo` after their
+Install the root requirements and run commands from the repository root after their
 upstream outputs exist. These scripts serve different downstream steps.
 
 The [intragroup filter](intragroup/readme.md) is the final configured pipeline

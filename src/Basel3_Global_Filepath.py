@@ -2,26 +2,13 @@
 
 import sys
 
-# ---- HARD GATE (must be first, no modern features before this) ----
-if sys.version_info < (3, 6):
-    try:
-        import shutil
-        import subprocess
+# The project dependencies require Python 3.8 or newer. Do not relaunch an
+# unknown python3 executable, which may be this same unsupported interpreter.
+if sys.version_info < (3, 8):
+    raise SystemExit("Python 3.8 or newer is required.")
 
-        py3 = shutil.which("python3")
-        if py3:
-            print("🔄 Re-launching with Python 3...\n")
-            subprocess.run([py3] + sys.argv)
-        else:
-            print("❌ Python 3 not found.")
-            print("👉 Install via: brew install python\n")
-    except Exception:
-        print("❌ Python 3.6+ required. Please install Python 3.")
-    sys.exit(1)
-
-# ---- SAFE ZONE: Python 3+ only below this line ----
-
-sys.stdout.reconfigure(line_buffering=True)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(line_buffering=True)
 
 import os
 

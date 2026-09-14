@@ -35,5 +35,3 @@ Run from the repository root:
 ```sh
 python3 pipeline/Task_manager_Global_yaml_driven.py
 ```
-
-The December 2024 event snapshots formerly stored in the event subfolders are historical exports, not required startup files. They include fields and records outside the current download selection, so they should not be treated as reproducible copies. They remain available in [the previous repository tree](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1/Material%20Events) and in existing local copies.

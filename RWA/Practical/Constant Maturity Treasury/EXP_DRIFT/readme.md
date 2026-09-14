@@ -7,10 +7,18 @@ drift, simulated rate path or duration-adjusted RWA calculation.
 
 ## Execution status
 
-The entry point searches the entire filesystem for `Basel3_Global_Filepath.py`
-and uses its `ROOT_DIR`. It is retained for research history; it is not an active
-repository-root command with verified path isolation. Current interest-rate
-calibration and simulation commands are in [the source guide](../../../../src/RWA/readme.md).
+The entry point resolves `src/Basel3_Global_Filepath.py` from its enclosing
+repository and uses the helper's `BASEL3_ROOT`. To reproduce the historical
+summary, run from the repository root with [requirements](../../../../requirements.txt)
+installed and a differenced input available:
+
+```bash
+python3 "RWA/Practical/Constant Maturity Treasury/EXP_DRIFT/Constant_Maturity_Treasury_exp_drift_v3.py"
+```
+
+This replaces the fixed summary output. It is not integrated into the active
+interest-rate pipeline. Current calibration and simulation commands are in
+[the source guide](../../../../src/RWA/readme.md).
 
 ## Inputs, selection and output
 
@@ -40,5 +48,6 @@ included in the mean, so this result is conditional on that selection.
 Using these summaries for stress scenarios, portfolio repricing or capital
 assessment is a proposed extension requiring a validated chronological contract
 and a valuation implementation. None is performed by this averaging script.
-Historical CSVs were not regenerated during the current documentation changes.
+For a historical CSV, confirm its input file, date ordering and retained-change
+selection before interpreting the reported mean.
 See [the valuation proposal](../readme.md) and [Expected Loss status](../../Expected%20Loss/readme.md).

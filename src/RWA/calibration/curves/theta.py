@@ -74,11 +74,11 @@ THETA_COLUMNS = {
     "theta30y": 30.0,
 }
 
-# Any mu value whose absolute magnitude exceeds this threshold
-# is treated as an exploded CIR estimate.
+# Finite theta values with absolute magnitude below this threshold are
+# candidates for reconstruction from the other maturity nodes.
 EXPLOSION_ABS_THRESHOLD = 0.01
 
-# Use all logical CPU cores by default. Set to a smaller integer if desired.
+# Use up to 28 logical CPU cores. Reduce this limit to reserve capacity.
 MAX_WORKERS = min(28, max(1, (os.cpu_count() or 1)))
 
 
@@ -188,11 +188,11 @@ def identify_anomalies(
     values: np.ndarray,
 ) -> np.ndarray:
     """
-    Return a Boolean mask identifying invalid or exploded values.
+    Return a Boolean mask for finite theta values below the repair threshold.
     """
     values = np.asarray(values, dtype=float)
 
-    # Repair only finite values that actually exceed the explosion threshold.
+    # Repair only finite values below the mean-reversion threshold.
     # Historical NaNs represent unavailable maturities and are not themselves
     # reconstruction targets. They are simply excluded from the curve fit.
     return (
@@ -573,7 +573,7 @@ def repair_mu_row(
 
         output[f"{column}_repaired"] = False
 
-    # No explosion on this observation date.
+    # No selected weak-mean-reversion node on this observation date.
     if not anomaly_mask.any():
         return output
 
@@ -702,7 +702,7 @@ def repair_mu_file(
 
     columns = list(THETA_COLUMNS)
     mu_values = dataframe[columns].to_numpy(dtype=float)
-    # Submit only rows containing finite exploded values. Missing historical
+    # Submit only rows containing finite below-threshold values. Missing historical
     # maturities are excluded from fitting but are not treated as repair targets.
     anomaly_matrix = (
         np.isfinite(mu_values)
@@ -805,13 +805,11 @@ def main() -> None:
         for column in THETA_COLUMNS
     )
 
-    # print(f"Input:  {INPUT_FILE.resolve()}")
-    # print(f"Output: {OUTPUT_FILE.resolve()}")
     print(f"Observation dates: {len(repaired):,}")
     print(f"Dates containing anomalies: {len(anomaly_rows):,}")
     print(f"Successfully repaired dates: {len(successful_rows):,}")
     print(f"Failed repair dates: {len(failed_rows):,}")
-    print(f"Individual mu nodes repaired: {total_repaired_nodes:,}")
+    print(f"Individual theta nodes repaired: {total_repaired_nodes:,}")
 
     if len(anomaly_rows) > 0:
         print("\nModels used:")

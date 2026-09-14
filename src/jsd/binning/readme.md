@@ -1,6 +1,6 @@
 # JSD binning
 
-`Material_events_JSD_binning_basel3.py` replaces the four binning scripts. It reads the selected peer-group horizon files and produces a separate histogram for each group, horizon, and selected central bin count.
+`Material_events_JSD_binning_basel3.py` reads the selected peer-group horizon files and produces a separate histogram for each group, horizon, and selected central bin count.
 
 Run from the repository root:
 
@@ -39,8 +39,8 @@ The three areas remain the central range from −1 to 1, the range from 1 to 2, 
 | 50 | 56 |
 | 100 | 106 |
 
-The original scripts repeated the edge at 2, producing an extra `[2.00, 2.00)` row. Complete runs of all four original scripts confirmed that row was zero in every column of all 48 outputs. The consolidated script removes this duplicate edge only.
-
-Existing `numpy.histogram` endpoint placement is retained: exactly 1 enters the first interval starting at 1; exactly 2 enters the final interval starting at 2. The final label is now `[2.00, inf)` so it describes the retained placement instead of the original `> 2.00` label. Assigning exactly 2 to the preceding interval would be a separate change to counts and is not included here.
-
-Across the complete local verification inputs, every count remained identical after deleting the empty row and updating the final label. Histogram mass, ratio-column order, group separation, and output filenames are unchanged. The following PMF stage retains the same bin labels and normalizes each ratio column independently.
+Exactly 1 enters the first interval starting at 1; exactly 2 enters the final
+interval, labeled `[2.00, inf)`. There is no empty interval at 2. Values below
+−1 fall outside the histogram range. The following PMF stage retains these bin
+labels and normalizes each ratio column independently. See the [regression
+checks](../../../tests/readme.md) for endpoint and histogram-mass coverage.

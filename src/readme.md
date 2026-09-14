@@ -6,9 +6,6 @@ Component guides: [Call Reports](call%20reports/readme.md),
 [ratios](ratios/readme.md), [material events](material%20events/readme.md),
 [peer groups](peer%20groups/readme.md), [JSD](jsd/readme.md),
 [measures](measures/readme.md), and [RWA](RWA/readme.md).
-Ongoing changes are published on `main`; see the
-[Git workflow](../.codex-engineering/GIT_WORKFLOW.md) and
-[engineering record](../.codex-engineering/readme.md).
 
 ## Run the pipeline
 
@@ -68,7 +65,7 @@ Preparation does not change the analysis calendars. In particular, `Material Eve
 
 ### Running preparation in Sublime Text
 
-Open `prepare_call_reports.py` and build it with a Python 3 interpreter that has the project requirements installed. The script needs no arguments for the default configuration and resolves its default paths from its own location, so the working directory does not need to be the repository root. The live download was tested through Sublime Text and from Terminal with Python 3.8.10. Use a build command with `--plan` if you want a preview instead of a download.
+Open `prepare_call_reports.py` and build it with a Python 3 interpreter that has the project requirements installed. The script needs no arguments for the default configuration and resolves its default paths from its own location, so the working directory does not need to be the repository root. Use a build command with `--plan` if you want a preview instead of a download.
 
 ## Processing order
 

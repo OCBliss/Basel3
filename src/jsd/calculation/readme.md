@@ -30,7 +30,7 @@ PMF filenames end with `_binned_<width>.csv`. A width is compared only when a ma
 
 ## Calculation
 
-The calculation preserves the original horizon scripts:
+The calculation proceeds as follows:
 
 1. Align each pair of PMFs by `Bin`, filling bins missing from either group with zero.
 2. Compare the columns shared by that pair, retaining their order from the first group.

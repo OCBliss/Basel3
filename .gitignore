@@ -25,7 +25,13 @@ Material Events/*/RAW/
 data/FFIEC/
 data/FFIEC_backups/
 data/.ffiec-*/
-# Ad hoc hierarchy scenarios stay local; selected research evidence is retained
-# explicitly under .codex-engineering/runs/.
-/RWA/Experimental/HIERARCHY/
-/RWA/FRED/snapshots/
+# Generated model scenarios and downloaded snapshots remain local.
+/RWA/Experimental/HIERARCHY/*
+!/RWA/Experimental/HIERARCHY/readme.md
+/RWA/FRED/snapshots/*
+!/RWA/FRED/snapshots/readme.md
+
+# Local development instructions, private journals and scratch files.
+/AGENTS.md
+/.codex-engineering/
+/.cache/

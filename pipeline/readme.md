@@ -1,10 +1,20 @@
-# Basel III Pipeline for Central Bank Paper
+# Workflow configuration and execution
 
-This project automates the processing of call reports and material events into regulatory metrics compliant with Basel III standards, as outlined by the Bank for International Settlements (BIS). It is designed for bank research and dynamically executes workflows based on `pipeline_config_dynamic.yaml`.
+[Task_manager_Global_yaml_driven.py](Task_manager_Global_yaml_driven.py) executes
+Python tasks from a YAML configuration. The repository provides separate plans
+for Call Report/JSD analysis and interest-rate calibration and simulation.
+These are research workflows; running them does not certify regulatory compliance
+or produce a completed duration-adjusted RWA calculation.
 
-Use `Task_manager_Global_yaml_driven.py` to run the workflow.
- 
-**Purpose:** yaml-driven task manager for executing the JSD analysis on call reports and RWA analysis on CMT data from FRED.
+| Workflow | Configuration | Scope |
+| --- | --- | --- |
+| Call Report and JSD analysis | [Default configuration](pipeline_config_dynamic.yaml) | Acquire and prepare reports/events, build ratios and cohorts, and calculate distribution comparisons. |
+| Existing-input interest-rate model | [RWA hierarchy](rwa_hierarchy/readme.md) | Calibrate and forecast from supplied Treasury yield histories. |
+| Retrieval through interest-rate model | [Live RWA](rwa_live/readme.md) | Acquire a verified Treasury snapshot, then calibrate and forecast from it. |
+
+All commands below run from the repository root after installing
+[requirements](../requirements.txt). Configure input selections and output locations
+before a real run; use a dry run to inspect the resolved execution plan.
 
 ## Run the Configured Pipeline
 
@@ -26,7 +36,7 @@ For environment setup and the complete guide index, see the [root README](../REA
 ## Run the separate RWA hierarchy
 
 The endogenous parameter hierarchy has its own configuration. Preview or execute
-it from `Basel3_repo`:
+it from the repository root:
 
 ```bash
 python3 pipeline/Task_manager_Global_yaml_driven.py \
@@ -39,7 +49,7 @@ Before each execution, set a new `parameters.output_dir` in that YAML. The defau
 is `RWA/Experimental/HIERARCHY/run`; an existing output directory is an error.
 The configuration fits all eight FRED tenors, uses 2,520-observation yield windows
 and 252-observation parameter windows, retains 3,024 observations, and simulates
-256 paths over 20 reported steps with four internal increments each. Its optional
+256 paths over 20 reported steps with four internal increments each. Its forecast mode defaults to recursive pathwise recalibration. Its optional
 estimation-noise benchmark defaults to disabled; `noise_replicates: 16` enables a
 small diagnostic at additional cost. Do not pre-create the output directory.
 

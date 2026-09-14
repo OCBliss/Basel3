@@ -1,11 +1,17 @@
 # Interest-rate parameter hierarchy
 
-This workflow extends the existing sigma-only second pass in
-`RWA/Experimental/RWA_Heston_MLE_vol_test.py` to **mu, theta and sigma at every
-maturity**, then evolves those three states jointly with the yield. It is an
-executable stage toward `PDF/Recursive IRR Model.pdf`, incorporating the author's
-clarification that higher-order dynamics come from applying the same estimation
-operation to the first-pass parameter histories.
+This workflow calibrates yield dynamics and **mu, theta and sigma processes at
+every maturity**, then evolves those three parameter states jointly with yields.
+It implements a finite hierarchy for the
+[Recursive IRR Model](../../../../PDF/Recursive%20IRR%20Model.pdf): higher-order
+coefficients come from applying the same estimation operation to first-pass
+parameter histories. Optional elapsed-time calibration uses genuine common-date
+observations and their actual calendar intervals.
+
+The [RWA workflow overview](../../readme.md#execution-order) gives the complete
+acquisition-to-output sequence. This component performs both calibration passes,
+coupled stabilization, dependence estimation and forecasting. The standalone
+[NS/NSS repair](../../calibration/curves/readme.md) is a separate legacy experiment.
 
 It also measures a central identification problem: repeated estimation can
 produce apparent parameter volatility even when the generating parameters are
@@ -16,9 +22,8 @@ establish a new economic risk factor.
 
 `workflow.py` handles the command-line interface, both calibration passes, aligned
 exports, scenario generation and the completion manifest. It imports `recursive.py`
-for pathwise rolling recalibration and `core.py` for numerical primitives,
-which implements the estimator, coupled stabilization, dependence calculations and
-simulation step. They share one numerical and file contract within this package.
+for pathwise rolling recalibration and `core.py` for the estimator, coupled
+stabilization, dependence calculations and simulation step. They share one numerical and file contract within this package.
 The companion [reconstruction component](../../data/parameters/readme.md) consumes
 compatible RAW/CURVE exports when explicitly directed to the same run.
 
@@ -27,8 +32,8 @@ and duration-adjusted RWA are future milestones, not current output labels.
 
 ## Run
 
-Python 3.8+, NumPy and pandas are required; the existing environment is supported.
-From `Basel3_repo`, either entry form can display the CLI:
+Install the [repository requirements](../../../../requirements.txt) in an active
+Python environment. From the repository root, either entry form displays the CLI:
 
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py --help
@@ -63,14 +68,74 @@ python3 pipeline/Task_manager_Global_yaml_driven.py \
 Change that configuration's `output_dir` before a subsequent run. Its default
 noise benchmark is disabled (`noise_replicates: 0`); use at least two replicates
 to enable it. More replicates improve resolution but do not cure model error.
-The default 20-task Call Report/JSD workflow is unchanged.
+The [Call Report/JSD pipeline](../../../../pipeline/readme.md) has a separate
+configuration and execution plan.
 
-`--as-of YYYY-MM-DD` restricts observed information to that date. `--recent-rows 0`
+`--as-of YYYY-MM-DD` restricts observation dates to that cutoff. `--recent-rows 0`
 uses all aligned history. Truncating history explicitly restarts the sequence of
 previous-date regularization anchors, so changing that setting can change fits.
 Within a fixed start date/settings, adding later observations does not revise
 earlier fitted rows. The first full second-pass date is at observation
 `yield_window + parameter_window - 1`, using one-based observation numbering.
+
+## Historical time and missing quotes
+
+Defaults remain `--time-basis observation --missing-policy forward-fill` for
+reproducibility: causally fill each original DGS series before the common-date
+join and assign every retained transition the scalar `--dt` (default `1/252`).
+Use this explicit alternative to fit genuine observations on an elapsed-time clock:
+
+```bash
+python3 src/RWA/models/parameter_hierarchy/workflow.py \
+  --input RWA/FRED/snapshots/my-run/series \
+  --input-manifest RWA/FRED/snapshots/my-run/snapshot.json \
+  --output RWA/Experimental/HIERARCHY/my-elapsed-run \
+  --time-basis act365f --missing-policy observed \
+  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
+  --forecast-mode recursive --paths 32 --steps 10 --substeps 8
+```
+
+`--missing-policy observed` uses the original `DGS<n>` quote column, removes
+missing quotes separately by tenor, then keeps dates genuinely observed for
+**every** selected maturity. It does not use the snapshot's `yield_clean` fills.
+Only blank cells and `.` represent missing quotes; malformed or nonfinite numeric
+tokens fail instead of becoming silently imputable observations.
+The preserved snapshot still contains its full raw/prepared histories and original
+imputation audit. Common-date filtering can discard genuine observations of other
+tenors when one tenor is missing; it is a complete-case model, not asynchronous
+observation inference. Missingness related to market conditions can bias it.
+
+`--time-basis act365f` assigns historical transition `i` the year fraction
+`h_i = (date[i+1] - date[i]).total_seconds() / (365 * 86400)`. The denominator
+remains 365 across leap years. ACT/365F requires unique, increasing, timezone-naive
+calendar dates without intraday times. Both yield and parameter calibration passes,
+standardized dependence residuals and the constant-parameter noise benchmark
+use the matching intervals. These switches are independent: observed-only with
+an observation clock is a useful simpler comparison, and filling can still be
+selected explicitly with ACT/365F. Neither choice establishes the best economic
+clock for this market.
+
+`yield_window`, `parameter_window` and `recent_rows` count retained observations;
+they do not specify fixed calendar-year spans. `--as-of` is applied before filling
+or missing-quote selection, and histories must have enough common dates for both
+passes. The manifest records the selected settings, source exclusions and
+`time_convention` interval evidence;
+`transition_intervals.csv` retains the exact historical transition dates and
+year fractions. Source entries report `missing_quotes`, `filled_quotes`,
+`excluded_missing_quotes`, `rows_before_alignment`, `rows_after_alignment` and
+`excluded_alignment_rows`. Inspect these alongside parameter-identification
+diagnostics.
+
+`--dt` remains the **future** reported-step duration in years in both modes.
+Forecasts advance at that regular elapsed interval and do not generate a holiday
+or business-day forecast calendar. For a one-calendar-day grid pass
+`--dt 0.0027397260273972603` (1/365); leaving `--dt` at 1/252 does not mean the ACT/365F
+forecast uses consecutive calendar days. Substeps divide each future increment
+for numerical integration, without adding calibration observations.
+
+The [elapsed-time tests](../../../../tests/test_rwa_elapsed_time.py) verify
+interval-weighted likelihoods, calendar durations, downstream timing contracts
+and recursive interval-buffer alignment.
 
 ## Model and finite hierarchy
 
@@ -108,20 +173,29 @@ The existing separate NS/NSS repair scripts are preserved. This workflow offers
 a likelihood-constrained alternative to independent parameter interpolation.
 
 Write the drift as `a - b*x`, with `b=theta` and `a=theta*mu`. For chronological
-observations define `y=diff(x)/dt`. Conditional Euler variance is `sigma**2*x*dt`.
-Minimizing the Gaussian negative log likelihood over a and b therefore reduces
-to weighted least squares with weights `1/x`. The solver includes the admissible
-boundary solutions and profiles
+observations with year-fraction intervals `h_i`, define `y_i=diff(x)_i/h_i`.
+Conditional Euler variance is `sigma**2*x_i*h_i`. Minimizing the Gaussian
+negative log likelihood over a and b therefore reduces to weighted least squares
+with weights `h_i/x_i`. The solver includes the admissible boundary solutions and
+profiles
 
 ```
-sigma**2 = dt * mean((y - a + b*x)**2 / x).
+sigma**2 = mean(h_i * (y_i - a + b*x_i)**2 / x_i).
 ```
+
+For constant intervals, the common h factor cancels from the regression and this
+reduces to the original `1/x` weighted fit. Standardized innovations divide
+`diff(x)_i - (a-b*x_i)*h_i` by `sigma*sqrt(x_i*h_i)`, including for dependence
+estimation. The Euler approximation still becomes less accurate for larger gaps;
+using their actual duration does not turn it into the exact CIR likelihood.
 
 At a fixed b, the unconstrained a is the weighted mean of `y+b*x`; enforce the
 positive mean boundary and recompute sigma. This lets a candidate speed change
 mu and sigma together while measuring its actual cost against observed rate
 transitions. Input normalization preserves the unit transformation: dividing X
-by 100 divides mu by 100 and sigma by 10, leaving theta unchanged.
+by 100 divides mu by 100 and sigma by 10, leaving theta unchanged. Theta has units inverse years; mu has its state's
+units and sigma has square-root state units per square-root year. The same
+rule applies when the state is an estimated mu, theta or sigma history.
 
 A raw fit is labelled weak when theta is below 1e-4 or no larger than its local
 weighted-regression standard error. This is an engineering diagnostic, **not a
@@ -133,7 +207,8 @@ deterministic/unidentified and have zero fitted diffusion.
 For weak fits:
 
 1. Healthy same-date maturity nodes supply a target speed through linear
-   interpolation of log(theta) against log(maturity), with endpoint extrapolation.
+   interpolation of log(theta) against log(maturity), holding the nearest
+   anchor's speed outside the covered maturity range.
 2. If there are no healthy nodes, use the previous date's stabilized speeds.
 3. At initialization without either source, use the explicit `--fallback-theta`
    setting (default 0.25 per year).
@@ -193,7 +268,8 @@ That paper is not a convergence proof for this projected hierarchy.
 
 `--noise-replicates N` fixes the fitted first-stage parameters, generates N yield
 panels with their estimated cross-tenor dependence, and reruns **both complete
-rolling passes and regularization** on each panel. The second-pass diffusion
+rolling passes and regularization** on each panel. It preserves the selected
+historical interval sequence in generation, both refits and residual scaling. The second-pass diffusion
 estimates form a conditional reference distribution. The report includes the
 observed coefficient, null median, null 95th percentile, exceedance fraction,
 failed replicates and their reasons. Any failed replicate makes `comparable`
@@ -220,21 +296,30 @@ This workflow does not implement that paper's estimator or inherit its results.
 | `parameter_dynamics.csv` | Long date/maturity/parameter table; theta/mu/sigma describe the named parameter process, with the same diagnostics |
 | `RAW/DGS*_with_parameters.csv` | Existing first-stage column contract and one-based row labels, chronological order, unavailable warmup retained as missing |
 | `CURVE/{mu,theta,sigma}_curve.csv` | Existing date-keyed maturity-column contract, generated from the stabilized fits |
-| `scenarios.npz` | States with axes (path, reported step including origin, state, maturity); state/tenor labels, correlation and projection counts |
-| `scenario_summary.csv` | Mean and 5/50/95 percentiles by reported step, state and maturity |
-| `manifest.json` | Settings, input hashes, units, date range, audit totals, dependence diagnostics, optional noise benchmark and limitations |
+| `transition_intervals.csv` | Exact historical start/end dates and `dt_years` for each retained yield transition |
+| `scenarios.npz` | States with axes (path, reported step including origin, state, maturity); state/tenor labels, origin correlation, projection counts and `elapsed_years` |
+| `scenario_summary.csv` | Mean and 5/50/95 percentiles by reported step, elapsed years, state and maturity |
+| `manifest.json` | Settings, input hashes, units, date range, audit totals, `time_convention`, dependence diagnostics, optional noise benchmark and limitations |
 
 The Python `calibrate_parameters(first_stage, window, ...)` interface also accepts
 a long first-stage table assembled from existing repaired parameter files. It
 requires date, maturity, mu, theta and sigma columns and refuses missing internal
 states or duplicated keys; it does not certify that supplied estimates were
-properly repaired. The CLI regenerates the necessary first-stage history from
-FRED because archived repository estimates predate the chronology correction.
+properly repaired. The CLI constructs first-stage histories directly from the
+selected yield inputs and settings, then passes them to parameter calibration.
 
-FRED percentages are retained. Quote dates are inner-joined across maturities;
-each series is forward-filled only from earlier quotes before the join. Filled
-quotes are counted. The fixed dt convention treats successive retained rows as
-equally spaced and does not implement irregular-calendar transition durations.
+FRED percentage points are retained. The source quote/missingness audit and
+selected loading policy determine which dates enter each run. RAW exports contain
+the values actually used by the model in both `DGS<n>` and `yield_clean`; in filled
+mode the former is therefore not an untouched raw quote column. Keep the original
+snapshot as raw evidence. In observed mode both columns contain genuine common-date
+quotes. RAW/CURVE dates remain the join keys; elapsed-time mode changes their
+spacing and fitted values without adding a timing column to those legacy tables.
+Consumers must retain the run manifest and date-derived interval convention.
+`time_convention` reports the basis, historical interval count, minimum, maximum
+and total historical year fractions, and future step duration. The additive
+`elapsed_years` forecast fields use `step * dt` and include zero at the origin;
+existing state-array axes and summary columns remain available.
 
 
 ## Recursive forecast operation
@@ -253,7 +338,11 @@ python3 src/RWA/models/parameter_hierarchy/workflow.py \
 
 The first reported step uses the calibrated origin coefficients and factor.
 Each path then appends its own simulated `[X, mu, theta, sigma]` state and removes
-its oldest history row. At the selected cadence, before drawing the next shock:
+its oldest history row. With ACT/365F, the interval buffer starts with the
+historical calendar durations; each appended state adds the scalar future `dt`
+and removes the expired interval. Every refit and innovation calculation uses
+that matching mixed historical/simulated sequence, including after complete
+buffer turnover. At the selected cadence, before drawing the next shock:
 
 1. Fit the mu, theta and sigma histories across all maturities using the existing
    conditional likelihood and coupled ridge stabilization. Prior anchors belong
@@ -291,16 +380,18 @@ Mixed zero/positive histories requiring a boundary-aware fit, unusable fits or
 excessive mean reversion abort the run with path/step context. Failed paths are
 never silently dropped or replaced. Choose a new output destination for a retry.
 
-[Recorded comparisons](../../../../.codex-engineering/runs/2026-09-13-recursive/readme.md)
-compare frozen and recursive modes using shared random draws, cadence alternatives,
-JSD sensitivity, held-out outcomes and runtime. Tests independently verify update
-timing, full-window rollover, path isolation, residual formulas and frozen equivalence.
+For empirical comparisons, hold the input window and random seed fixed while
+varying forecast mode or recalibration cadence. Compare terminal distributions,
+including shared-bin JSD sensitivity, alongside held-out outcomes, Monte Carlo
+uncertainty and runtime. The [recursive tests](../../../../tests/test_rwa_recursive.py)
+independently verify update timing, full-window rollover, path isolation, residual
+formulas and frozen equivalence; these correctness checks do not establish which
+forecast mode performs better on new observations.
 
 ## Verification and remaining RWA work
 
 ```sh
-python3 -m unittest discover -s tests -p test_rwa_hierarchy.py -v
-python3 -m unittest discover -s tests -v
+python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
 
 Tests independently check the likelihood against a nonlinear optimizer, coupled
@@ -309,17 +400,19 @@ date/order/future invariance, drift/covariance, update-order bias, singular
 correlation, boundary counts, deterministic refinement, reproducibility, file
 contracts through the existing rebuild, and actual pipeline execution.
 
-The research record in `.codex-engineering/runs/2026-09-13-capability/` includes
-actual eight-tenor outputs, constant-versus-varying parameter controls, a small
-held-out comparison against frozen first-stage parameters, and finite-horizon
-moment checks. These are initial validation evidence, not a demonstration of
-superior forecasts or economic novelty.
+Use the [test guide](../../../../tests/readme.md) for isolated temporary files and
+environment setup. Known-answer and integration tests establish implementation
+behavior; broader held-out comparisons are required to assess forecasting value.
 
 Remaining milestones include measurement-error-aware parameter dynamics,
 wider held-out evaluation,
 and the exposure/cash-flow valuation and capital mapping required to complete
 the duration-sensitive RWA objective. No VaR or regulatory capital result is
-claimed by this implementation.
+claimed by this implementation. Elapsed-time handling does not identify latent
+parameter dynamics separately from measurement error, model informative missingness,
+or make the jointly simulated constant-maturity par-rate curves arbitrage-free
+spot/discount curves. HJM or other factor/valuation extensions require their own
+curve construction, dynamics assumptions and held-out validation.
 
 
 ## Verified acquired inputs

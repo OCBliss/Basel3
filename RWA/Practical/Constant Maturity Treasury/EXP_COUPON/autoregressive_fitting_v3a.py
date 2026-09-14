@@ -8,15 +8,19 @@ from statsmodels.tsa.ar_model import AutoReg
 from scipy.optimize import minimize
 from multiprocessing import Pool, cpu_count
 
-# Locate CODE directory
+# Locate the repository src directory
 def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "CODE":
+    """Resolve the source helper from this script's enclosing RWA tree."""
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    while os.path.basename(current_dir) != "RWA":
         parent_dir = os.path.dirname(current_dir)
         if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'CODE' directory.")
+            raise FileNotFoundError("Script must remain inside the repository's RWA directory.")
         current_dir = parent_dir
-    return current_dir
+    code_dir = os.path.join(os.path.dirname(current_dir), "src")
+    if not os.path.isfile(os.path.join(code_dir, "Basel3_Global_Filepath.py")):
+        raise FileNotFoundError("The repository's src/Basel3_Global_Filepath.py is missing.")
+    return code_dir
 
 # Load Basel3_Global_Filepath.py
 CODE_DIR = find_code_dir()
@@ -132,7 +136,7 @@ def main(series_list=None, model_type="CIR", output_csv="CIR_parameters_summary.
     summary_df = pd.DataFrame(final_data, index=series_list).T
     summary_df.index.name = "Parameters"
 
-    # ✅ Write to EXPECTED_COUPON_DIR, not FRED_DIR
+    # Save the summary in the expected-coupon output directory.
     output_path = os.path.join(EXPECTED_COUPON_DIR, output_csv)
     summary_df.to_csv(output_path)
 

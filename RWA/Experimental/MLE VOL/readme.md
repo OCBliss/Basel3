@@ -9,7 +9,7 @@ finite hierarchy, units and limitations.
 
 ## Active executable workflow
 
-Run from `Basel3_repo` with the root requirements installed. Choose a new output
+Run from the repository root with the root requirements installed. Choose a new output
 directory each time:
 
 ```bash
@@ -42,19 +42,24 @@ See RAW's guide for exact filenames, schemas and the mismatch with historical
 
 The older [RWA_Heston_MLE_vol_test.py](../RWA_Heston_MLE_vol_test.py) shows the
 sigma-only second-pass experiment, producing `theta_vol`, `mu_vol` and `vol_vol`.
-It searches for a legacy `CODE` directory, expects `MLE YIELD/DGS<n>_vol.csv`,
-uses file-order filling/windows, and executes at import. Those defaults do not
-match the current repository layout or the rebuilt filenames. It is retained
+Its path helper resolves to this repository's `src/Basel3_Global_Filepath.py`.
+It still expects `MLE YIELD/DGS<n>_vol.csv`, uses file-order filling/windows,
+and executes at import. Its input names do not match the rebuilt filenames. It is retained
 as research history and is not the runnable entry point documented above.
 
 ## Interpretation and verification
 
 Second-pass volatility can arise from noisy rolling estimates and repair
-transitions even when the generating parameters are constant. The
-[archived experiments](../../../.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
-measure that issue; they do not establish forecasting superiority or complete
-PDF-level recursive valuation. The current hierarchy freezes second-level
-coefficients over a forecast and does not recalibrate every simulated path.
+transitions even when the generating parameters are constant. Use the optional
+`--noise-replicates` diagnostic to compare fitted dynamics with a simulated
+constant-parameter reference. Keep its generated evidence and settings in the
+run manifest; this comparison does not establish forecasting superiority or
+complete recursive valuation. The current hierarchy offers frozen and pathwise
+recursive second-level calibration. Optional ACT/365F/observed mode uses genuine
+common-date quotes and historical calendar intervals in both passes, dependence,
+noise controls and recursive buffers. This does not remove measurement error
+from estimated parameter histories. See the [active output guide](../HIERARCHY/readme.md)
+for historical interval records, run provenance and the RAW/CURVE interfaces.
 
 ```bash
 python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v

@@ -7,12 +7,18 @@ produce duration-adjusted RWA.
 
 ## Execution status
 
-The file searches the entire filesystem for `Basel3_Global_Filepath.py` and
-executes at import. Its paths therefore depend on an external legacy setup and
-are not a current repository-root entry point. For active calibration and
+The script resolves `src/Basel3_Global_Filepath.py` from its enclosing repository
+and uses the helper's `BASEL3_ROOT`. It executes at import and replaces existing
+outputs. To reproduce the retained row-offset calculation, run explicitly from
+the repository root with [requirements](../../../../requirements.txt) installed:
+
+```bash
+python3 "RWA/Practical/Constant Maturity Treasury/Differenced/Constant_Maturity_Treasury_Differenced5a.py"
+```
+
+The numerical behavior below describes a historical experiment, not a validated
+forecasting method or an active pipeline stage. For active calibration and
 simulation commands, use [the source guide](../../../../src/RWA/readme.md).
-The numerical behavior below describes the retained experiment, not a validated
-forecasting method.
 
 ## Input and output contract
 
@@ -43,5 +49,5 @@ The filtering produces a selected subset of changes, not the complete shock
 distribution. It cannot by itself support an unconditional expected change or
 tail-loss calculation. The next [EXP_DRIFT stage](../EXP_DRIFT/readme.md) averages
 the retained values; review this ordering and selection before interpreting
-those averages. Historical output CSVs have not been regenerated or relabelled
-as validated scenarios during this documentation change.
+those averages. Checked-in CSVs are historical outputs of this row-offset
+calculation; they are not validated future scenarios.

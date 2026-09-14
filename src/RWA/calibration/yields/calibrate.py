@@ -94,7 +94,7 @@ def cir_log_likelihood(params, yields, dt):
 
 
 def make_initial_guess(yields_block):
-    """Create the original generic starting values for the first window."""
+    """Initialize the optimizer from the window mean and increment variation."""
     sigma_guess = float(np.std(np.diff(yields_block)))
 
     return np.array(
@@ -265,8 +265,7 @@ def process_csv(file_name):
 ###############################################################################
 
 def main():
-    # One process per maturity. This replaces the original nested structure of
-    # eight outer threads, each creating fourteen inner worker processes.
+    # Calibrate maturities concurrently with one process per input CSV.
     worker_count = min(len(CSV_FILES), os.cpu_count() or 1)
 
     print(

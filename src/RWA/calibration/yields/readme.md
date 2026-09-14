@@ -9,7 +9,7 @@ calibration to the estimated parameter histories and has its own entry point.
 ## Run
 
 Install the [repository requirements](../../../../requirements.txt) in your active
-Python environment. Run this command from `Basel3_repo`:
+Python environment. Run this command from the repository root:
 
 ```bash
 python3 src/RWA/calibration/yields/calibrate.py
@@ -60,11 +60,11 @@ Then run [cross-maturity repair](../curves/readme.md) followed by
 [parameter reconstruction](../../data/parameters/readme.md). Curve assembly is
 a separate preparation step, not an output automatically produced here.
 
-Earlier versions calibrated newest-first histories in the wrong transition
-direction. Regenerate dependent curves from the corrected RAW estimates before
-combining their results; moving this source file does not regenerate historical
-CSV files. The fixed `DT` treats successive observations as equally spaced and
-does not account separately for calendar gaps. Positive optimizer bounds do not
+Use RAW estimates and dependent curves generated from the same chronological
+inputs and settings. The fixed `DT` treats successive observations as equally
+spaced and does not account separately for calendar gaps; select the
+[parameter hierarchy](../../models/parameter_hierarchy/readme.md#historical-time-and-missing-quotes)
+for configurable elapsed-time calibration. Positive optimizer bounds do not
 resolve weak parameter identification or establish the risk model's validity.
 
 ## Verification

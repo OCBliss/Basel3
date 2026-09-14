@@ -1,60 +1,29 @@
-# Step 08.2.0.5 — Matrix Construction of JSD Metrics by Horizon
+# JSD outputs and proposed matrix construction
 
-## Purpose
+This directory contains documentation only. There is no matrix-construction
+script here and no matrix stage in the current pipeline. The matrix contract below describes a proposed extension.
 
-This script builds *Jensen-Shannon Divergence (JSD)* matrices by variable group across **Basel III horizon windows T+1 to T+4**, organizing precomputed divergence files into time-series panels for downstream visualization and comparative analysis.
+## Implemented outputs
 
----
+The [calculation stage](../calculation/readme.md) writes one-row comparisons under
+`Material Events/JSD/BASEL III T+<horizon>/` for the selected horizons and central
+bin counts. Each bin specification has Survivors–Failures, Survivors–Mergers and
+Mergers–Failures files, such as `JSD_survivors_vs_failures_100.csv`. Values are
+square-root Jensen–Shannon divergence using natural logarithms. The three stages
+use common histogram edges within a specification, then normalize each ratio
+column independently. See [the JSD workflow](../readme.md) for prerequisites and
+exact commands from the repository root.
 
-## Key Functionality
+The next implemented consumer is [the column filter](../../measures/intragroup/readme.md),
+which retains selected result columns meeting its threshold. It does not assemble
+matrices or test predictive significance.
 
-- **Auto-locates** `Basel3_Global_Filepath.py` to determine the `ROOT_DIR` dynamically
-- **Scans all** `JSD_*.csv` files within `Material Events/JSD/BASEL III T+1..T+4`
-- **Parses column names** using regex pattern:
+## Proposed matrix contract
 
-RCB-<group_id>_<lag_suffix>
-Example: RCB-2312-02_q0q2
-
-- **Groups columns** by RCB group and organizes JSD values across time horizons
-- **Builds and saves** one output CSV per `(peer_group, RCB-group)` pair into:
-
-/Material Events/JSD/Matrix Outputs/JSD_<peer_meta>_<group>.csv
-
-
----
-
-## Output Structure
-
-Each matrix CSV has:
-
-| Lag Suffix | BASEL III T+1 | BASEL III T+2 | BASEL III T+3 | BASEL III T+4 |
-|------------|----------------|----------------|----------------|----------------|
-| q0         | ...            | ...            | ...            | ...            |
-| q0q1       | ...            | ...            | ...            | ...            |
-| q0q2       | ...            | ...            | ...            | ...            |
-| q0q3       | ...            | ...            | ...            | ...            |
-
-- One CSV is created per `(peer_meta, RCB-group)` combination
-- Values are pulled from the **first row** of each JSD_*.csv file (assumed single-row)
-
----
-
-## Why It Matters
-
-This step unifies JSD divergence statistics into a **coherent time-panel format** for each variable group, enabling:
-
-- Consistent **comparison of risk signal intensity** across Basel III horizons
-- Clearer **visualization of temporal dynamics** in systemic risk divergence
-- Downstream feeding into modal or macroprudential policy frameworks
-
----
-
-## File Naming Convention
-
-For a source JSD file:
-
-JSD_survivors_vs_failures_100.csv
-
-And a group like `RCB-0211-1754`, the output will be:
-
-/Matrix Outputs/JSD_survivors_vs_failures_20_RCB-0211-1754.csv
+A future matrix stage could collect a given cohort comparison, central bin count
+and variable into rows such as `q0`, `q0q1`, `q0q2`, `q0q3` and columns for horizons
+T+1 through T+4. It must preserve the bin specification and cohort identity,
+validate missing/duplicate source results, and retain provenance rather than
+silently mixing selected and stale outputs. No command or output location is
+implemented for that stage. Such a matrix would organize descriptive distances;
+it would not by itself establish causality, risk ordering or held-out accuracy.

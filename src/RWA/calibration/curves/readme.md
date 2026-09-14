@@ -10,7 +10,7 @@ different parameter columns and anomaly thresholds.
 Install the [repository requirements](../../../../requirements.txt), including
 NumPy, pandas and SciPy. First complete [yield calibration](../yields/readme.md)
 and the [CURVE assembly recipe](../../../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
-From `Basel3_repo`, run:
+From the repository root, run:
 
 ```bash
 python3 src/RWA/calibration/curves/mu.py

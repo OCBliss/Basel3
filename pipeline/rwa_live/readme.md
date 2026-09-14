@@ -10,7 +10,7 @@ security-level duration losses or duration-adjusted RWA.
 
 Install [requirements](../../requirements.txt). Before running, edit
 `parameters.snapshot_dir` and `parameters.output_dir` in [config.yaml](config.yaml)
-to two new directory names inside `Basel3_repo`. Do not create those directories;
+to two new directory names inside the repository. Do not create those directories;
 the producing stages create them after their validation succeeds.
 
 ```bash
@@ -70,18 +70,54 @@ available when retrieval is not part of the requested run.
 | `recent_rows` | `3024` | Last common-history rows used by the model; `0` uses all |
 | `paths`, `steps`, `substeps` | `256`, `20`, `4` | Scenario count, reported steps and internal Euler increments per step |
 | `seed` | `1234` | Reproducible simulation random seed for fixed inputs/settings |
+| `forecast_mode` | `recursive` | Pathwise recalibration; use `frozen` for origin coefficients and dependence. |
+| `recalibrate_every` | `1` | Reported-step cadence for recursive updates; zero disables updates. |
+| `time_basis` | `observation` | Historical transition clock: `observation` or `act365f`. |
+| `missing_policy` | `forward-fill` | Causal fills or `observed` genuine common-date quotes. |
+| `dt` | `0.003968253968253968` | Future reported-step year fraction (1/252); also the historical interval in observation mode. |
 
 Acquisition defaults to all eight supported maturities and a requested end of the
 local current date. The YAML does not currently expose an `end` parameter; use
 the [acquisition CLI](../../src/RWA/data/yields/readme.md) for a fixed cutoff, or
 explicitly add and pass `--end` when adapting a copy of this configuration.
-The model's default observation interval is `1/252`; its estimation-noise
-benchmark is disabled unless explicitly added to the model arguments.
+The estimation-noise benchmark is disabled unless explicitly added to the
+model arguments; use zero or at least two replicates.
 
 The 2010 start is a bounded history choice. Validation still checks the actual
 returned data; the chosen start does not justify imputing arbitrary gaps or
 assuming every series is continuous. Freshness is measured from each last
 **genuine** quote, not from a filled endpoint.
+
+## Configure elapsed-time calibration
+
+The saved YAML preserves the historical observation-clock/forward-fill defaults.
+To fit genuine observations using actual historical year fractions, set these
+existing entries in its `parameters` block:
+
+```yaml
+time_basis: act365f
+missing_policy: observed
+dt: 0.003968253968253968
+```
+
+The model arguments already pass these settings. `observed` reads original
+`DGS<n>` values and retains only dates genuinely observed across all selected
+tenors; it does not fit prepared fill values. ACT/365F divides the calendar time
+between retained dates by 365 days, including weekends, gaps and leap years.
+Both rolling calibration passes, dependence residuals, the optional noise
+benchmark and recursive history buffers use those historical intervals.
+
+Windows and `recent_rows` remain observation counts, so a common count can span
+different dates under the two policies. `dt` remains the regular **future**
+year-fraction increment; use `0.0027397260273972603` for 1/365 if that forecast grid
+is intended. No business-day/holiday forecast calendar is generated. Substeps
+refine each future increment without creating extra calibration observations.
+
+Review `transition_intervals.csv`, the manifest's `time_convention`, source
+exclusions and fitted-parameter audits. Retaining actual durations does not remove
+Euler approximation error, informative-missingness bias or estimation noise, and
+it does not construct an arbitrage-free spot curve. See the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
+and [elapsed-time tests](../../tests/test_rwa_elapsed_time.py).
 
 ## Outputs, failures and reruns
 
@@ -92,7 +128,8 @@ API key; it is not an implementation of the separate keyed observations API.
 
 The [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) describes
 `yield_parameters.csv`, `parameter_dynamics.csv`, RAW/CURVE exports,
-`scenario_summary.csv`, `scenarios.npz` and the final completion manifest. Check
+`scenario_summary.csv`, `scenarios.npz`, historical `transition_intervals.csv`
+and the final completion manifest. Forecast outputs include `elapsed_years`. Check
 both the snapshot's quality report and the model's diagnostics. Successful
 execution does not establish statistical identification or forecast superiority.
 
@@ -110,14 +147,6 @@ coefficients and full joint dependence. Exposure valuation is a separate stage.
 
 ## Verification
 
-The [recorded live configuration](../../.codex-engineering/runs/2026-09-13-yield-acquisition/live-config.yaml)
-and [manager log](../../.codex-engineering/runs/2026-09-13-yield-acquisition/live-manager.log)
-show both stages completing on September 13, 2026: eight maturities, 4,354 common
-input rows spanning 2010-01-04 through 2026-09-10, then 4,040 first-pass and 6,096
-second-pass parameter rows. The run used 256 paths, 20 reported steps and 32 joint
-state dimensions, with zero recorded boundary projections. These counts describe
-that fixed run, not guaranteed results from future downloads.
-
 Use the repository-local temporary/cache setup in the
 [test guide](../../tests/readme.md) for isolated checks:
 
@@ -128,9 +157,9 @@ python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v
 
 The acquisition tests exercise malformed/network failures, chronological filling,
 freshness, publication and provenance verification; hierarchy checks cover model
-contracts and actual manager execution on isolated inputs. The live log provides
-the separate evidence that these two configured stages worked together on the
-retrieved data.
+contracts and actual manager execution on isolated inputs. A live run additionally
+checks the current source response and produces its own snapshot and model
+manifests; inspect both before treating the pipeline as complete.
 
 
 ## Forecast mode and update cadence

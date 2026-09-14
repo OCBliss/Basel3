@@ -12,7 +12,10 @@ algorithms and stochastic models.
 Start with the yield-data guide for source settings, refresh behavior, cleaning,
 provenance and output locations. Historical observations in `RWA/FRED` remain
 separate from new acquisition runs. A local CSV is not evidence that it is
-current or came from a reproducible download.
+current or came from a reproducible download. The model can use genuine
+common-date quotes and ACT/365F historical gaps while preserving the snapshot
+preparation and imputation audit. The [yield-data guide](yields/readme.md) explains
+how that optional policy differs from the reproducible forward-fill default.
 
 Parameter reconstruction reads the established RAW yield files, NSS-repaired mu
 and theta, and the corresponding sigma curves. From the repository root, after

@@ -2,11 +2,11 @@
 
 This directory currently contains documentation only. There is no expected-loss
 calculator here and no command that produces an exposure-level expected-loss or
-RWA result. The previous reference to an unspecified “Step 13” did not identify
-an executable stage in the current repository.
+RWA result.
 
 The existing [Practical CMT workflow](../Constant%20Maturity%20Treasury/readme.md)
-prepares yield-shock, drift and coupon calculations. The separate
+describes historical yield preparation, selected-change summaries and parameter
+estimation. The separate
 [endogenous parameter hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md) produces
 rate/parameter scenarios. Neither output alone is a portfolio expected-loss or
 regulatory capital calculation.
@@ -20,6 +20,6 @@ silently treated as the same calculation. The
 RWA research objective; valuation remains an unfinished milestone.
 
 For runnable current capabilities, use the [RWA source guide](../../../src/RWA/readme.md).
-Read the [research checkpoint](../../../.codex-engineering/CURRENT_TASK.md) and
-[journal](../../../.codex-engineering/JOURNAL.md) for completed work, evidence and
-the next implementation task. No valuation output is claimed for this directory.
+The [model output guide](../../Experimental/HIERARCHY/readme.md) describes the
+generated scenarios and provenance that a future valuation stage would consume.
+No valuation output is produced by this directory.

@@ -1,6 +1,6 @@
 # Outcome cohorts and observation horizons
 
-Run these stages after the material-event flagging stages, from `Basel3_repo`
+Run these stages after the material-event flagging stages, from the repository root
 with the root requirements installed:
 
 ```bash

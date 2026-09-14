@@ -78,7 +78,7 @@ MU_COLUMNS = {
 # is treated as an exploded CIR estimate.
 EXPLOSION_ABS_THRESHOLD = 9
 
-# Use all logical CPU cores by default. Set to a smaller integer if desired.
+# Use up to 28 logical CPU cores. Reduce this limit to reserve capacity.
 MAX_WORKERS = min(28, max(1, (os.cpu_count() or 1)))
 
 
@@ -188,7 +188,7 @@ def identify_anomalies(
     values: np.ndarray,
 ) -> np.ndarray:
     """
-    Return a Boolean mask identifying invalid or exploded values.
+    Return a Boolean mask for finite values above the explosion threshold.
     """
     values = np.asarray(values, dtype=float)
 
@@ -805,8 +805,6 @@ def main() -> None:
         for column in MU_COLUMNS
     )
 
-    # print(f"Input:  {INPUT_FILE.resolve()}")
-    # print(f"Output: {OUTPUT_FILE.resolve()}")
     print(f"Observation dates: {len(repaired):,}")
     print(f"Dates containing anomalies: {len(anomaly_rows):,}")
     print(f"Successfully repaired dates: {len(successful_rows):,}")

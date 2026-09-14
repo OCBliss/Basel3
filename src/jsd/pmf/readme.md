@@ -25,6 +25,6 @@ Outputs are written to:
 
 `Material Events/{Group}/JS Divergence/Basel III T+{horizon}/Probabilities/probabilities_{original_filename}`
 
-With the default second and third coverage counts, 20/30/50/100 central bins produce 26/36/56/106 PMF rows. The binning change removes the former empty `[2.00, 2.00)` row and labels the retained final interval `[2.00, inf)`. Complete local comparisons confirmed every other probability value is unchanged. See the binning README for exact endpoint behavior.
+With the default second and third coverage counts, 20/30/50/100 central bins produce 26/36/56/106 PMF rows. The final interval is `[2.00, inf)`. See the [binning guide](../binning/readme.md) for exact endpoint behavior.
 
 Each group, horizon, bin specification, and ratio column is normalized independently. The resulting files feed the selected-horizon JSD calculation.

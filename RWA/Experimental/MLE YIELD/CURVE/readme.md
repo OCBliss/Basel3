@@ -25,7 +25,7 @@ standard deviation of yields. Assembly performs no unit conversion.
 ## Prepare curves from first-pass RAW files
 
 First run [rolling calibration](../RAW/readme.md) if you need fresh estimates.
-Install the root requirements and run the following from `Basel3_repo`. The
+Install the root requirements and run the following from the repository root. The
 recipe reads the eight `RAW/DGS<n>_with_parameters.csv` files, checks required
 columns and unique dates, and **replaces these three curve CSVs**. Use source
 files from one consistent calibration run. Historical checked-in CSVs are not
@@ -77,6 +77,13 @@ The [new parameter hierarchy](../../../../src/RWA/models/parameter_hierarchy/rea
 exports `CURVE/` inside its own selected output directory. Those panels come
 from its coupled stabilization. Do not mix them into an older NS/NSS run without
 explicitly choosing that methodology and a consistent set of RAW inputs.
+The hierarchy's ACT/365F/observed option retains genuine common dates and actual
+calendar intervals. Its curve column names stay the same, while dates and fitted
+values can differ. Keep `manifest.json` and `transition_intervals.csv` from the
+[complete hierarchy run](../../HIERARCHY/readme.md); this assembly recipe does not
+carry time-basis metadata into the three wide tables. The fixed `DT` convention
+described above applies to the standalone legacy calibration, not every
+hierarchy export sharing this schema.
 
 ## Run the consumers
 

@@ -3,8 +3,7 @@
 This directory groups the historical Treasury preparation experiments. The
 bond-pricing functions described below are a proposed interface: no implementation
 of these functions or executable bond-valuation entry point is currently present
-in the repository. The previous README's numeric YTM, bond-price and return
-examples were not verified outputs of current code and have been removed.
+in the repository.
 
 The current executable work is
 [interest-rate calibration and parameter simulation](../../../src/RWA/readme.md).

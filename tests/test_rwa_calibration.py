@@ -327,7 +327,7 @@ class CIRCurveDomainTests(unittest.TestCase):
             self.assertEqual("", result.curve_fit_error)
 
     def test_real_short_tenor_theta_extrapolation_cannot_publish_negative_parameters(self):
-        # Same-date fit values captured in real-windows/nss-domain-diagnosis.log.
+        # Dated calibration fixture whose short-tenor NSS extrapolation is negative.
         row = pd.Series({
             "observation_date": "2025-03-10",
             "theta1y": .0016707722787036, "theta2y": .0065764086975963,

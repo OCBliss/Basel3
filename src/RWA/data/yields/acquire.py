@@ -28,7 +28,7 @@ def repository_path(value):
     try:
         path.relative_to(ROOT)
     except ValueError:
-        raise ValueError("yield paths must remain inside Basel3_repo")
+        raise ValueError("yield paths must remain inside the repository")
     return path
 
 
@@ -296,7 +296,7 @@ def verify_snapshot(manifest_path, input_directory, maturities=TENORS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", required=True, help="new snapshot directory inside Basel3_repo")
+    parser.add_argument("--output", required=True, help="new snapshot directory inside the repository")
     parser.add_argument("--start", default="2010-01-01")
     parser.add_argument("--end", default=date.today().isoformat())
     parser.add_argument("--maturities", nargs="+", type=int, default=list(TENORS))

@@ -8,7 +8,7 @@ Supported maturities are 1, 2, 3, 5, 7, 10, 20 and 30 years.
 ## Download a new snapshot
 
 Install the [repository requirements](../../../../requirements.txt) in your active
-Python environment. Run from `Basel3_repo`; the output directory must not already
+Python environment. Run from the repository root; the output directory must not already
 exist, and all project paths must resolve inside the repository.
 
 ```bash
@@ -81,8 +81,8 @@ Preparation follows this order:
 
 Dates absent from the provider response are not synthesized, so weekends are not
 inserted as new observations. A missing holiday cell already present in the
-response can be filled within the configured limits. Calendar-day gap controls
-do not convert the model's fixed observation-step `dt` into a calendar-time model.
+response can be filled within the configured limits. These source-quality limits
+are independent of the model's optional calendar-time calibration clock.
 
 ## Snapshot files and provenance
 
@@ -92,7 +92,8 @@ do not convert the model's fixed observation-step `dt` into a calendar-time mode
 | `series/DGS<n>.csv` | Ascending supported history for each requested tenor |
 | `snapshot.json` | Completion status, retrieval timestamp, requested interval, vintage description, raw/source hashes and quality report |
 
-Each prepared series has:
+The [snapshot-folder guide](../../../../RWA/FRED/snapshots/readme.md) describes
+storage, reruns and the next consumer. Each prepared series has:
 
 ```text
 observation_date,DGS<n>,yield_clean,is_imputed,source_date
@@ -120,6 +121,20 @@ python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
   --paths 256 --steps 20 --substeps 4 --seed 1234
 ```
+
+To use genuine common-date quotes with historical elapsed-time calibration, add
+`--time-basis act365f --missing-policy observed` to the model command. The model
+reads the original `DGS<n>` values, removes missing observations and intersects
+genuine dates across maturities. It leaves this snapshot and its bounded fills
+unchanged. ACT/365F uses actual retained-date gaps divided by 365 days throughout
+both calibration passes, dependence and the optional noise benchmark. Windows
+still count observations. Defaults remain `observation` and `forward-fill`.
+
+The model's scalar `--dt` remains the future year-fraction increment (default
+1/252), even with ACT/365F history; it does not supply a holiday forecast calendar.
+The model writes exact historical intervals and elapsed forecast times in its own
+[output directory](../../../../RWA/Experimental/HIERARCHY/readme.md). See the
+[model guide](../../models/parameter_hierarchy/readme.md) for mathematics and limits.
 
 `--input-manifest` verifies the complete maturity/path contract and all preserved
 raw/prepared hashes, then repeats preparation from the raw bytes. Both regenerated

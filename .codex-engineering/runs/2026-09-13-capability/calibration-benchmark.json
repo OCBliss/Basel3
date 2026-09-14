@@ -1,9 +1,0 @@
-{
-  "windows": 24,
-  "stable_solver_seconds": 0.007404089000000003,
-  "existing_optimizer_seconds": 0.5379529339999999,
-  "ratio": 72.65619497550605,
-  "optimizer_successes": 24,
-  "maximum_new_minus_existing_nll": -1.3224052963778377e-09,
-  "note": "One local timing sample; boundary constraints differ. These are raw fits, not the complete hierarchy runtime."
-}

@@ -7,13 +7,22 @@ or duration-adjusted RWA.
 
 ## Execution status and current alternative
 
-The file looks for a `CODE` ancestor and loads `Basel3_Global_Filepath.py` from
-it before defining its workflow. This does not match the current repository
-layout. It also imports `statsmodels`, which is not part of the root requirements.
-These are historical defaults, not a working setup command for a fresh clone.
-The active [yield calibration](../../../../src/RWA/calibration/yields/readme.md)
+The script resolves `src/Basel3_Global_Filepath.py` from its enclosing repository
+and uses the helper's `BASEL3_ROOT`. It requires `statsmodels` in addition to the
+[repository requirements](../../../../requirements.txt), including when its default
+CIR branch is selected. To reproduce the retained experiment, install the optional
+dependency in your Python environment and run from the repository root:
+
+```bash
+python3 -m pip install statsmodels
+python3 "RWA/Practical/Constant Maturity Treasury/EXP_COUPON/autoregressive_fitting_v3a.py"
+```
+
+This replaces the fixed summary output and retains the selection and fitting
+limitations below. It is not integrated into the active snapshot-to-scenario
+pipeline. The active [yield calibration](../../../../src/RWA/calibration/yields/readme.md)
 and [parameter simulation](../../../../src/RWA/models/parameter_hierarchy/readme.md)
-guides provide current commands, prerequisites and independently tested behavior.
+guides describe the current model workflows.
 
 ## Legacy inputs and fitting
 
@@ -41,8 +50,8 @@ The legacy output is `CIR_parameters_summary.csv` in this folder. It has a
 `Parameters` index with rows `Mean Reversion Speed`, `Long-Term Mean` and
 `Volatility`, plus the six series columns. Values are rounded to four decimal
 places. Same-named output is replaced by a run. The checked-in CSV is a historical
-artifact; this documentation update does not establish that it was regenerated
-or validated against current source.
+artifact; its presence does not establish that it was generated or validated
+against current source.
 
 A fitted CIR sigma is a square-root diffusion coefficient, not a coupon estimate.
 The AR(1) residual standard deviation and CIR coefficient have different meanings.

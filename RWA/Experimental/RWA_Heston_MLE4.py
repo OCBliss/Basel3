@@ -13,15 +13,19 @@ import concurrent.futures
 ###############################################################################
 
 def find_code_dir():
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    while current_dir and os.path.basename(current_dir) != "CODE":
+    """Resolve the source helper from this script's enclosing RWA tree."""
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    while os.path.basename(current_dir) != "RWA":
         parent_dir = os.path.dirname(current_dir)
         if parent_dir == current_dir:
-            raise FileNotFoundError("Could not locate 'CODE' directory.")
+            raise FileNotFoundError("Script must remain inside the repository's RWA directory.")
         current_dir = parent_dir
-    return current_dir
+    code_dir = os.path.join(os.path.dirname(current_dir), "src")
+    if not os.path.isfile(os.path.join(code_dir, "Basel3_Global_Filepath.py")):
+        raise FileNotFoundError("The repository's src/Basel3_Global_Filepath.py is missing.")
+    return code_dir
 
-# Locate CODE directory and add it to sys.path
+# Locate the repository src directory and add it to sys.path
 CODE_DIR = find_code_dir()
 sys.path.append(CODE_DIR)
 
@@ -80,7 +84,7 @@ def process_window(i, yields_data):
     """
     Compute CIR parameters for the window starting at row `i` using the given data.
     """
-    block = yields_data[i : i + 2520]  # FIXED WINDOW SELECTION (1260 rows)
+    block = yields_data[i : i + 2520]  # Fixed 2,520-observation window
     theta, mu, sigma = estimate_theta_cir(block)
     return i, theta, mu, sigma  # RETURN CORRECT ROW i FOR STORING RESULTS
 

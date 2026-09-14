@@ -13,6 +13,9 @@ parameters:
   steps: 20
   substeps: 4
   seed: 1234
+  time_basis: observation
+  missing_policy: forward-fill
+  dt: 0.003968253968253968
   forecast_mode: recursive
   recalibrate_every: 1
 
@@ -55,6 +58,12 @@ scripts:
       - "{substeps}"
       - --seed
       - "{seed}"
+      - --time-basis
+      - "{time_basis}"
+      - --missing-policy
+      - "{missing_policy}"
+      - --dt
+      - "{dt}"
       - --forecast-mode
       - "{forecast_mode}"
       - --recalibrate-every
@@ -64,7 +73,9 @@ scripts:
       - "{snapshot_dir}/series/DGS*.csv"
     outputs:
       - "{output_dir}/manifest.json"
+      - "{output_dir}/yield_parameters.csv"
       - "{output_dir}/parameter_dynamics.csv"
+      - "{output_dir}/transition_intervals.csv"
       - "{output_dir}/scenario_summary.csv"
       - "{output_dir}/scenarios.npz"
 

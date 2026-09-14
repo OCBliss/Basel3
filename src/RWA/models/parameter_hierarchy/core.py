@@ -38,8 +38,38 @@ def integer(value, name, minimum):
         raise ValueError(name + " must be at least " + str(minimum))
 
 
-def _sample(values, dt):
-    positive_number(dt, "dt")
+def transition_steps(dt, n):
+    """Return one positive finite year interval per chronological transition.
+
+    A scalar preserves the fixed-step interface; an array must have exactly n
+    entries. Do not broadcast a one-element vector, coerce numeric strings or
+    accept booleans as elapsed time. The returned array never aliases the input.
+    """
+    integer(n, "transition count", 1)
+    try:
+        raw = np.asarray(dt)
+    except (TypeError, ValueError) as error:
+        raise ValueError("dt must be a positive number or one-dimensional transition array") from error
+    if raw.ndim > 1 or raw.dtype.kind not in "iuf":
+        raise ValueError("dt must contain finite positive numeric transition intervals")
+    # NumPy promotes a mixed Python [True, .1] sequence to float; retain the
+    # strict scalar contract before that implicit coercion loses its type.
+    if isinstance(dt, (list, tuple)) and any(isinstance(x, (bool, np.bool_)) for x in dt):
+        raise ValueError("dt must not contain booleans")
+    if raw.ndim == 0:
+        positive_number(raw.item(), "dt")
+        value = float(raw)
+        positive_number(value, "dt")
+        return np.full(n, value, dtype=float)
+    if raw.shape != (n,) or not np.isfinite(raw).all() or (raw <= 0).any():
+        raise ValueError("dt must have one finite positive interval per transition (" + str(n) + ")")
+    result = raw.astype(float, copy=True)
+    if not np.isfinite(result).all() or (result <= 0).any():
+        raise ValueError("dt must remain finite and positive in float64 precision")
+    return result
+
+
+def _sample(values):
     v = np.asarray(values, dtype=float)
     if v.ndim != 1 or len(v) < 4 or not np.isfinite(v).all() or (v < 0).any():
         raise ValueError("CIR history needs at least four finite nonnegative states")
@@ -57,8 +87,10 @@ def fit_cir(values, dt=1 / 252, fixed_theta=None):
     boundaries, then profile sigma. At theta=0, mu is undefined, not enormous.
     theta_se is a local regression diagnostic, not a boundary confidence interval.
     Constant histories return a deterministic, unidentified process explicitly.
+    dt is a scalar or one positive elapsed-year interval per transition.
     """
-    v = _sample(values, dt)
+    v = _sample(values)
+    intervals = transition_steps(dt, len(v) - 1)
     if fixed_theta is not None:
         positive_number(fixed_theta, "fixed_theta", allow_zero=True)
     if np.ptp(v) <= np.finfo(float).eps * max(float(np.max(v)), 1e-100) * 8:
@@ -67,8 +99,12 @@ def fit_cir(values, dt=1 / 252, fixed_theta=None):
                       float("inf"), 0.0, True, True)
     scale = float(np.mean(v))
     x = v[:-1] / scale
-    y = np.diff(v / scale) / dt
-    w = 1 / x
+    y = np.diff(v / scale) / intervals
+    # Euler increment variance is sigma^2 * X * h. For derivative responses
+    # Delta(X/scale)/h the WLS weights are h/x. Divide by the first interval
+    # solely to preserve the fixed-step arithmetic and improve typical scaling.
+    step_scale = float(intervals[0])
+    w = (intervals / step_scale) / x
     xbar = float(np.average(x, weights=w))
     ybar = float(np.average(y, weights=w))
     sx = float(np.sum(w * (x - xbar) ** 2))
@@ -93,13 +129,13 @@ def fit_cir(values, dt=1 / 252, fixed_theta=None):
         loss, intercept, b = min(candidates)
     else:
         loss, intercept, b = profile(float(fixed_theta))
-    sigma2 = loss * dt * scale / len(x)
+    sigma2 = loss * step_scale * scale / len(x)
     if sigma2 <= 0 or not np.isfinite(sigma2):
         raise ValueError("nonconstant history has degenerate transition variance")
-    variance = sigma2 * v[:-1] * dt
-    residual = np.diff(v) - (intercept * scale - b * v[:-1]) * dt
+    variance = sigma2 * v[:-1] * intervals
+    residual = np.diff(v) - (intercept * scale - b * v[:-1]) * intervals
     nll = .5 * float(np.sum(np.log(2 * np.pi * variance) + residual ** 2 / variance))
-    se = np.sqrt(sigma2 / (scale * dt * sx)) if sx > 0 else float("inf")
+    se = np.sqrt(sigma2 / (scale * step_scale * sx)) if sx > 0 else float("inf")
     mu = intercept * scale / b if b > 0 else float("nan")
     return CIRFit(intercept * scale, b, mu, float(np.sqrt(sigma2)), float(se),
                   nll, bool(b < 1e-4 or b <= se))
@@ -198,6 +234,41 @@ def innovation_correlation(residuals, shrinkage=.05):
         "constant_columns": np.flatnonzero(norms == 0).tolist(),
         "min_eigenvalue": float(np.linalg.eigvalsh(correlation)[0]),
         "max_correlation_adjustment": float(np.max(np.abs(correlation - empirical)))}
+
+
+def joint_standardized_residuals(history, coefficients, dt):
+    """Standardize simultaneous Euler innovations on each historical interval.
+
+    History is (observations, X/mu/theta/sigma, maturity); coefficient order is
+    (mu/theta/sigma process, theta/mu/sigma coefficient, maturity). Yield drift
+    and diffusion use left-point parameter states; parameter innovations use the
+    supplied second-level fit. A zero diffusion with a nonzero innovation fails.
+    """
+    h = np.asarray(history, dtype=float)
+    c = np.asarray(coefficients, dtype=float)
+    if (h.ndim != 3 or h.shape[0] < 2 or h.shape[1] != 4 or h.shape[2] < 1
+            or not np.isfinite(h).all() or (h < 0).any()):
+        raise ValueError("joint history needs finite nonnegative (observations,4,maturity) states")
+    if c.shape != (3, 3, h.shape[2]) or not np.isfinite(c).all() or (c < 0).any():
+        raise ValueError("joint coefficients need finite nonnegative (3,3,maturity) values")
+    intervals = transition_steps(dt, len(h) - 1)[:, None, None]
+    earlier = h[:-1]
+    drift = np.empty_like(earlier)
+    diffusion = np.empty_like(earlier)
+    drift[:, 0] = earlier[:, 2] * (earlier[:, 1] - earlier[:, 0])
+    diffusion[:, 0] = earlier[:, 3] * np.sqrt(earlier[:, 0])
+    drift[:, 1:] = c[:, 0] * (c[:, 1] - earlier[:, 1:])
+    diffusion[:, 1:] = c[:, 2] * np.sqrt(earlier[:, 1:])
+    innovations = np.diff(h, axis=0) - drift * intervals
+    if not np.isfinite(innovations).all() or not np.isfinite(diffusion).all():
+        raise ValueError("nonfinite joint transition moments; inspect states and intervals")
+    if np.any((diffusion == 0) & (np.abs(innovations) > 1e-10)):
+        raise ValueError("nonzero innovations under a zero diffusion coefficient")
+    residuals = np.divide(innovations, diffusion * np.sqrt(intervals),
+                          out=np.zeros_like(innovations), where=diffusion > 0)
+    if not np.isfinite(residuals).all():
+        raise ValueError("nonfinite standardized innovations; inspect states and transition intervals")
+    return residuals
 
 
 def step_hierarchy(state, coefficients, normal_shocks, factor, dt):

@@ -4,7 +4,7 @@ This workflow calibrates a CIR yield process separately for the eight Treasury
 maturities, organizes the fitted parameter histories by date, and repairs selected
 mu/theta anomalies before preparing second-pass inputs.
 
-Run commands from `Basel3_repo` with the root requirements installed. These legacy
+Run commands from the repository root with the root requirements installed. These legacy
 commands write their configured output locations and can replace existing CSVs.
 
 | Order | Stage | How to run and inspect it |

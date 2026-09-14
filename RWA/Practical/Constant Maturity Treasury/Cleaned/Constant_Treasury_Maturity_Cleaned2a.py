@@ -5,10 +5,17 @@ import importlib.util
 
 # Step 1: Locate 'Basel3_Global_Filepath.py'
 def find_global_filepath():
-    for root, _, files in os.walk(os.path.abspath(os.sep)):
-        if "Basel3_Global_Filepath.py" in files:
-            return os.path.join(root, "Basel3_Global_Filepath.py")
-    raise FileNotFoundError("Could not locate 'Basel3_Global_Filepath.py' on the system.")
+    """Find the source helper in the same repository, without a system scan."""
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    while os.path.basename(current_dir) != "RWA":
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir == current_dir:
+            raise FileNotFoundError("Script must remain inside the repository's RWA directory.")
+        current_dir = parent_dir
+    helper = os.path.join(os.path.dirname(current_dir), "src", "Basel3_Global_Filepath.py")
+    if not os.path.isfile(helper):
+        raise FileNotFoundError("The repository's src/Basel3_Global_Filepath.py is missing.")
+    return helper
 
 global_filepath_path = find_global_filepath()
 
@@ -20,7 +27,7 @@ def load_global_filepath(filepath):
     return global_filepath
 
 global_filepath = load_global_filepath(global_filepath_path)
-ROOT_DIR = global_filepath.ROOT_DIR
+ROOT_DIR = global_filepath.BASEL3_ROOT
 RWA_DIR = os.path.join(ROOT_DIR, "RWA")
 PRACT_DIR = os.path.join(RWA_DIR, "Practical")
 RAW_DIR = os.path.join(RWA_DIR, "FRED")

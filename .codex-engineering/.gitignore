@@ -1,3 +1,0 @@
-# Keep temporary experiment data and caches local; retain journals and evidence.
-runs/*/tmp/
-runs/*/cache/

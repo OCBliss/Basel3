@@ -1,344 +1,123 @@
-## Basel III Regulatory Analytics Pipeline
+# Basel3 — Regulatory analytics and interest-rate research
 
-**Author:** Jonathan Waller  
-**GitHub:** github.com/OCBLISS  
-**Contact:** johnny.waller.nb@gmail.com  
-**Affiliation:** Independent Researcher  
+Basel3 investigates how regulatory capital and liquidity measures relate to bank
+outcomes and interest-rate exposure. It contains two executable workflows:
 
-## Start here
+- **Call Report analysis:** retrieve quarterly FFIEC data, calculate bank ratios,
+  construct outcome cohorts and compare their distributions across horizons.
+- **Interest-rate modeling:** retrieve Treasury yields, estimate and stabilize
+  CIR parameters, model the dynamics of those parameters and simulate joint
+  paths across maturities.
 
-Active development is published on [main](https://github.com/OCBliss/Basel3/tree/main).
-All existing `refactor` work is included there. Stable capabilities can subsequently
-be integrated back into `refactor`; ongoing changes remain visible on `main`.
+The Call Report workflow currently ends with filtered pairwise distribution
+distances. The interest-rate workflow ends with calibrated parameter histories,
+joint scenarios and diagnostic records. Exposure valuation, loss distributions
+and a duration-sensitive capital mapping remain research objectives.
 
-From the `Basel3_repo` directory, prepare a local Python environment and preview
-the main workflow:
+## Installation
+
+Clone the repository with an authenticated GitHub connection, then install the
+[requirements](requirements.txt) in a Python environment:
 
 ```bash
+git clone git@github.com:OCBliss/Basel3.git
+cd Basel3
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install -r requirements.txt
+```
+
+Python 3.8 or later is required; dependency versions must support the selected
+interpreter. The activation command above is for POSIX shells. On Windows,
+activate the environment with `.venv\Scripts\Activate.ps1` in PowerShell.
+
+All commands below run from the **repository root**, the directory containing
+`requirements.txt`, `src/` and `pipeline/`. The checkout may have any directory
+name: source and data paths resolve relative to the code's location.
+
+## Run a workflow
+
+Preview the Call Report plan without downloading data or running its stages:
+
+```bash
 python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
 ```
 
-The preview starts no processing. To run the complete Call Report/JSD workflow,
-use the same final command without `--dry-run`; it downloads required FFIEC data
-and writes the configured outputs. Python 3.8 or later is supported by the current
-source; install versions of the requirements compatible with your interpreter.
-
-| What to do | Guide |
-| --- | --- |
-| Run or configure the task manager | [Pipeline](pipeline/readme.md) |
-| Understand the source and data flow | [Source overview](src/readme.md) |
-| Download and process Call Reports | [Call Reports](src/call%20reports/readme.md) |
-| Construct outcome cohorts and horizons | [Peer groups](src/peer%20groups/readme.md) |
-| Compare distributions | [JSD](src/jsd/readme.md) |
-| Filter results or combine cohort data | [Measures](src/measures/readme.md) |
-| Run endogenous RWA parameter dynamics | [RWA](src/RWA/readme.md) |
-| Run regression checks | [Tests](tests/readme.md) |
-| Inspect discoveries, failed attempts and results | [Engineering journal](.codex-engineering/readme.md) |
-| Commit, synchronize branches or repair SSH | [Git workflow](.codex-engineering/GIT_WORKFLOW.md) |
-
-The [RWA hierarchy result](.codex-engineering/runs/2026-09-13-capability/RESULTS.md)
-documents the implemented milestone and its empirical limitations. The complete
-recursive model and valuation objective in the PDF remain under development.
-
-## Basel III Under Strain: Empirical Evidence from Call Report Data
-
-This project implements a data pipeline used to test key assumptions of the Basel III regulatory framework, specifically the belief that regulatory capital adequacy and liquidity classifications (e.g., HQLA, NML stability) correspond to reduced failure risk.
-
-Using FFIEC Call Report data, the system constructs bank cohorts (Failures, Mergers, Survivors) and evaluates their distributional behavior across multiple horizons (T+1–T+4). Jensen-Shannon Divergence (JSD) is used to measure whether regulatory-compliant institutions exhibit statistically distinct (and safer) profiles relative to failing banks.
-
-Results suggest that:
-- Regulatory classifications fail to preserve monotonic risk ordering
-- Duration risk and classification arbitrage distort capital adequacy signals
-- Depositor behavior deviates from standard NML assumptions (dynamic, heterogeneous)
-
-The pipeline in this repository produces the empirical outputs supporting these findings.
-
----
-
-1. Do Basel III capital and liquidity classifications
-retain statistical separation between future failures
-and survivors?
-
-2. Does predictive separation deteriorate as the
-forecast horizon increases?
-
-3. Do depositor behaviors conform to homogeneous,
-memoryless assumptions commonly used in regulatory
-liquidity frameworks?
-
-4. Can duration-sensitive interest-rate modeling
-identify capital impairment not reflected in
-regulatory risk weights?
-
----
-
-## Conceptual Framework
-
-The pipeline implements a class-conditional transformation approach:
-
-- Failures, Mergers, and Survivors are treated as structurally distinct states, not simple partitions of a common dataset.
-- Each cohort undergoes independent preprocessing to preserve class-specific characteristics.
-- Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation out-of-sample, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
-
-This design ensures that divergence metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
-
-### Forecast Horizons
-
-Observations are indexed relative to the quarter in which a structural event
-occurs.
-
-If a bank experiences a material event (failure, merger, etc.) during **2023 Q1**:
-
-| Observation Quarter | Horizon | Event Quarter |
-|---------------------|---------|---------------|
-| 2022 Q4 | T+1 | 2023 Q1 |
-| 2022 Q3 | T+2 | 2023 Q1 |
-| 2022 Q2 | T+3 | 2023 Q1 |
-| 2022 Q1 | T+4 | 2023 Q1 |
-
-The structural event remains fixed while the observation quarter moves further
-back in time.
-
----
-
-### Jensen-Shannon Divergence Matrices
-
-Each matrix reports the Jensen-Shannon divergence for a single regulatory
-variable (for example **RCE-HK07-Saving+**).
-* Item Number HK09
-* * MATURITY AND REPRICING DATA FOR TIME DEPOITS OF 250000 OR LESS, TIME DEPOSITS OF 250000 OR LESS WITH A REMAINING MATURITY OR NEXT REPRICING DATE OF THREE MONTHS OR LESS
-
-* Item Number 2385 (Savings)
-* * TOTAL NONTRANSACTION ACCOUNTS (INCLUDING MMDA'S)
-
-Rows represent the information used to compute the divergence.
-
-| Row | Meaning |
-|------|---------|
-| **q0** | Regulatory ratio measured at the observation quarter |
-| **q0q1** | One-quarter change in the ratio (`q1 → q0`) |
-| **q0q2** | Two-quarter change in the ratio (`q2 → q0`) |
-| **q0q3** | Three-quarter change in the ratio (`q3 → q0`) |
-
-Example:
-
-|                | BASEL III T+1 | BASEL III T+2 | BASEL III T+3 | BASEL III T+4 |
-|----------------|--------------:|--------------:|--------------:|--------------:|
-| **q0**   | 0.42 | 0.326 | 0.311 | 0.287 |
-| **q0q1** | 0.551 | 0.458 | 0.405 | 0.347 |
-| **q0q2** | 0.578 | 0.470 | 0.404 | 0.349 |
-| **q0q3** | 0.573 | 0.482 | 0.439 | 0.386 |
-
-For a bank failing during **2023 Q1**, the temporal alignment is:
-
-| q3 | q2 | q1 | q0 | Horizon | Event |
-|----|----|----|----|---------|-------|
-| 2022 Q1 | 2022 Q2 | 2022 Q3 | 2022 Q4 | T+1 | 2023 Q1 |
-| 2021 Q4 | 2022 Q1 | 2022 Q2 | 2022 Q3 | T+2 | 2023 Q1 |
-| 2021 Q3 | 2021 Q4 | 2022 Q1 | 2022 Q2 | T+3 | 2023 Q1 |
-| 2021 Q2 | 2021 Q3 | 2021 Q4 | 2022 Q1 | T+4 | 2023 Q1 |
-
-Thus, the value in **q0q1 × BASEL III T+1** measures the Jensen-Shannon
-divergence computed from the one-quarter change in the regulatory ratio
-(**2022 Q3 → 2022 Q4**), evaluated one quarter before the structural event.
-
-**Conclusion**
-Across all forecast horizons, the divergence associated with quarter-over-quarter changes exceeds the divergence obtained from contemporaneous observations alone. This suggests that temporal dynamics provide greater discriminatory power than static balance-sheet measurements.
-
-### Why Multiple Horizons?
-
-If Basel III classifications genuinely identify safer institutions, statistical
-separation should persist as the forecast horizon increases.
-
-Evaluating multiple horizons allows the framework to distinguish between:
-
-- variables that separate only immediately before failure,
-- variables that retain predictive information several quarters in advance,
-- variables whose predictive content decays through time.
-
-The evolution of divergence across T+1–T+4 therefore becomes an empirical
-measure of the temporal stability of regulatory classifications.
-
-### Dynamic Divergence
-
-The framework evaluates not only divergence at individual horizons but also
-the evolution of divergence between successive horizons.
-
-Traditional analyses often evaluate regulatory variables independently at each reporting period. This framework instead evaluates the evolution of distributional separation across successive forecast horizons. The objective is to determine whether the trajectory of divergence contains predictive information beyond that available from any single quarterly observation.
-
-Rather than asking only,
-
-"How different are failures from survivors at T+2?"
-
-the framework also asks,
-
-"How rapidly does that difference change between T+2 and T+1?"
-
-These temporal transitions capture changes in depositor behavior and balance
-sheet adjustment immediately preceding structural events.
-
-For example:
-- T+4 → T+3
-- T+3 → T+2
-- T+2 → T+1
-
-### Motivation
-
-Traditional liquidity assumptions often model depositor behavior as relatively
-stable through time.
-
-If divergence changes abruptly between adjacent horizons, this suggests that
-depositor responses may occur in rapid, heterogeneous repricing episodes
-rather than as smooth, memoryless processes.
-
-The multi-horizon framework was therefore designed to evaluate whether the
-timing of distributional changes itself contains economically meaningful
-
-## Pipeline
-
-[Here](pipeline/readme.md)
-
-The configured Basel III pipeline runs 20 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
-
-Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
-
-This design was chosen because:
-
-research modules evolve independently;
-statistical methodologies may be substituted without changing upstream preprocessing;
-different regulatory epochs, schedules, horizons, and parameterizations can be executed independently;
-computationally independent tasks can execute concurrently.
-
-The YAML configuration therefore represents the research workflow itself rather than simply a list of Python scripts.
-
-### Call Reports
-
-[Here](src/call%20reports/readme.md)
-
-The empirical analysis in this repository is built upon FFIEC Call Reports, the
-quarterly regulatory filings submitted by every insured U.S. commercial bank.
-These reports provide standardized disclosures covering capital adequacy,
-balance sheet composition, liquidity, credit quality, income, and regulatory
-ratios.
-
-The objective of this module is not simply to clean regulatory filings, but to
-transform heterogeneous reporting schedules into a longitudinal analytical
-dataset suitable for statistical inference. The pipeline standardizes reporting
-formats across time, performs cross-schedule validation, engineers derived
-variables, and reorganizes the data into structures optimized for temporal,
-cross-sectional, and distributional analysis.
-
-### JSD
-
-[Binning, PMF and calculation guide](src/readme.md)
-
-Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon divergence was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
-
-### Material Events
-
-[Here](Material%20Events/readme.md)
-
-Basel III is ultimately concerned with the ability of regulatory metrics to
-distinguish institutions that subsequently experience materially different
-outcomes.
-
-The Material Events module constructs the dependent variables used throughout
-the empirical framework by identifying future structural banking events—
-including failures, mergers, de novo institutions, and surviving banks—from
-FDIC BankFind data.
-
-Rather than treating all institutions as a homogeneous population, these
-outcomes are preserved as distinct analytical cohorts before preprocessing.
-This enables subsequent peer-group construction and distributional analysis to
-evaluate whether regulatory classifications retain predictive separation across
-future forecast horizons (T+1 through T+4).
-
-## RWA Module (Active Development)
-
-The RWA module extends the empirical Basel III analysis by investigating
-duration-sensitive capital impairment arising from interest-rate risk that is
-not reflected in regulatory risk weights.
-
-### PDF
-
-Explanation of the RWA module mathematical foundation [Here](PDF/readme.md)
-
-### Implemented components
-
-The [RWA source map](src/RWA/readme.md) groups the working implementation by role:
-
-- [Yield data](src/RWA/data/yields/readme.md): live FRED retrieval, preserved quotes, bounded causal cleaning and verified snapshot provenance.
-- [Yield calibration](src/RWA/calibration/yields/readme.md): causal rolling estimates from local FRED yield histories.
-- [Curve repair](src/RWA/calibration/curves/readme.md): NS/NSS repair with parameter-domain checks and explicit diagnostics.
-- [Parameter reconstruction](src/RWA/data/parameters/readme.md): date-aligned outputs for downstream parameter models.
-- [Parameter hierarchy](src/RWA/models/parameter_hierarchy/readme.md): coupled ridge stabilization, endogenous mu/theta/sigma dynamics and joint parameter/yield scenarios.
-
-The [live workflow](pipeline/rwa_live/readme.md) retrieves yields and runs the hierarchy.
-The [offline workflow](pipeline/rwa_hierarchy/readme.md) uses existing local yield files. [RWA data and experiments](RWA/README.md) document existing inputs,
-legacy Practical scripts and output schemas. These implementations support
-interest-rate calibration and simulation; they do not yet calculate exposure-level
-losses or duration-adjusted RWA.
-
-### Remaining research
-
-The PDF objective still requires separating estimation noise from latent parameter
-dynamics, extending evaluation of recursive pathwise recalibration, valuing
-exposures under those scenarios, and establishing the resulting risk/capital mapping.
-The [research checkpoint](.codex-engineering/CURRENT_TASK.md) and
-[journal](.codex-engineering/JOURNAL.md) record evidence and the next milestone.
-
-
----
-
-# How to Run It
-
-### Requirements
-  - `pyyaml`
-  - `pandas`
-  - `numpy`
-  - `requests`
-
-
-### OS Compatibility Note
-- The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.
-
-### Performance Note
-- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation. The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
-
-### How It Works
-1. Install the dependencies from the repository root:
-
-   ```sh
-   python3 -m pip install -r requirements.txt
-   ```
-
-   The pipeline's first task downloads FFIEC **Call Reports — Single Period**, in tab-delimited format. It reads the material-event date ranges in the active YAML, includes three earlier quarters for the dynamic ratios, validates the ZIPs, and extracts them under `data/TXT/`. The current settings require 47 quarters, from 2013Q2 through 2024Q4. No bulk data needs to be copied from another checkout. See the [preparation and rerun instructions](src/readme.md).
-2. `Basel3_Global_Filepath.py`:
-   - Finds the `Basel3/` root directory dynamically from its own location, then;
-   - Resolves `src/`, `data/` and `Material Events/` within that checkout.
-3. Run the manager from the repository root:
-
-   ```sh
-   python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
-   python3 pipeline/Task_manager_Global_yaml_driven.py
-   ```
-
-   The dry run shows the expanded arguments and artifact paths without running scripts or creating logs. Use `--config path/to/config.yaml` for another configuration, or `--list` to list its tasks.
-
-4. `pipeline/pipeline_config_dynamic.yaml` defines:
-   - `parameters`: Shared horizon and bin selections.
-   - `scripts`: Paths relative to `src/`, argument lists, inputs, outputs and directories to create.
-   - `dependencies`: Prerequisites that must complete before a task runs.
-   - `execution`: An ordered list of sequential or concurrent phases. Each phase completes before the next begins.
-
-   The manager expands parameter placeholders in both arguments and artifact paths, validates the plan, and runs each declared task once. Per-task logs are saved under `pipeline_logs/<run-id>/` by default.
-
-### Select Horizons and Bins
-
-Edit this block at the top of the YAML configuration:
+Run the complete Call Report analysis:
+
+```bash
+python3 pipeline/Task_manager_Global_yaml_driven.py
+```
+
+Run Treasury acquisition followed by the parameter hierarchy:
+
+```bash
+python3 pipeline/Task_manager_Global_yaml_driven.py \
+  --config pipeline/rwa_live/config.yaml --dry-run
+python3 pipeline/Task_manager_Global_yaml_driven.py \
+  --config pipeline/rwa_live/config.yaml
+```
+
+The live interest-rate workflow creates a verified yield snapshot and model
+outputs in the locations configured by its YAML. These output directories must
+be new for each run. See the [live workflow guide](pipeline/rwa_live/readme.md)
+for rerun settings and the [RWA execution guide](src/RWA/readme.md) for each
+calculation and its outputs. The [offline configuration](pipeline/rwa_hierarchy/readme.md)
+uses yield files already available in the repository.
+
+The task manager executes the configured stages, checks declared inputs and
+outputs, and writes per-task logs under `pipeline_logs/<run-id>/`. Selected Call
+Report and JSD outputs can be replaced on rerun; the RWA snapshot and hierarchy
+writers require new destinations. Full dependency and execution rules are in
+the [pipeline guide](pipeline/readme.md).
+
+## Call Report analysis
+
+The research asks whether regulatory classifications separate institutions with
+different subsequent outcomes, how that separation changes across observation
+horizons, and whether interest-rate exposure adds information beyond reported
+risk weights. Distributional separation alone does not establish causality,
+predictive accuracy, safety or an appropriate capital requirement.
+
+The default configuration executes 20 tasks in this order:
+
+| Stage | Processing | Result |
+| --- | --- | --- |
+| Download and preparation | Retrieve and validate quarterly FFIEC single-period archives | TXT schedules, checksums and preparation manifest |
+| Conversion and merge | Convert schedules, attach FDIC certificates and merge reporting fields | Bank-quarter CSVs |
+| Ratios and historical changes | Calculate 76 ratios and changes relative to earlier quarters, matching banks by `CERT` | Current ratios and `q0q1`, `q0q2`, `q0q3` changes |
+| Material events | Retrieve FDIC event records, clean them and apply date-window flags | De novo, failure and merger flags |
+| Peer groups | Select Failures, Mergers and Survivors by horizon, then combine calendar-selected quarters | Cohort panels for T+1 through T+4 |
+| Histograms and PMFs | Count observations with common bin edges and normalize each ratio column | Cohort-specific probability distributions |
+| Distribution comparison | Compare Survivors–Failures, Survivors–Mergers and Mergers–Failures | Pairwise distance CSVs |
+| Filtering | Retain columns meeting the configured distance threshold | Selected comparison columns |
+
+The [source guide](src/readme.md) maps every task to its executable program.
+[Ratio definitions](src/ratios/variables/readme.md) document calculations and
+form-specific rules. The [material-event guide](src/material%20events/readme.md)
+explains certificate and date-window semantics.
+
+### Horizons and distribution distances
+
+A horizon relates the observation quarter to the event window. For an event in
+2023 Q1, the corresponding earlier observation quarters are 2022 Q4 at T+1,
+2022 Q3 at T+2, 2022 Q2 at T+3 and 2022 Q1 at T+4. The supplied quarter tables
+determine the actual inclusive event windows and the quarters admitted to the
+analysis. Failure and merger selections can overlap.
+
+Within each observation quarter, `q0` denotes the current ratio and `q0q1`,
+`q0q2`, `q0q3` denote proportional changes against one, two and three prior
+quarters. Their exact denominator and missing-value rules are documented in
+[dynamic ratios](src/ratios/readme.md).
+
+The code reports the **square root of Jensen–Shannon divergence**, using natural
+logarithms. It compares full histogram-based distributions, including differences
+in shape and overlap that low-order moments can miss. Results depend on cohort
+selection, missing-value treatment and bin specification. The [calculation guide](src/jsd/calculation/readme.md)
+defines alignment, normalization and zero-mass handling.
+
+The [YAML configuration](pipeline/pipeline_config_dynamic.yaml) supplies shared
+horizon and bin selections:
 
 ```yaml
 parameters:
@@ -348,87 +127,63 @@ parameters:
   bins3: 1
 ```
 
-The default runs all four horizons and all four central bin counts. For an optional subset, `horizons: [1, 3]` and `bins1: [20, 50]` select only T+1/T+3 and those two central bin counts. The same selection reaches peer-group creation, calendar concatenation, binning, PMFs, JSD comparisons and the final filter. Expected input/output paths expand to that selection as well; no separate horizon scripts or duplicated YAML branches are needed.
+`bins1` gives counts across −1 to 1, `bins2` across 1 to 2 and `bins3` the single
+unbounded upper interval. These defaults produce 26, 36, 56 and 106 total bins.
+Selections propagate through peer groups, histograms, PMFs, comparisons and
+filtering. A future matrix-construction stage and formal evaluation of changes
+in distance across horizons are described in the [output guide](src/jsd/output/readme.md);
+those stages are not implemented.
 
-`bins1` supplies the counts across −1 to 1, `bins2` supplies the count across 1 to 2, and `bins3` is the single unbounded upper bin. Thus `20 + 5 + 1` produces 26 bins. `bins1` accepts positive counts, `bins2` is a positive count, and `bins3` currently accepts only `1`. Output filenames retain the central count, such as `_binned_20.csv`; changing `bins2` updates that specification's outputs.
+## Interest-rate modeling
 
-### Current Workflow
+The [RWA execution guide](src/RWA/readme.md) explains the complete implemented
+sequence and distinguishes the integrated model from the legacy calibration
+scripts. It covers acquisition, quote selection, both parameter-estimation
+passes, ridge treatment, dependence, noise diagnostics, recursive simulation
+and generated results.
 
-The current configuration has **20 tasks**:
+The model applies calibration to yield histories and then separately to the
+estimated `mu`, `theta` and `sigma` histories across maturities. The resulting
+parameter processes drive joint yield and parameter scenarios. Historical
+intervals can use an observation clock or actual calendar year fractions;
+future simulation intervals are configured explicitly. Pathwise recursion
+recalibrates parameter dynamics from each simulated path's available history.
 
-| Tasks | Processing |
+These are research estimates. Calibration noise and overlapping windows can
+produce apparent parameter dynamics. Positive scenarios and passing regression
+tests do not establish economic identification, out-of-sample superiority or an
+arbitrage-free term structure. The [model guide](src/RWA/models/parameter_hierarchy/readme.md)
+details mathematical assumptions and failure handling. The [model PDF](PDF/Recursive%20IRR%20Model.pdf)
+describes the broader research objective.
+
+## Repository map
+
+| Directory | Contents |
 | --- | --- |
-| `0.0` | Download and verify all required FFIEC reporting quarters before conversion |
-| `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
-| `3.0`, `4.0` | Build current-quarter ratios and dynamic ratios using historical rows joined by `CERT` |
-| `6.0.1`–`6.0.3` | Call `Material_events_download.py` concurrently for de novo, failures and mergers |
-| `6.1`, `6.1.1` | Clean the downloads, then remove matching RAW download files |
-| `6.2`–`6.4` | Call `Material_events_flag.py` in de novo → failures → mergers order |
-| `7.0` | Call `peer groups/base/Material_events_peer_group_basel3.py` for selected horizons |
-| `7.1` | Call `peer groups/horizons/Material_events_peer_group_basel3.py` to select calendar files and concatenate each group/horizon |
-| `8.0` | Call `Material_events_JSD_binning_basel3.py` for selected horizons and bin specifications |
-| `8.1.1` | Normalize selected histograms with `Material_events_JSD_probabilities_basel3.py` |
-| `8.2` | Calculate the three comparisons with `Material_events_JSD_basel3.py` |
-| `8.3.0.1` | Apply `JSD_intragroup_filter.py` to selected results; the configured threshold is `0.3` |
+| [src/](src/readme.md) | Executable analytical components and their usage guides |
+| [pipeline/](pipeline/readme.md) | Task manager and workflow configurations |
+| [data/](data/readme.md) | Call Report reference tables and locations for generated datasets |
+| [Material Events/](Material%20Events/readme.md) | Event definitions, analysis calendars and generated outcome data |
+| [RWA/](RWA/README.md) | Treasury input data, archived experimental tables and model-output contracts |
+| [PDF/](PDF/readme.md) | Research model and saved bank-report reference PDFs |
+| [tests/](tests/readme.md) | Regression and integration tests |
 
-The eight material-event tasks use four direct scripts. Their YAML `args` lists supply event selections and paths. The six subsequent tasks use two peer-group scripts, one binning script, one PMF script, one calculation script and one filter script. Each selected group/horizon retains its own output files.
+Downloaded archives, caches, run logs and generated model scenarios remain
+local. Their producing workflows create manifests and audit records so each
+result can be traced to its inputs and settings. Shipped historical tables are
+identified in their directory guides; new outputs are not assumed to exist in
+a fresh clone.
 
-See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI](src/material%20events/readme.md), [peer-group CLI](src/peer%20groups/base/readme.md), [binning CLI](src/jsd/binning/readme.md), and [JSD calculation CLI](src/jsd/calculation/readme.md).
+## Validation
 
-### Directory Structure
-- `pipeline/`:
-  - `Task_manager_Global_yaml_driven.py`
-  - `pipeline_config_dynamic.yaml`
-- `data/`:
-  - `CSV/`:
-    - `Schedules/`:
-      - `20240630/`:
-        - `FFIEC CDR Call Schedule RC 06302024.csv`
-    - `Cleaned/`:
-      - `Cleaned_Call_Report_20240630.csv`
-    - `Interleaved/`:
-      - `Cleaned_Call_Report_20240630.csv`
-    - `Dynamic_Lag/`:
-      - `Cleaned/`:
-        - `Dynamic_Cleaned_Call_Report_20240630.csv`
-  - `TXT/`: downloaded quarterly schedules, stored locally.
-  - `FFIEC/`: validated ZIP cache and preparation records, stored locally.
-- `Material Events/`: tracked quarter tables and reference CSVs. The pipeline creates event, peer-group, JSD and filtered-output subfolders when it runs.
-- `PDF/`: research models and the archived bank-report PDFs in `Call Reports/`.
-- `RWA/`: source data and separate RWA research work.
-- `src/`: subroot directory containing all scripts.
-  - `call reports/`:
-    - `prepare_call_reports.py`
-    - `call_reports_mkdir_txt_csvs_global.py`
-    - `Call_Report_Merged_Cleaned_Global.py`
-    - `numeric_only.py`
-    - `Call_Report.py`
-    - `Call_Reports_v4_0.py`
-  - `ratios/`:
-    - `Dynamic_Ratios.py`
-    - `variables/readme.md`: ratio definitions.
-  - `material events/`:
-    - `FDIC API/`:
-      - `Material_events_download.py`
-      - `Material_events_cleaned.py`
-      - `Material_events_delete_api.py`
-    - `Material_events_flag.py`
-  - `peer groups/`:
-    - `base/`:
-      - `Material_events_peer_group_basel3.py`
-    - `horizons/`:
-      - `Material_events_peer_group_basel3.py`
-  - `jsd/`:
-    - `binning/`:
-      - `Material_events_JSD_binning_basel3.py`
-    - `pmf/`:
-      - `Material_events_JSD_probabilities_basel3.py`
-    - `calculation/`:
-      - `Material_events_JSD_basel3.py`
-  - `measures/`:
-    - `intragroup/`:
-      - `JSD_intragroup_filter.py`
-    - `intergroup/`:
-      - `JSD_intergroup_call_reports.py`
+Install the project requirements and follow the [test guide](tests/readme.md)
+for the complete suite or focused component checks. Tests use isolated fixtures
+and cover analytical contracts, independent likelihood comparisons, chronology,
+parameter branches, recursive histories, input verification and pipeline wiring.
+Scientific validation also requires suitable held-out data, sensitivity analysis
+and comparison with alternative model assumptions.
 
-The old root-level `Call Report/`, `JSD/` and `Variables/` directories are not part of a fresh clone. Call Report data is downloaded into `data/`; new JSD results are written under `Material Events/`; the [ratio catalogue](src/ratios/variables/readme.md) is kept beside the ratio code. Historical CSVs and saved sample results remain available in [commit 176c8db](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1). Existing local copies are retained and ignored by Git.
+## Author
+
+Jonathan Waller — Independent Researcher
+[GitHub](https://github.com/OCBliss) · [Contact](mailto:johnny.waller.nb@gmail.com)

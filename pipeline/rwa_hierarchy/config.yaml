@@ -10,6 +10,9 @@ parameters:
   substeps: 4
   seed: 1234
   noise_replicates: 0
+  time_basis: observation
+  missing_policy: forward-fill
+  dt: 0.003968253968253968
   forecast_mode: recursive
   recalibrate_every: 1
 
@@ -35,6 +38,12 @@ scripts:
       - "{seed}"
       - --noise-replicates
       - "{noise_replicates}"
+      - --time-basis
+      - "{time_basis}"
+      - --missing-policy
+      - "{missing_policy}"
+      - --dt
+      - "{dt}"
       - --forecast-mode
       - "{forecast_mode}"
       - --recalibrate-every
@@ -42,7 +51,9 @@ scripts:
     inputs: ["RWA/FRED/DGS*.csv"]
     outputs:
       - "{output_dir}/manifest.json"
+      - "{output_dir}/yield_parameters.csv"
       - "{output_dir}/parameter_dynamics.csv"
+      - "{output_dir}/transition_intervals.csv"
       - "{output_dir}/scenario_summary.csv"
       - "{output_dir}/scenarios.npz"
 

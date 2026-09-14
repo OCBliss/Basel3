@@ -6,7 +6,7 @@ second stochastic process or estimate xi.
 
 ## Rebuild
 
-From `Basel3_repo`, with the root requirements installed:
+From the repository root, with the root requirements installed:
 
 ```bash
 python3 src/RWA/data/parameters/rebuild.py
@@ -55,4 +55,10 @@ fits processes to **mu, theta and sigma**, including volatility of each paramete
 Its CLI starts from FRED yields and produces its own consistent calibration run;
 it does not automatically scan this folder. Its documented Python interface can
 accept a long first-stage table assembled from existing parameter histories.
+When consuming hierarchy exports from ACT/365F/observed mode, retain their
+manifest and interval audit. These date-based joins accommodate irregular genuine
+common dates, but this six-column legacy export does not preserve time-basis
+metadata and performs no recalibration. A downstream fit must explicitly use the
+same historical interval convention.
+
 See the [MLE VOL guide](../readme.md) for the legacy experiment and active commands.

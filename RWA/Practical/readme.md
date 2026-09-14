@@ -14,17 +14,19 @@ see [Expected Loss](Expected%20Loss/readme.md) for the required contract.
 
 | Historical stage | Purpose and status |
 | --- | --- |
-| [Cleaned](Constant%20Maturity%20Treasury/Cleaned/README.md) | Merge six FRED maturity series by date; legacy filesystem-wide root discovery |
+| [Cleaned](Constant%20Maturity%20Treasury/Cleaned/README.md) | Merge six FRED maturity series by date; retain descending-order filling |
 | [Differenced](Constant%20Maturity%20Treasury/Differenced/README.md) | Compute row-offset yield changes; chronological interpretation depends on input ordering |
 | [EXP_DRIFT](Constant%20Maturity%20Treasury/EXP_DRIFT/readme.md) | Average the retained changes in one selected input file |
 | [EXP_COUPON](Constant%20Maturity%20Treasury/EXP_COUPON/readme.md) | Estimate CIR or AR(1) parameters; does not calculate coupon cash flows |
 | [Bond valuation proposal](Constant%20Maturity%20Treasury/readme.md) | Intended pricing and return calculations; no implementation currently present |
 
-The first three legacy scripts search the filesystem for a global path file.
-The parameter experiment expects a `CODE` ancestor that does not match this
-checkout. They are retained for research history and are not safe current
-repository-root entry points. Their data has not been regenerated during the
-source reorganization.
+These scripts resolve their path helper from this repository's `src/` directory.
+They retain their historical algorithms and output conventions and are not
+integrated into the active snapshot-to-scenario pipeline. The cleaning and
+differencing scripts execute at import; run them only as explicit scripts, and
+review their overwrite behavior before reproducing an experiment. Checked-in outputs are historical artifacts, not
+verified products of the current executable workflow; assess their source,
+ordering, units and processing assumptions before using them.
 
 ## Current executable interest-rate workflow
 

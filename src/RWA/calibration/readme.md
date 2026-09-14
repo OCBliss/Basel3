@@ -29,8 +29,8 @@ python3 src/RWA/calibration/curves/theta.py
 
 Review accepted and failed repairs before
 [reconstructing parameter histories](../data/parameters/readme.md). These commands
-replace their configured historical output files; moving the source folders does
-not regenerate data or certify older results.
+replace their configured output files. Rebuild dependent tables from the same
+input histories and settings before comparing or combining results.
 
 The [parameter hierarchy](../models/parameter_hierarchy/readme.md) uses a separate
 coupled stabilization method and calibrates parameter histories within its own

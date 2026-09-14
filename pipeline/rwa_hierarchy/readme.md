@@ -14,7 +14,7 @@ Install the [repository requirements](../../requirements.txt). Supply the eight
 it does not fetch new quotes.
 
 Before each real run, set `parameters.output_dir` in `config.yaml` to a **new**
-directory inside `Basel3_repo`. Do not create that directory beforehand. All
+directory inside the repository. Do not create that directory beforehand. All
 commands below run from the repository root:
 
 ```bash
@@ -41,14 +41,50 @@ numerical suitability of the data. A real run writes task logs under
 | `steps` | `20` | Number of reported forecast increments after the initial state. |
 | `substeps` | `4` | Internal Euler increments per reported increment. |
 | `seed` | `1234` | Reproducible simulation seed. |
+| `forecast_mode` | `recursive` | Pathwise recalibration; use `frozen` for origin coefficients and dependence. |
+| `recalibrate_every` | `1` | Reported-step cadence for recursive updates; zero disables updates. |
+| `time_basis` | `observation` | Historical transition clock: `observation` or `act365f`. |
+| `missing_policy` | `forward-fill` | Causal fills or `observed` genuine common-date quotes. |
+| `dt` | `0.003968253968253968` | Future reported-step year fraction (1/252); also the historical interval in observation mode. |
 | `noise_replicates` | `0` | Disable the estimation-noise benchmark; use at least two to enable it. Sixteen gives a small diagnostic at additional cost. |
 
-The model's other defaults include `dt = 1/252`, all eight maturities, likelihood
-repair budget `2`, fallback theta `0.25` and correlation shrinkage `0.05`.
+The model's other defaults include all eight maturities, likelihood repair
+budget `2`, fallback theta `0.25` and correlation shrinkage `0.05`.
 Changing `substeps` refines the numerical approximation while keeping each
 reported increment's duration unchanged. The
 [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) explains the settings,
 minimum history, units, diagnostics and Python interface.
+
+## Configure elapsed-time calibration
+
+The saved YAML preserves the historical observation-clock/forward-fill defaults.
+To fit genuine observations using actual historical year fractions, set these
+existing entries in its `parameters` block:
+
+```yaml
+time_basis: act365f
+missing_policy: observed
+dt: 0.003968253968253968
+```
+
+The model arguments already pass these settings. `observed` reads original
+`DGS<n>` values and retains only dates genuinely observed across all selected
+tenors; it does not fit prepared fill values. ACT/365F divides the calendar time
+between retained dates by 365 days, including weekends, gaps and leap years.
+Both rolling calibration passes, dependence residuals, the optional noise
+benchmark and recursive history buffers use those historical intervals.
+
+Windows and `recent_rows` remain observation counts, so a common count can span
+different dates under the two policies. `dt` remains the regular **future**
+year-fraction increment; use `0.0027397260273972603` for 1/365 if that forecast grid
+is intended. No business-day/holiday forecast calendar is generated. Substeps
+refine each future increment without creating extra calibration observations.
+
+Review `transition_intervals.csv`, the manifest's `time_convention`, source
+exclusions and fitted-parameter audits. Retaining actual durations does not remove
+Euler approximation error, informative-missingness bias or estimation noise, and
+it does not construct an arbitrage-free spot curve. See the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
+and [elapsed-time tests](../../tests/test_rwa_elapsed_time.py).
 
 ## YAML path and execution contract
 
@@ -60,8 +96,8 @@ path: RWA/models/parameter_hierarchy/workflow.py
 
 Script paths resolve relative to `src/`, so this value deliberately omits a
 leading `src/`. Input/output artifact paths and the default task working
-directory resolve from the repository root, even though the YAML now lives in
-this nested directory. Arguments are a list; values such as `"{output_dir}"`
+directory resolve from the repository root, even though the YAML lives in
+this directory. Arguments are a list; values such as `"{output_dir}"`
 expand from the top-level `parameters` block.
 
 `dependencies: {}` is an explicit empty dependency mapping and the execution
@@ -75,7 +111,9 @@ output destination.
 The configured completion artifacts are `manifest.json`,
 `parameter_dynamics.csv`, `scenario_summary.csv` and `scenarios.npz` beneath
 `output_dir`. The workflow additionally writes `yield_parameters.csv`,
-per-maturity `RAW/` histories and three `CURVE/` tables. The manifest records
+per-maturity `RAW/` histories, three `CURVE/` tables and exact historical
+`transition_intervals.csv`. Forecast NPZ and summary outputs include
+`elapsed_years`, measured from the forecast origin. The manifest records
 settings, source hashes, regularization/dependence diagnostics, boundary
 projections and the optional estimation-noise benchmark; it is written last.
 An output directory without a completion manifest is incomplete.

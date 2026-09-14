@@ -1,10 +1,23 @@
-This file contains data from Call Reports received and processed by 
-the FFIEC Central Data Repository (CDR) as of 2024-09-15T04:30:02 
-The file is meant to provide integrated view of financial data 
-across the financial institutions filing Call Reports in a format 
-that could facilitate the analysis of such data by the public. 
-The file may not contain the most recent Call Report and financial 
-institutions data available in FFIEC CDR for public access. To 
-obtain the most recent publicly available Call Report facsimiles, 
-visit the FFIEC CDR Public Data Distribution site. 
-  
+# Downloaded FFIEC schedules
+
+The Call Report preparation stage downloads and extracts quarterly single-period
+archives into `FFIEC CDR Call Bulk All Schedules YYYYMMDD/` directories here.
+The TXT schedules are generated local inputs and are excluded from Git.
+
+From the repository root:
+
+```bash
+python3 "src/call reports/prepare_call_reports.py" --plan
+python3 "src/call reports/prepare_call_reports.py"
+```
+
+The first command lists required quarters; the second retrieves and verifies
+them. ZIP caches and per-quarter checksums are written under `data/FFIEC/`.
+The subsequent [conversion stage](../../src/call%20reports/readme.md) reads these
+TXT files and uses the POR schedule to attach FDIC certificate numbers.
+
+The two tracked quarterly README files preserve FFIEC notices from historical
+exports. Their processing timestamps describe those exports, not the vintage
+of a new download. Consult the newly generated preparation manifest and file
+checksums for the data used by a current run. See the [data guide](../readme.md)
+for refresh and cache behavior.

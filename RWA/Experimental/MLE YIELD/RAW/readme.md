@@ -5,7 +5,7 @@ This directory contains one rolling-calibration file per Treasury maturity:
 
 ## Generate
 
-From `Basel3_repo`, after installing the root requirements:
+From the repository root, after installing the root requirements:
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -42,6 +42,18 @@ The likelihood is the Gaussian Euler approximation to
 `sigma**2 * X * dt`. Consecutive observations use the same time step; calendar
 holidays and gaps do not create variable time steps in this implementation.
 
+## Active hierarchy exports
+
+The separate [parameter hierarchy](../../../../src/RWA/models/parameter_hierarchy/readme.md)
+exports a compatible `RAW/` inside each [new model run](../../HIERARCHY/readme.md).
+Its optional `--time-basis act365f --missing-policy observed` fits genuine
+common-date quotes with actual historical gaps; the standalone command above
+continues to use its fixed constants. Hierarchy RAW files put model-used yields
+in both DGS and `yield_clean`, so preserve the source snapshot for original
+missingness. Dates can be irregular; keep the hierarchy manifest and exact
+`transition_intervals.csv` alongside these tables. Do not infer the method from
+a shared filename or mix outputs from different clocks and missingness policies.
+
 ## Next stages and historical data
 
 Use the [CURVE assembly recipe](../CURVE/readme.md) to form date-keyed maturity
@@ -50,6 +62,5 @@ panels, then [repair mu/theta](../NSS/readme.md) and reconstruct
 
 The existing tracked CSVs predate the chronological calibration repair. Their
 presence does not mean the current implementation generated or validated them.
-For isolated checks, use the [test guide](../../../../tests/readme.md) and
-`test_rwa_calibration.py`; do not run a full historical overwrite merely to check
-that a command is documented.
+For isolated checks that preserve historical CSVs, use the
+[test guide](../../../../tests/readme.md) and `test_rwa_calibration.py`.

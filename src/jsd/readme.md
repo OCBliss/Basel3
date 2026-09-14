@@ -1,7 +1,7 @@
 # Distribution comparisons
 
 These stages compare bank-ratio distributions for Failures, Mergers and Survivors
-at the selected observation horizons. Run from `Basel3_repo` after the
+at the selected observation horizons. Run from the repository root after the
 [peer-group stages](../peer%20groups/readme.md) have produced the selected panels.
 Install the root `requirements.txt` first.
 
