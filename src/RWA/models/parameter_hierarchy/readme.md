@@ -12,6 +12,18 @@ motivates the recursive update. The implementation uses the CIR interpretation
 and initialization convention described below; it does not implement exposure
 valuation, loss aggregation or a duration-adjusted RWA calculation.
 
+## Guide contents
+
+- [State factors and fitted coefficient names](#state-and-coefficient-names)
+- [Historical initialization and the 2,520-row window](#historical-initialization-estimates-need-their-own-warmup)
+- [Every-increment dependency and update order](#every-increment-calculation)
+- [Covariance calculation for all eight maturities](#covariance-calculation-for-all-eight-maturities)
+- [Cholesky calculation](#cholesky-calculation)
+- [Brownian covariance and the shock transformation](#brownian-covariance-and-the-shock-transformation)
+- [Repairing each factor at every tenor](#repairing-each-factor-at-every-tenor)
+- [Calibration and coupled ridge treatment](#calibration-and-coupled-ridge-treatment)
+- [Run commands](#run-from-the-repository-root), [saved outputs](#outputs-and-compatibility) and [verification](#verify-a-completed-run)
+
 ## Component responsibilities
 
 | Source | Responsibility |
@@ -94,6 +106,15 @@ The historical tables keep their established `theta`, `mu`, `sigma` column names
 there `mu` means a fitted long-run mean. The simulation has three state families,
 not separate stochastic states for every historical coefficient column.
 
+Here **state factor** means one maturity-indexed rate, sigma or xi process.
+The eight tenor components within a family are the variables whose covariance
+is estimated. These factors are distinct from the numerical Cholesky factor L,
+which is a matrix used to transform shocks. Historical `mu` (μ, long-run mean),
+`theta` (θ, mean-reversion speed) and fitted `sigma` are calibration outputs;
+their names do not create extra latent-factor families. Each recursive state's
+fresh drift fit likewise has a speed and long-run mean, while its actual diffusion
+multiplier follows the ordered higher-state dependency below.
+
 Historical xi uses the `Vol(nu)` identification in equations 2.3/2.9. Forecast xi
 is a CIR state whose coefficients are reestimated from its own rolling history,
 following the PDF's CIR prose and page-four shock ordering. It is not forcibly
@@ -137,34 +158,194 @@ to freeze coefficients or skip intermediate covariance updates. Increasing
 
 ## Separate factor and Brownian covariances
 
-For each family, the archive distinguishes:
+[Covariance estimation](covariance.py) works on the current history with default
+shape `(2520, 3, 8)`. The three families are rate (PDF X), sigma (PDF ν) and xi
+(PDF ξ). Every family uses this exact maturity order on **both** matrix axes:
 
-| Array | Mathematical meaning |
+| Matrix position | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Treasury maturity in years | 1 | 2 | 3 | 5 | 7 | 10 | 20 | 30 |
+
+Each actual increment recreates three separate 8×8 level covariance matrices C,
+three 8×8 correlations R, three 8×8 Cholesky factors L, and three 8×8 Brownian
+covariances Q. The two covariance sets are **{C_rate, C_sigma, C_xi}** and
+**{Q_rate, Q_sigma, Q_xi}**. A Cholesky factor is not an additional covariance.
+Each C or Q stores all 64 entries, with eight entries in each maturity row;
+symmetry relates pairs of entries but does not change the stored 8×8 shape.
+Together the two covariance sets contain six matrices, or 384 stored entries.
+
+| Archive array | Meaning and default shape |
 | --- | --- |
-| `factor_covariance` | Sample covariance C of historical state levels, divisor `n-1` |
-| `raw_correlation` | Level covariance normalized by its marginal standard deviations |
-| `correlation` | R actually used to correlate shocks |
-| `cholesky` | Lower-triangular L satisfying `L @ L.T = R` |
-| `brownian_covariance` | Conditional Brownian-increment covariance Q = `h * R` |
-| `brownian_increments` | Realized vector `sqrt(h) * L @ Z` |
+| `factor_covariance` | Rolling sample level covariances C; `(3,8,8)` |
+| `raw_correlation` | C normalized by its marginal standard deviations; `(3,8,8)` |
+| `correlation` | R actually used to correlate shocks; `(3,8,8)` |
+| `cholesky` | Lower-triangular L satisfying LLᵀ = R; `(3,8,8)` |
+| `brownian_covariance` | Conditional Brownian-increment covariances Q = hR; `(3,8,8)` |
+| `normal_shocks` | Three independent standard-normal eight-vectors; `(3,8)` |
+| `brownian_increments` | Three realized transformed eight-vectors; `(3,8)` |
 
-Each matrix array has shape `(3, maturity, maturity)`: three distinct 8×8 matrices
-for eight tenors. Each realized shock family is an eight-element vector, not an
-8×8 matrix. C describes state-level dispersion; Q describes Brownian increments
-before the model's state-dependent diffusion multipliers. No pooled cross-family
-matrix is estimated or applied.
+### Covariance calculation for all eight maturities
 
-`--correlation-regularization 0` preserves the empirical correlations by default.
-Rank deficiency, undefined zero-variance correlations and invalid Cholesky factors
-fail explicitly. An explicitly requested alpha in `(0, 1]` replaces R with
-`(1-alpha)*raw_correlation + alpha*I`; the unchanged C, raw correlation and alpha
-are retained. This is an explicit modeling adjustment, not a recovery of missing
-information. It does not make a zero-variance correlation defined.
+Let $f\in\{\mathrm{rate},\mathrm{sigma},\mathrm{xi}\}$ denote one family, and let
+$Y^{(f)}_{s,i}$ be its history value at row $s$ and maturity position $i$.
+There are $n=2520$ rows by default. The initial rows are the aligned historical
+states; each completed increment replaces the oldest row with the new simulated
+states. All calculations below use the current buffer **before the next shock**.
+Historical calibration and any accepted parameter repairs establish sigma and xi
+history before it enters this calculation. Rate history retains the model-used
+source yields; a parameter repair does not rewrite those historical rate quotes.
+At a recursive increment, C describes the already available state buffer; refitting
+its coefficients does not retroactively replace the buffered states.
 
-Independent Gaussian families follow the PDF's independent-Z equations. A
-separate nonzero instantaneous cross-family rho is not imposed. Sigma and rate
-still depend on the updated lower-level states through the ordered equations.
-Correlations are calculated from state levels, not pooled standardized innovations.
+For every $i,j\in\{1,2,3,4,5,6,7,8\}$, compute the sample mean and covariance:
+
+$$
+\bar Y^{(f)}_i=\frac{1}{n}\sum_{s=1}^{n}Y^{(f)}_{s,i},\qquad
+C^{(f)}_{ij}=\frac{1}{n-1}\sum_{s=1}^{n}
+\left(Y^{(f)}_{s,i}-\bar Y^{(f)}_i\right)
+\left(Y^{(f)}_{s,j}-\bar Y^{(f)}_j\right).
+$$
+
+The divisor is **n−1** (`ddof=1`). The sample mean above centers the covariance;
+it is not the fitted CIR long-run mean μ. These are covariances of state
+**levels**, with one equal-weight row per retained observation or increment.
+They are not covariances of pooled innovations or time-weighted increments.
+Historical transition lengths enter CIR calibration separately.
+
+For each of the three families, the complete matrix has the following layout
+(the family superscript is suppressed only to keep the entries readable):
+
+$$
+C=\begin{bmatrix}
+C_{11}&C_{12}&C_{13}&C_{14}&C_{15}&C_{16}&C_{17}&C_{18}\\
+C_{21}&C_{22}&C_{23}&C_{24}&C_{25}&C_{26}&C_{27}&C_{28}\\
+C_{31}&C_{32}&C_{33}&C_{34}&C_{35}&C_{36}&C_{37}&C_{38}\\
+C_{41}&C_{42}&C_{43}&C_{44}&C_{45}&C_{46}&C_{47}&C_{48}\\
+C_{51}&C_{52}&C_{53}&C_{54}&C_{55}&C_{56}&C_{57}&C_{58}\\
+C_{61}&C_{62}&C_{63}&C_{64}&C_{65}&C_{66}&C_{67}&C_{68}\\
+C_{71}&C_{72}&C_{73}&C_{74}&C_{75}&C_{76}&C_{77}&C_{78}\\
+C_{81}&C_{82}&C_{83}&C_{84}&C_{85}&C_{86}&C_{87}&C_{88}
+\end{bmatrix}\in\mathbb R^{8\times8}.
+$$
+
+The diagonal entries are the eight level variances. Each off-diagonal entry is
+the covariance between the two labelled maturities. Normalize with the diagonal
+matrix of standard deviations:
+
+$$
+D^{(f)}=\operatorname{diag}\!\left(\sqrt{C^{(f)}_{11}},\sqrt{C^{(f)}_{22}},
+\sqrt{C^{(f)}_{33}},\sqrt{C^{(f)}_{44}},\sqrt{C^{(f)}_{55}},
+\sqrt{C^{(f)}_{66}},\sqrt{C^{(f)}_{77}},\sqrt{C^{(f)}_{88}}\right),
+$$
+
+$$
+R^{(f)}_{\mathrm{raw}}=(D^{(f)})^{-1}C^{(f)}(D^{(f)})^{-1},\qquad
+R^{(f)}_{\mathrm{raw},ij}=\frac{C^{(f)}_{ij}}{\sqrt{C^{(f)}_{ii}C^{(f)}_{jj}}}.
+$$
+
+Each correlation matrix has diagonal one. The implementation assigns that
+diagonal exactly after normalization to remove floating-point roundoff.
+`--correlation-regularization 0` uses this empirical correlation unchanged.
+If an alpha in `(0,1]` is explicitly requested, the matrix actually factored is
+
+$$
+R^{(f)}=(1-\alpha)R^{(f)}_{\mathrm{raw}}+\alpha I_8.
+$$
+
+At the default $\alpha=0$, $R^{(f)}=R^{(f)}_{\mathrm{raw}}$. The archive retains
+the unchanged C, raw correlation and chosen alpha. This adjustment is explicit;
+it does not recover missing information. Zero-variance columns fail because
+normalization is undefined. Rank-deficient empirical correlations fail by
+default; unusable Cholesky factors also fail explicitly.
+
+### Cholesky calculation
+
+For **each family separately**, calculate the lower-triangular 8×8 matrix
+$L^{(f)}$ satisfying
+
+$$
+L^{(f)}(L^{(f)})^{\mathsf T}=R^{(f)}.
+$$
+
+The entrywise Cholesky–Banachiewicz recurrence is, for $j=1,2,3,4,5,6,7,8$:
+
+$$
+L^{(f)}_{jj}=\sqrt{R^{(f)}_{jj}-\sum_{k=1}^{j-1}(L^{(f)}_{jk})^2},
+$$
+
+$$
+L^{(f)}_{ij}=\frac{R^{(f)}_{ij}-\sum_{k=1}^{j-1}L^{(f)}_{ik}L^{(f)}_{jk}}
+{L^{(f)}_{jj}},\qquad i=j+1,\ldots,8,
+$$
+
+$$
+L^{(f)}_{ij}=0\quad\text{for }i<j.
+$$
+
+The empty sum at $j=1$ is zero. Each positive diagonal pivot is calculated
+before the entries below it; later columns subtract products already accounted
+for by earlier columns. All three full factors have this 8×8 layout:
+
+$$
+L=\begin{bmatrix}
+L_{11}&0&0&0&0&0&0&0\\
+L_{21}&L_{22}&0&0&0&0&0&0\\
+L_{31}&L_{32}&L_{33}&0&0&0&0&0\\
+L_{41}&L_{42}&L_{43}&L_{44}&0&0&0&0\\
+L_{51}&L_{52}&L_{53}&L_{54}&L_{55}&0&0&0\\
+L_{61}&L_{62}&L_{63}&L_{64}&L_{65}&L_{66}&0&0\\
+L_{71}&L_{72}&L_{73}&L_{74}&L_{75}&L_{76}&L_{77}&0\\
+L_{81}&L_{82}&L_{83}&L_{84}&L_{85}&L_{86}&L_{87}&L_{88}
+\end{bmatrix}\in\mathbb R^{8\times8}.
+$$
+
+The implementation calls `numpy.linalg.cholesky(R)` for this factorization;
+it does not maintain a separate handwritten recurrence. The archive records
+all three resulting factors. They are recreated from the current history before
+every increment, including the first increment and every substep, before new
+normal vectors are drawn. No pooled cross-family factor is estimated or applied.
+
+### Brownian covariance and the shock transformation
+
+For each family draw an eight-component column vector
+$z^{(f)}\sim\mathcal N(0,I_8)$. The three normal vectors are independent. With
+actual increment length $h=dt/\mathrm{substeps}$ in years, apply the factor once:
+
+$$
+\Delta W^{(f)}=\sqrt h\,L^{(f)}z^{(f)},\qquad
+\Delta W^{(f)}_i=\sqrt h\sum_{j=1}^{i}L^{(f)}_{ij}z^{(f)}_j,
+\quad i=1,2,3,4,5,6,7,8.
+$$
+
+Conditioning on the rolling history that produced L gives
+
+$$
+Q^{(f)}=\operatorname{Cov}(\Delta W^{(f)}\mid\text{current history})
+=hL^{(f)}I_8(L^{(f)})^{\mathsf T}=hR^{(f)}\in\mathbb R^{8\times8}.
+$$
+
+Thus every Brownian marginal has variance h, while each off-diagonal entry is
+$Q^{(f)}_{ij}=hR^{(f)}_{ij}$. Each **realized** $\Delta W^{(f)}$ is an eight-vector;
+its conditional covariance Q is the full 8×8 matrix. C has the squared units of
+its state family, R is dimensionless, and Q has units of elapsed years.
+
+The model uses level correlations as its cross-maturity Brownian dependence
+assumption. It factors the unit-diagonal R because the SDE separately supplies
+the diffusion magnitude: xi's fitted diffusion, new xi for sigma, and new sigma
+for rate, each multiplied by the square root of the receiving state. Factoring
+C in this shock transformation would also inject historical level standard
+deviations into those SDE amplitudes, double-counting a scale the stated model
+does not put into its Brownian drivers. Q therefore describes the drivers before
+state-dependent multipliers; it is not the covariance of the final state changes.
+
+After dependence is refreshed, every increment also fits xi's free-diffusion
+CIR coefficients and rate/sigma drifts conditional on their known varying
+higher-state histories. The [ordered update](#every-increment-calculation) then
+advances **xi → sigma using new xi → rate using new sigma** with the newly
+transformed shocks. Those results enter the next rolling covariance and refit
+window. Independent Gaussian families follow the PDF's independent-Z equations;
+no additional nonzero instantaneous cross-family rho is imposed. The nonlinear
+higher-state multipliers still couple the evolving families.
 
 ## Calibration and coupled ridge treatment
 
@@ -186,16 +367,64 @@ error is flagged weak. This diagnostic is not a confidence interval or proof of
 identification. Zero raw speed makes the mean undefined; constant histories are
 marked deterministic/unidentified.
 
-Healthy maturity nodes provide log-speed/log-maturity anchors. If none are
-available, use the previous calibrated speeds; at initialization without those,
-use the explicit `--fallback-theta` setting (default 0.25 per year). Move toward
-an anchor only within `--nll-budget` (default 2.0) of the raw likelihood optimum.
-This budget is a regularization allowance, not a confidence guarantee. Raw estimates, anchor sources,
-targets, likelihood costs and weak/regularized flags are retained. A regularized
-fit keeps its weak flag. The anchoring and likelihood-budget rule applies to all historical parameter
-branches and all three recursive state families. Rate and sigma recursion use
-the conditional likelihood below rather than reprofiling an invented scalar
-diffusion.
+### Repairing each factor at every tenor
+
+All eight columns—**1, 2, 3, 5, 7, 10, 20 and 30 years**—are fitted before
+weak-node repair targets are selected. These are per-tenor marginal or conditional
+Euler likelihood fits with cross-tenor repair anchors. The covariance calculation
+is separate; the estimator is not a full multivariate joint likelihood.
+
+| Stage, across all eight tenors | Estimated quantities | Action for a weak tenor |
+| --- | --- | --- |
+| First historical pass on yields | Each tenor's μ, θ and σ | Reprofile the mean and diffusion together at an admissible anchored speed |
+| Second pass on the entire μ history | Speed, long-run mean and diffusion of μ | Apply the same coupled free-diffusion repair within this branch |
+| Second pass on the entire θ history | Speed, long-run mean and diffusion of θ | Apply the same coupled free-diffusion repair within this branch |
+| Second pass on the entire σ history | Speed, long-run mean and diffusion of σ; its diffusion initializes xi history | Apply the same coupled free-diffusion repair within this branch |
+| Every increment: rate family | Speed and long-run mean conditional on sigma history | Reprofile drift while holding the known varying sigma history and transition variances fixed |
+| Every increment: sigma family | Speed and long-run mean conditional on xi history | Reprofile drift while holding the known varying xi history and transition variances fixed |
+| Every increment: xi family | Speed, long-run mean and free diffusion | Reprofile the mean and diffusion together at an admissible anchored speed |
+
+For each panel, [core.py](core.py) applies the following procedure:
+
+1. Fit every tenor and diagnose a weak speed when θ is below `1e-4` per year
+   or no greater than its local regression standard error. Healthy fits remain
+   unchanged. A deterministic/unidentified free-diffusion history remains flagged.
+2. Sort healthy tenor nodes by maturity and interpolate **log θ against log
+   maturity** to propose each weak node's speed. This covers every weak maturity,
+   including the 1-year and 30-year endpoints. Outside the healthy-node span,
+   `numpy.interp` uses the nearest healthy endpoint speed; it does not extrapolate
+   a new slope. One healthy node supplies its speed to all weak targets.
+3. If every node is weak, use that tenor's prior calibrated speed. At the first
+   fit without a prior, use `--fallback-theta` (default 0.25 per year). These
+   fallback sources remain explicit in the audit.
+4. Refit at the proposed speed. For a free-diffusion fit, this profiles the drift
+   intercept a = θμ, hence μ, and residual diffusion σ together. For a conditioned
+   fit, it profiles the intercept and μ while keeping the supplied higher-state
+   history and its variances fixed. This preserves the coefficient relationship
+   used by that tenor's own transition likelihood.
+5. Accept the target only when its negative-log-likelihood increase is at most
+   `--nll-budget` (default 2.0). Otherwise, perform **45 bisection iterations**
+   along the segment from the raw optimum's speed toward the target, retaining
+   an admissible profiled candidate. A target is not forced through the budget.
+6. Preserve raw estimates, the target, anchor source, accepted change, likelihood
+   cost and usability diagnosis. The original weak flag survives an accepted
+   repair: regularization does not demonstrate that identification was recovered.
+
+This is **log-linear tenor anchoring with coupled likelihood profiling**. It does
+not independently smooth μ, θ and σ or claim improved forecast performance.
+The standalone legacy [mu NS/NSS repair](../../calibration/curves/mu.py) and
+[theta NS/NSS repair](../../calibration/curves/theta.py), documented in the
+[curve-repair guide](../../calibration/curves/readme.md), are separate commands.
+They are not invoked by this recursive workflow, and there is no separate NSS
+repair of sigma in the current model.
+
+Parameter healing and correlation conditioning act on different objects. The
+repair above changes fitted coefficients subject to their likelihoods; it does
+not rewrite historical raw rates or smooth the 64 entries of C. The explicit
+correlation alpha changes R before Cholesky while retaining raw C and R. Alpha
+is zero by default: there is no automatic matrix repair. Undefined variances,
+invalid factors or unusable accepted coefficients fail rather than becoming
+silently replaced observations or simulated states.
 
 For a lower state Y with known higher-state history A, the ordered model uses
 right-endpoint A in every historical transition:

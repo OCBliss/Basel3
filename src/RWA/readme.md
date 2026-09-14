@@ -8,6 +8,29 @@ including the first. Its current endpoint is a serial trajectory with complete
 calibration and covariance records. Exposure valuation and duration-adjusted RWA
 remain downstream research stages.
 
+## Model calculations
+
+- [State factors and fitted μ/θ/diffusion coefficients](models/parameter_hierarchy/readme.md#state-and-coefficient-names)
+- [Initialization and the complete 2,520-row history](models/parameter_hierarchy/readme.md#historical-initialization-estimates-need-their-own-warmup)
+- [Full eight-maturity covariance calculation](models/parameter_hierarchy/readme.md#covariance-calculation-for-all-eight-maturities)
+- [Repairing every factor at all eight tenors](models/parameter_hierarchy/readme.md#repairing-each-factor-at-every-tenor)
+- [Cholesky calculation and all three 8×8 factors](models/parameter_hierarchy/readme.md#cholesky-calculation)
+- [Brownian covariance and shock transformation](models/parameter_hierarchy/readme.md#brownian-covariance-and-the-shock-transformation)
+- [Every-increment dependency and update order](models/parameter_hierarchy/readme.md#every-increment-calculation)
+
+Each family's current level history produces its own C → R → L and Q = hR.
+The three factors transform three independent eight-component normal vectors.
+Every increment also refits xi's coefficients and rate/sigma's conditional
+drifts, then advances xi, sigma using new xi, and rate using new sigma. The
+updated states become part of the next covariance and calibration window.
+
+Tenor repair covers first-pass μ/θ/σ, all three second-pass parameter branches,
+and each recursive family. Healthy maturities anchor weak speeds; the repair
+reprofiles the linked coefficients within a likelihood budget. During recursion,
+rate/sigma's known higher-state variances remain fixed in that fit. This parameter
+repair is distinct from optional correlation conditioning and the legacy NSS
+commands; it does not rewrite historical rate quotes.
+
 ## Run the complete workflow
 
 Run commands from the repository root. Install [requirements](../../requirements.txt)

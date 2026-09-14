@@ -1,5 +1,30 @@
 # Interest-rate calibration, parameter simulation and the RWA research goal
 
+## Covariance, Cholesky and the recursive factors
+
+- [State factors and fitted parameter names](../src/RWA/models/parameter_hierarchy/readme.md#state-and-coefficient-names)
+- [Historical initialization](../src/RWA/models/parameter_hierarchy/readme.md#historical-initialization-estimates-need-their-own-warmup)
+- [Covariance formula for all eight maturities](../src/RWA/models/parameter_hierarchy/readme.md#covariance-calculation-for-all-eight-maturities)
+- [Repairing every factor at all eight tenors](../src/RWA/models/parameter_hierarchy/readme.md#repairing-each-factor-at-every-tenor)
+- [Cholesky calculation and the complete 8×8 factors](../src/RWA/models/parameter_hierarchy/readme.md#cholesky-calculation)
+- [Brownian covariance and the correlated shocks](../src/RWA/models/parameter_hierarchy/readme.md#brownian-covariance-and-the-shock-transformation)
+- [Every-increment update order](../src/RWA/models/parameter_hierarchy/readme.md#every-increment-calculation)
+
+For rate (PDF X), sigma (ν) and xi (ξ), each increment recalculates a separate
+8×8 level covariance, correlation, Cholesky factor and Brownian covariance using
+maturities **1, 2, 3, 5, 7, 10, 20 and 30 years**. The factors transform the
+three families' shocks after dependence and drift recalibration. The state
+updates then proceed xi → sigma using new xi → rate using new sigma; the new
+states feed the next rolling window. The linked model guide gives the full
+sample-covariance formula, Cholesky recurrence and distinction between C and Q.
+
+Tenor repair covers first-pass μ/θ/σ, all three second-pass parameter branches,
+and each recursive family. Healthy maturities anchor weak speeds; the repair
+reprofiles the linked coefficients within a likelihood budget. During recursion,
+rate/sigma's known higher-state variances remain fixed in that fit. This parameter
+repair is distinct from optional correlation conditioning and the legacy NSS
+commands; it does not rewrite historical rate quotes.
+
 ## Current workflows and commands
 
 The tables below distinguish runnable current stages from the ultimate research
