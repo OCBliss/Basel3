@@ -1,19 +1,19 @@
-# Interest-rate calibration and scenario workflow
+# Interest-rate acquisition, calibration and recursive simulation
 
-The RWA model estimates Treasury yield dynamics across eight maturities, estimates
-processes for the resulting mu, theta and sigma histories, and simulates those
-parameters jointly with yields. It supports both frozen calibration and recursive
-pathwise recalibration. Its current endpoint is an auditable set of parameter
-estimates and scenarios for the [RWA research area](../../RWA/README.md).
-Exposure valuation, duration-sensitive losses, VaR and capital mapping remain
-separate research stages.
+The RWA workflow retrieves Treasury yields, estimates mu/theta/sigma histories
+across eight maturities, estimates dynamics for every parameter branch, and
+advances one continuing trajectory of **rate, sigma and xi**. It recalculates
+separate family dependence and CIR coefficients before every actual increment,
+including the first. Its current endpoint is a serial trajectory with complete
+calibration and covariance records. Exposure valuation and duration-adjusted RWA
+remain downstream research stages.
 
 ## Run the complete workflow
 
-Run all commands from the repository root. Install the
-[Python requirements](../../requirements.txt), then choose new `snapshot_dir` and
-`output_dir` values in [the live configuration](../../pipeline/rwa_live/config.yaml).
-The stages create these directories; do not create them beforehand.
+Run commands from the repository root. Install [requirements](../../requirements.txt)
+and choose new `snapshot_dir` and `output_dir` values in the
+[live configuration](../../pipeline/rwa_live/config.yaml). Do not create those
+directories beforehand.
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -23,129 +23,129 @@ python3 pipeline/Task_manager_Global_yaml_driven.py \
   --config pipeline/rwa_live/config.yaml
 ```
 
-The preview resolves commands and artifact paths without downloading data or
-running the model. The real run retrieves current FRED data, verifies a new
-snapshot and executes the model. The [live pipeline guide](../../pipeline/rwa_live/readme.md)
-documents its settings, dependency order and rerun behavior. The saved configuration
-selects recursive forecasts; direct model commands default to frozen forecasts.
+The preview resolves the plan without downloading or fitting. The real run
+retrieves a new snapshot, verifies its provenance and executes the model. The
+[live guide](../../pipeline/rwa_live/readme.md) describes settings and retries.
 
 ## Execution order
 
-The canonical workflow consists of acquisition followed by one model command.
-The model performs both calibration passes internally; the standalone legacy
-calibration, NS/NSS and reconstruction scripts are not prerequisite tasks.
+Acquisition and the model are the two shell-level stages. The model handles its
+historical calibration and recursive calculations internally. Standalone legacy
+NS/NSS and reconstruction scripts are not prerequisites.
 
-The manager first runs [`data/yields/acquire.py`](data/yields/acquire.py), then
-[`models/parameter_hierarchy/workflow.py`](models/parameter_hierarchy/workflow.py).
-Within the model command, the function calls follow this sequence:
+| Order | Purpose and inputs | Output and next consumer |
+| --- | --- | --- |
+| 1. Acquire observations | [`data/yields/acquire.py`](data/yields/acquire.py) downloads FRED yields; validates dates, quotes, freshness and bounded causal fills. | Raw bytes, per-tenor prepared CSVs and `snapshot.json`, consumed by model verification. |
+| 2. Verify and select history | [`models/parameter_hierarchy/workflow.py`](models/parameter_hierarchy/workflow.py) verifies source/prepared hashes, repeats preparation, applies cutoff/missingness policy and aligns maturities. | Common chronological yields with explicit transition intervals. |
+| 3. Fit historical rate parameters | `calibrate_panel()` applies rolling CIR fits and coupled likelihood-budgeted ridge treatment to every tenor. | Date/maturity `mu`, `theta`, `sigma` histories with raw and stabilized estimates. |
+| 4. Fit every parameter branch | `calibrate_parameters()` applies the same rolling estimator separately to mu, theta and sigma. | Speed, long-run mean and diffusion histories for all three branches, retained in `parameter_dynamics.csv`. |
+| 5. Initialize recursive states | `walk_history()` aligns observed rates, first-pass sigma and the sigma branch's second-pass diffusion, then retains the requested complete state history. | At least 2,520 aligned estimate dates by default; `initial_history.npz` preserves the starting buffer, intervals and labels for replay. |
+| 6. Recalculate dependence | `family_covariances()` computes, for each actual increment, three separate level covariances, normalized correlations, Cholesky factors and Brownian covariances. | Per-family 8×8 matrices; each factor transforms only its own eight-element shock vector. |
+| 7. Self-calibrate and advance | `simulate_walk()` refits xi's CIR coefficients and fits rate/sigma drifts conditionally on their known varying higher-state histories; it updates xi, sigma using new xi, and rate using new sigma. It projects and audits each update, then appends it to the rolling history. | One serial trajectory and an audit for every numerical increment, including substeps. |
+| 8. Continue and export | `run_years()` continues subsequent years from the previous year's final history, anchors and RNG state. Write yearly trajectories, covariance archives and restart state. | Completed year manifests and, after all requested years finish, the root completion manifest. |
+
+[`core.py`](models/parameter_hierarchy/core.py) supplies the CIR estimator and
+coupled stabilization. [`covariance.py`](models/parameter_hierarchy/covariance.py)
+keeps family matrices distinct. [`recursive.py`](models/parameter_hierarchy/recursive.py)
+coordinates each numerical increment, and
+[`covariance_archive.py`](models/parameter_hierarchy/covariance_archive.py)
+records the matrices and shocks actually used. Rate and sigma use right-endpoint higher-state history in their conditional
+transition variance; xi retains a freely fitted diffusion. These are internal calculations,
+not extra commands to run independently. The
+[model guide](models/parameter_hierarchy/readme.md) defines equations, initialization,
+projection, regularization and the implementation's interpretation of the PDF.
+
+## History requirements and direct execution
+
+The default `history_window=2520` requires **2,520 dates of parameter estimates**,
+not merely 2,520 source quotes. Both rolling calibration passes need earlier data.
+The minimum common source count is:
 
 ```text
-acquire.py: acquire_snapshot()
-    → download_yields() → parse_yields() → write verified snapshot
-workflow.py: main()
-    → verify_snapshot() → read_yield_panel()
-    → calibrate_panel()                 # yield → mu, theta, sigma histories
-    → calibrate_parameters()            # each parameter → its own CIR history
-    → forecast_inputs()                 # origin states and joint dependence
-    → simulate() or simulate_recursive()
-    → parameter_noise_diagnostic()      # optional; paths already generated
-    → write_outputs()                   # completion manifest written last
+yield_window + parameter_window + history_window - 2
+2520 + 252 + 2520 - 2 = 5290
 ```
 
-Both calibration passes call [`core.py`](models/parameter_hierarchy/core.py)'s
-`stabilize_panel()` and `fit_cir()`. Scenario steps use its `step_hierarchy()`.
-[`recursive.py`](models/parameter_hierarchy/recursive.py) additionally refits
-parameter dynamics and dependence from each path's available history. These
-functions run inside the model process; they are not additional shell commands.
+Missing-date selection can reduce available history. A snapshot must begin early
+enough to satisfy the actual common count; unavailable estimates are not filled.
+`--recent-rows 0` uses all selected history; any explicit truncation must still
+satisfy this minimum and changes the initialization of prior-date ridge anchors.
 
-| Order | Operation | Result and next consumer |
-| --- | --- | --- |
-| 1 | **Retrieve and validate yields.** Download the requested FRED series, preserve original bytes, enforce date/freshness/gap limits and prepare bounded causal fills. | A new snapshot containing raw CSV, per-tenor series and `snapshot.json`. |
-| 2 | **Verify and select model observations.** Reproduce snapshot preparation and check hashes; apply the observation cutoff, missing-quote policy, common-date alignment and optional history truncation. | A chronological yield panel with an explicit historical time convention. |
-| 3 | **Calibrate yield dynamics.** At each rolling date, estimate mu, theta and sigma for every maturity. Diagnose weak mean reversion and jointly reprofile the coefficients within a likelihood-cost budget using cross-maturity or earlier-date anchors. | Stabilized first-pass parameter histories and their raw-fit/repair audits. |
-| 4 | **Calibrate parameter dynamics.** Apply the rolling CIR fit and coupled ridge stabilization separately to the complete mu, theta and sigma histories across maturities. | Nine second-level coefficients per tenor: mean reversion, mean level and diffusion for each parameter process. |
-| 5 | **Estimate joint dependence.** Standardize trailing innovations using the fitted drift, diffusion and historical intervals; estimate the full cross-state/cross-tenor correlation, shrink it and factor it. | Origin state, second-level coefficients and a joint shock factor. |
-| 6 | **Generate scenarios.** Advance X, mu, theta and sigma with simultaneous left-point Euler steps. Frozen mode retains the origin calibration; recursive mode refits parameter processes and dependence using each path's own rolling history before subsequent shocks. | Joint paths, projection counts and, in recursive mode, path/origin recalibration diagnostics. |
-| 7 | **Run the optional estimation-noise diagnostic.** When enabled, generate constant-parameter yield panels and rerun both rolling calibration passes and stabilization. | A conditional comparison showing how estimation and repair can themselves produce apparent parameter volatility. It does not alter the scenario paths. |
-| 8 | **Export the completed run.** Write parameter tables, compatible RAW/CURVE tables, historical intervals, scenarios and summaries; write the completion manifest last. | Auditable outputs for model comparison and future valuation consumers. |
-
-The [model specification](models/parameter_hierarchy/readme.md) gives the equations,
-regularization rules, missing-data choices and failure behavior. In this finite
-hierarchy, the fitted diffusion of the sigma process supplies xi; xi is not an
-additional independently simulated state. Estimated parameter dynamics can include
-estimation noise, even when the generating economic parameters are constant.
-
-## Reuse existing inputs
-
-The [local-input pipeline](../../pipeline/rwa_hierarchy/readme.md) reads
-`RWA/FRED/DGS*.csv` without downloading or checking snapshot provenance. Its model
-command can also be run directly, with an explicit forecast mode and new output:
+For existing inputs, use the [local-input configuration](../../pipeline/rwa_hierarchy/readme.md)
+or invoke the same model directly:
 
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py \
-  --output RWA/Experimental/HIERARCHY/example-recursive-run \
-  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
-  --forecast-mode recursive --recalibrate-every 1 \
-  --paths 32 --steps 10 --substeps 8
+  --output RWA/Experimental/HIERARCHY/my-serial-run \
+  --yield-window 2520 --parameter-window 252 --history-window 2520 \
+  --years 1 --steps-per-year 252 --substeps 1 --seed 1234
 ```
 
-To reuse an acquired snapshot instead, supply both `--input` and
-`--input-manifest` as shown in the [yield-data guide](data/yields/readme.md).
-Enable the optional diagnostic with `--noise-replicates N`, where N is at least
-two; it reruns both calibration passes for each replicate and adds computation.
-Use `--forecast-mode frozen` for the origin-calibration comparison.
+To use a verified snapshot, add `--input` and `--input-manifest` as shown in the
+[yield-data guide](data/yields/readme.md). To continue across two forecast years
+in one run, set `--years 2`. Year two continues year one's state and random stream;
+years are not independent ensemble paths.
 
-Defaults use `--time-basis observation --missing-policy forward-fill`: one fixed
-historical interval per retained row. For genuine common-date quotes and actual
-calendar durations, select `--time-basis act365f --missing-policy observed`.
-Both rolling passes, dependence, the noise diagnostic and recursive buffers use
-the selected historical intervals. Windows count observations. `--dt` remains
-the regular future interval in years; forecasts do not generate a trading calendar.
-An observation cutoff on a current download does not recover a historical vintage.
+The default forecast `dt=1/252` and `steps_per_year=252` form one year.
+Their product must equal one. `substeps` splits each reported step; every substep
+also triggers dependence estimation, calibration and archive output.
 
-## Source organization and legacy workflow
+Historical defaults use the observation clock and causal forward-fill.
+`--time-basis act365f --missing-policy observed` selects genuine common-date
+quotes and actual historical calendar gaps divided by 365. Historical and future
+intervals remain aligned with the rolling buffer. Windows count observations;
+ACT/365F does not generate a future business-day calendar or historical vintages.
+
+## Source domains and legacy workflow
 
 | Domain | Components |
 | --- | --- |
-| [Data](data/readme.md) | [Yield acquisition](data/yields/readme.md) and [parameter reconstruction](data/parameters/readme.md) |
-| [Calibration](calibration/readme.md) | Standalone [yield fitting](calibration/yields/readme.md) and [NS/NSS curve repair](calibration/curves/readme.md) |
-| [Models](models/readme.md) | [Parameter hierarchy](models/parameter_hierarchy/readme.md): workflow, numerical core and recursive engine |
+| [Data](data/readme.md) | [Yield acquisition](data/yields/readme.md), [parameter reconstruction](data/parameters/readme.md) |
+| [Calibration](calibration/readme.md) | Standalone [yield fitting](calibration/yields/readme.md), [NS/NSS repair](calibration/curves/readme.md) |
+| [Models](models/readme.md) | [Recursive hierarchy](models/parameter_hierarchy/readme.md), numerical core and covariance archives |
 
-The legacy file-based sequence remains available for separate experiments:
+The separate legacy sequence remains: standalone yield calibration →
+[CURVE assembly](../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md) →
+mu/theta NS/NSS repair → parameter reconstruction. Those commands replace their
+configured legacy outputs. Independent NS/NSS smoothing and the integrated
+model's coupled likelihood stabilization have different assumptions; retain each
+run's method, inputs and audits when comparing or reusing them.
 
-1. Run standalone [yield calibration](calibration/yields/readme.md).
-2. Assemble mu, theta and sigma panels using the
-   [CURVE preparation recipe](../../RWA/Experimental/MLE%20YIELD/CURVE/readme.md).
-3. Run [mu/theta NS/NSS repair](calibration/curves/readme.md) and inspect its audit.
-4. Run [parameter reconstruction](data/parameters/readme.md) to create the
-   six-column histories described in [MLE VOL/RAW](../../RWA/Experimental/MLE%20VOL/RAW/readme.md).
+## Results and validation
 
-These commands replace their configured legacy output files. Independent NS/NSS
-smoothing and the canonical model's coupled likelihood stabilization have different
-assumptions. Keep their methods, input histories and timing conventions explicit
-when comparing or reusing outputs.
+Historical outputs are `yield_parameters.csv`, `parameter_dynamics.csv`, `RAW/`,
+`CURVE/`, `transition_intervals.csv` and `initial_history.npz`. The root manifest's
+`files_sha256` records the initial-history and historical-export hashes.
+Each `year_NNNN/` contains a three-state
+trajectory, per-increment covariance records, restart data and a completion
+manifest. See the [output guide](../../RWA/Experimental/HIERARCHY/readme.md).
+The former four-state ensemble arrays and quantile summaries are incompatible
+with this serial output contract and are not generated by the current workflow.
 
-## Results, verification and research endpoint
+Verify a completed run from its preserved starting history and increment records:
 
-A model run produces `yield_parameters.csv`, `parameter_dynamics.csv`, `RAW/`,
-`CURVE/`, `transition_intervals.csv`, `scenarios.npz`, `scenario_summary.csv` and
-`manifest.json` beneath its selected output directory. See the
-[output guide](../../RWA/Experimental/HIERARCHY/readme.md) for schemas. A directory
-without its completion manifest is incomplete. Review identification warnings,
-likelihood costs, imputation/exclusion counts and boundary projections before
-using scenarios downstream.
+```bash
+python3 src/RWA/models/parameter_hierarchy/verify.py \
+  --input RWA/Experimental/HIERARCHY/my-run
+python3 src/RWA/models/parameter_hierarchy/verify.py \
+  --input RWA/Experimental/HIERARCHY/my-run --recalibrate
+```
 
-Use the environment and temporary-file instructions in the
-[test guide](../../tests/readme.md), then run the RWA checks:
+Default verification checks hashes, rolling covariances, applied shocks, ordered
+updates, clocks and year-restart continuity without new random draws. The optional
+recalibration check also recomputes conditional lower-family drift fits and xi's
+CIR fit from the stored history and causal anchors. See the
+[model guide](models/parameter_hierarchy/readme.md#verify-a-completed-run) for cost
+and interpretation.
+
+Use the [test guide](../../tests/readme.md) to run isolated checks:
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
 
-Tests cover likelihood and interval calculations, causal windows, all parameter
-branches, recursive path isolation, frozen equivalence, output contracts and
-configured pipeline execution. Successful execution does not establish forecast
-superiority, separate latent dynamics from measurement error or produce an
-arbitrage-free discount curve. Completing duration-sensitive RWA requires explicit
-curve construction, exposure cash flows and valuation, loss/risk definitions,
-capital mapping and independent validation.
+Review actual results, identification warnings, likelihood costs, correlation
+adjustments, source exclusions and boundary projections. Replaying a trajectory
+checks computational provenance; it does not prove forecasting superiority or
+separate estimation noise from economic risk. Cash flows, discount-curve
+construction, valuation, loss definitions and capital mapping remain unfinished.

@@ -1,21 +1,15 @@
-# RWA hierarchy pipeline
+# Run the recursive model from existing yield inputs
 
-[config.yaml](config.yaml) runs the
-[endogenous parameter hierarchy](../../src/RWA/models/parameter_hierarchy/readme.md)
-through the repository's YAML task manager. It is a separate one-task workflow;
-the [default Call Report/JSD configuration](../pipeline_config_dynamic.yaml)
-retains its own execution plan.
+[config.yaml](config.yaml) runs the interest-rate model against supplied Treasury
+yield histories without acquisition. It calibrates all historical parameter
+branches, then advances one continuing rate/sigma/xi trajectory with separate
+family dependence and calibration refreshed at every actual increment.
 
-## Prepare and run
+## Run
 
-Install the [repository requirements](../../requirements.txt). Supply the eight
-`RWA/FRED/DGS{1,2,3,5,7,10,20,30}.csv` input histories, each containing
-`observation_date` and its named DGS column. The workflow reads existing files;
-it does not fetch new quotes.
-
-Before each real run, set `parameters.output_dir` in `config.yaml` to a **new**
-directory inside the repository. Do not create that directory beforehand. All
-commands below run from the repository root:
+Install [requirements](../../requirements.txt) and work from the repository root.
+Set `parameters.output_dir` to a new repository-local directory before execution.
+Do not pre-create it.
 
 ```bash
 python3 pipeline/Task_manager_Global_yaml_driven.py \
@@ -24,138 +18,98 @@ python3 pipeline/Task_manager_Global_yaml_driven.py \
   --config pipeline/rwa_hierarchy/config.yaml
 ```
 
-The dry run resolves the configuration and displays the command and artifact
-paths without starting the model or creating directories/logs. It does not test
-numerical suitability of the data. A real run writes task logs under
-`pipeline_logs/<run-id>/` unless `log_root` is configured.
+The dry run resolves commands and artifacts without executing the model. The
+real run uses `RWA/FRED/DGS*.csv`; these historical files must contain enough common
+observations. For current retrieved data and snapshot verification, use the
+[live workflow](../rwa_live/readme.md) or the direct snapshot command in the
+[model guide](../../src/RWA/models/parameter_hierarchy/readme.md).
 
-## Settings
+## History and serial forecast settings
 
-| YAML parameter | Default | Effect |
+| Setting | Default | Meaning |
 | --- | --- | --- |
-| `output_dir` | `RWA/Experimental/HIERARCHY/run` | New destination for one complete run. Existing destinations are rejected. |
-| `yield_window` | `2520` | Observations in each trailing first-pass yield fit. |
-| `parameter_window` | `252` | Observations in each trailing fit to estimated mu, theta and sigma histories. |
-| `recent_rows` | `3024` | Retain this many of the most recent common input dates; zero uses all common dates. |
-| `paths` | `256` | Number of joint simulated paths. |
-| `steps` | `20` | Number of reported forecast increments after the initial state. |
-| `substeps` | `4` | Internal Euler increments per reported increment. |
-| `seed` | `1234` | Reproducible simulation seed. |
-| `forecast_mode` | `recursive` | Pathwise recalibration; use `frozen` for origin coefficients and dependence. |
-| `recalibrate_every` | `1` | Reported-step cadence for recursive updates; zero disables updates. |
-| `time_basis` | `observation` | Historical transition clock: `observation` or `act365f`. |
-| `missing_policy` | `forward-fill` | Causal fills or `observed` genuine common-date quotes. |
-| `dt` | `0.003968253968253968` | Future reported-step year fraction (1/252); also the historical interval in observation mode. |
-| `noise_replicates` | `0` | Disable the estimation-noise benchmark; use at least two to enable it. Sixteen gives a small diagnostic at additional cost. |
+| `yield_window` | `2520` | Observations per historical rate calibration |
+| `parameter_window` | `252` | Estimates per historical parameter-process calibration |
+| `history_window` | `2520` | Complete aligned rate/sigma/xi estimate dates retained for recursion |
+| `recent_rows` | `0` | Use all selected source rows; an explicit positive cap must include all warmups |
+| `years` | `1` | Consecutive forecast years, each continuing the preceding year |
+| `steps_per_year` | `252` | Reported increments in a year |
+| `dt` | `0.003968253968253968` | Reported-step years; its product with steps per year must be one |
+| `substeps` | `1` | Actual Euler increments per reported step; each recalibrates and archives |
+| `correlation_regularization` | `0` | Preserve empirical family correlations; any positive adjustment must be explicit |
+| `seed` | `1234` | Initialize one random stream, continued across years |
+| `time_basis` | `observation` | Historical fixed observation clock or `act365f` date gaps |
+| `missing_policy` | `forward-fill` | Causal fills or `observed` genuine common-date quotes |
 
-The model's other defaults include all eight maturities, likelihood repair
-budget `2`, fallback theta `0.25` and correlation shrinkage `0.05`.
-Changing `substeps` refines the numerical approximation while keeping each
-reported increment's duration unchanged. The
-[model guide](../../src/RWA/models/parameter_hierarchy/readme.md) explains the settings,
-minimum history, units, diagnostics and Python interface.
+The model needs at least `yield_window + parameter_window + history_window - 2`
+common source observations: **5,290** at default settings. A 2,520-row yield input
+cannot produce 2,520 fitted dates. Missing-date selection can reduce the usable
+count; the model rejects insufficient history instead of padding estimates.
 
-## Configure elapsed-time calibration
+Set `years: 2` for a two-year continuous trajectory. The second year starts from
+the preceding history, RNG and ridge anchors, not the historical origin. There
+is no ensemble-path setting, frozen mode or reduced update cadence. Every actual
+increment—including the first—refreshes all three dependence structures and fits
+all three state families before xi → sigma → rate advancement.
 
-The saved YAML preserves the historical observation-clock/forward-fill defaults.
-To fit genuine observations using actual historical year fractions, set these
-existing entries in its `parameters` block:
+## Historical elapsed time
+
+To use genuine quotes and actual historical year fractions, set:
 
 ```yaml
 time_basis: act365f
 missing_policy: observed
-dt: 0.003968253968253968
 ```
 
-The model arguments already pass these settings. `observed` reads original
-`DGS<n>` values and retains only dates genuinely observed across all selected
-tenors; it does not fit prepared fill values. ACT/365F divides the calendar time
-between retained dates by 365 days, including weekends, gaps and leap years.
-Both rolling calibration passes, dependence residuals, the optional noise
-benchmark and recursive history buffers use those historical intervals.
+ACT/365F divides calendar gaps by 365 days. Windows remain counts of observations
+or fitted dates. Historical interval arrays follow the states through both
+calibration passes and recursive buffers; each simulated substep supplies its
+own year fraction. Future `dt` and `steps_per_year` define the forecast grid, not
+a generated holiday calendar. If changing to 365 reported steps per year, change
+both settings so their product remains one.
 
-Windows and `recent_rows` remain observation counts, so a common count can span
-different dates under the two policies. `dt` remains the regular **future**
-year-fraction increment; use `0.0027397260273972603` for 1/365 if that forecast grid
-is intended. No business-day/holiday forecast calendar is generated. Substeps
-refine each future increment without creating extra calibration observations.
+## YAML and outputs
 
-Review `transition_intervals.csv`, the manifest's `time_convention`, source
-exclusions and fitted-parameter audits. Retaining actual durations does not remove
-Euler approximation error, informative-missingness bias or estimation noise, and
-it does not construct an arbitrage-free spot curve. See the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
-and [elapsed-time tests](../../tests/test_rwa_elapsed_time.py).
-
-## YAML path and execution contract
-
-The single step is `rwa_hierarchy`, with this source path:
+The single task's source path is relative to `src/`:
 
 ```yaml
 path: RWA/models/parameter_hierarchy/workflow.py
 ```
 
-Script paths resolve relative to `src/`, so this value deliberately omits a
-leading `src/`. Input/output artifact paths and the default task working
-directory resolve from the repository root, even though the YAML lives in
-this directory. Arguments are a list; values such as `"{output_dir}"`
-expand from the top-level `parameters` block.
+Input/output paths resolve from the repository root. Keep the explicit empty
+`dependencies` mapping and the single `rwa_hierarchy` entry in the sequential
+execution plan. Arguments expand from the top-level parameter block. Do not add
+the model destination to `create_dirs` because the model rejects existing outputs.
 
-`dependencies: {}` is an explicit empty dependency mapping and the execution
-plan is `sequential: [rwa_hierarchy]`. Keep these entries when modifying this
-configuration. The step must occur exactly once in the execution plan. Do not
-add `output_dir` to `create_dirs`: the model intentionally refuses an existing
-output destination.
+The root output contains historical calibration tables, RAW/CURVE exports,
+`transition_intervals.csv`, `initial_history.npz` and a completion `manifest.json`.
+Each `year_NNNN/`
+contains `trajectory.csv`, `trajectory.npz`, a per-increment `covariance/` archive,
+`restart.npz` and its year manifest. See the
+[output guide](../../RWA/Experimental/HIERARCHY/readme.md) for exact dimensions.
+This replaces the former four-state ensemble output contract.
 
-## Results and failure handling
-
-The configured completion artifacts are `manifest.json`,
-`parameter_dynamics.csv`, `scenario_summary.csv` and `scenarios.npz` beneath
-`output_dir`. The workflow additionally writes `yield_parameters.csv`,
-per-maturity `RAW/` histories, three `CURVE/` tables and exact historical
-`transition_intervals.csv`. Forecast NPZ and summary outputs include
-`elapsed_years`, measured from the forecast origin. The manifest records
-settings, source hashes, regularization/dependence diagnostics, boundary
-projections and the optional estimation-noise benchmark; it is written last.
-An output directory without a completion manifest is incomplete.
-
-The task manager checks declared inputs, subprocess status and declared output
-existence, stopping on a failed task. The model rejects paths escaping the
-repository, existing output destinations, invalid histories/settings,
-insufficient calibration history and excessive simulation size. Excessive
-mean-reversion speed for the chosen step requires more substeps. Inspect the
-task log and any partial output, correct the cause, and choose a new output
-directory before rerunning; existing results are not overwritten.
-
-The finite hierarchy simulates yield, mu, theta and sigma jointly, recalibrating
-parameter dynamics and dependence within each path when recursive mode is selected.
-Estimated parameter volatility includes estimation noise. Exposure valuation and
-RWA capital calculation are separate stages. Use the output contracts and validation
-limits in the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) when
-building a downstream consumer.
+The manager checks declared inputs, subprocess exit status and output existence.
+The model rejects invalid histories, insufficient warmup, undefined correlations,
+unusable fits and invalid time settings. It streams audit records, so a failure
+can leave partial data; completion manifests distinguish successful results.
+Choose a new destination after correcting a failed run. A completed trajectory
+does not calculate exposure valuation or capital/RWA.
 
 ## Verification
+The [model verifier](../../src/RWA/models/parameter_hierarchy/readme.md#verify-a-completed-run)
+checks a completed run from its preserved starting history, file hashes and
+per-increment records. Its optional recalibration check repeats the fitted model
+coefficients as well as replaying the saved transitions.
 
-Use the repository-local temporary-file setup in the
-[test guide](../../tests/readme.md), then run:
+
+Use the [test guide](../../tests/readme.md) for isolated checks and run:
 
 ```bash
-python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v
+python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 python3 -B -m unittest discover -s tests -p test_pipeline_manager.py -v
 ```
 
-The hierarchy tests execute this actual configuration through the manager with
-isolated two-tenor fixtures and reduced numerical settings, then check
-completion. They also exercise direct CLI output, downstream reconstruction,
-causality, numerical behavior and path boundaries. The manager suite verifies
-configuration parsing, argument expansion, dependency ordering and failures.
-
-
-## Forecast mode and update cadence
-
-The configuration selects `forecast_mode: recursive` and `recalibrate_every: 1`.
-Each path recalibrates mu/theta/sigma dynamics and full joint dependence from its
-own rolling history before its next reported step. Set `forecast_mode: frozen`
-for the origin-calibration benchmark, or increase `recalibrate_every` to compare
-less frequent updates. Changes to a path's calibration cannot use future draws
-or another path's simulated observations. The model guide specifies numerical
-bounds, failure behavior and per-path diagnostics in `recursive_calibration`.
+Review the actual results and generated audits. Deterministic step checks,
+separate covariance identities, archive replay and configured execution test
+computational behavior; they do not establish forecast superiority.

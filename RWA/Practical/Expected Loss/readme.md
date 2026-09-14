@@ -8,7 +8,7 @@ The existing [Practical CMT workflow](../Constant%20Maturity%20Treasury/readme.m
 describes historical yield preparation, selected-change summaries and parameter
 estimation. The separate
 [endogenous parameter hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md) produces
-rate/parameter scenarios. Neither output alone is a portfolio expected-loss or
+a recursive rate/sigma/xi trajectory. Neither output alone is a portfolio expected-loss or
 regulatory capital calculation.
 
 Before this stage can be implemented, its contract needs to specify the securities
@@ -21,5 +21,5 @@ RWA research objective; valuation remains an unfinished milestone.
 
 For runnable current capabilities, use the [RWA source guide](../../../src/RWA/readme.md).
 The [model output guide](../../Experimental/HIERARCHY/readme.md) describes the
-generated scenarios and provenance that a future valuation stage would consume.
+generated trajectories and provenance that a future valuation stage would consume.
 No valuation output is produced by this directory.

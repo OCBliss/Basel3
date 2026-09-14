@@ -1,63 +1,62 @@
-# Independent RWA workflow; the Call Report/JSD execution list is unchanged.
-# Choose a NEW output_dir for each run. Existing results are never overwritten.
+# One continuing trajectory; every actual increment recalibrates. Choose new output directories.
 parameters:
   output_dir: RWA/Experimental/HIERARCHY/run
   yield_window: 2520
   parameter_window: 252
-  recent_rows: 3024
-  paths: 256
-  steps: 20
-  substeps: 4
+  recent_rows: 0
+  substeps: 1
   seed: 1234
-  noise_replicates: 0
   time_basis: observation
   missing_policy: forward-fill
   dt: 0.003968253968253968
-  forecast_mode: recursive
-  recalibrate_every: 1
-
+  history_window: 2520
+  years: 1
+  steps_per_year: 252
+  correlation_regularization: 0.0
 scripts:
   rwa_hierarchy:
     path: RWA/models/parameter_hierarchy/workflow.py
     args:
-      - --output
-      - "{output_dir}"
-      - --yield-window
-      - "{yield_window}"
-      - --parameter-window
-      - "{parameter_window}"
-      - --recent-rows
-      - "{recent_rows}"
-      - --paths
-      - "{paths}"
-      - --steps
-      - "{steps}"
-      - --substeps
-      - "{substeps}"
-      - --seed
-      - "{seed}"
-      - --noise-replicates
-      - "{noise_replicates}"
-      - --time-basis
-      - "{time_basis}"
-      - --missing-policy
-      - "{missing_policy}"
-      - --dt
-      - "{dt}"
-      - --forecast-mode
-      - "{forecast_mode}"
-      - --recalibrate-every
-      - "{recalibrate_every}"
-    inputs: ["RWA/FRED/DGS*.csv"]
+    - --output
+    - '{output_dir}'
+    - --yield-window
+    - '{yield_window}'
+    - --parameter-window
+    - '{parameter_window}'
+    - --recent-rows
+    - '{recent_rows}'
+    - --substeps
+    - '{substeps}'
+    - --seed
+    - '{seed}'
+    - --time-basis
+    - '{time_basis}'
+    - --missing-policy
+    - '{missing_policy}'
+    - --dt
+    - '{dt}'
+    - --history-window
+    - '{history_window}'
+    - --years
+    - '{years}'
+    - --steps-per-year
+    - '{steps_per_year}'
+    - --correlation-regularization
+    - '{correlation_regularization}'
+    inputs:
+    - RWA/FRED/DGS*.csv
     outputs:
-      - "{output_dir}/manifest.json"
-      - "{output_dir}/yield_parameters.csv"
-      - "{output_dir}/parameter_dynamics.csv"
-      - "{output_dir}/transition_intervals.csv"
-      - "{output_dir}/scenario_summary.csv"
-      - "{output_dir}/scenarios.npz"
-
+    - '{output_dir}/manifest.json'
+    - '{output_dir}/yield_parameters.csv'
+    - '{output_dir}/parameter_dynamics.csv'
+    - '{output_dir}/transition_intervals.csv'
+    - '{output_dir}/initial_history.npz'
+    - '{output_dir}/year_*/manifest.json'
+    - '{output_dir}/year_*/trajectory.npz'
+    - '{output_dir}/year_*/trajectory.csv'
+    - '{output_dir}/year_*/restart.npz'
+    - '{output_dir}/year_*/covariance/manifest.json'
 dependencies: {}
-
 execution:
-  - sequential: [rwa_hierarchy]
+- sequential:
+  - rwa_hierarchy

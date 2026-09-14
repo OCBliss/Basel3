@@ -181,104 +181,74 @@ class EndogenousHierarchyTests(unittest.TestCase):
         self.assertTrue((result.sigma==0).all())
         self.assertTrue(result.deterministic.all())
 
-    def test_noise_benchmark_replays_both_passes_and_reports_estimator_variation(self):
-        source = rates(100,d=2)
-        first = workflow.calibrate_panel(source,48)
-        second = workflow.calibrate_parameters(first,24)
-        report = workflow.parameter_noise_diagnostic(source,first,second,48,24,
-                                                     replicates=2,seed=15)
-        self.assertTrue(report['comparable'],report['failures'])
-        self.assertEqual(len(report['rows']),6)
-        self.assertTrue(any(row['null_median']>0 for row in report['rows']))
-        repeated = workflow.parameter_noise_diagnostic(source,first,second,48,24,
-                                                       replicates=2,seed=15)
-        self.assertEqual(report,repeated)
+class WalkHistoryTests(unittest.TestCase):
+    @staticmethod
+    def inputs(rows=60, yield_window=8, parameter_window=6):
+        dates = pd.bdate_range("2000-01-03", periods=rows)
+        yields = pd.DataFrame({1: 3 + np.arange(rows)/1000,
+                               2: 4 + np.arange(rows)/900}, index=dates)
+        first = pd.DataFrame([
+            dict(observation_date=date, maturity=tenor,
+                 mu=30 + position/100, theta=2 + position/500,
+                 sigma=.2 + position/1000 + tenor/100)
+            for position, date in enumerate(dates) if position >= yield_window-1
+            for tenor in (1, 2)])
+        second = pd.DataFrame([
+            dict(observation_date=date, maturity=tenor, parameter=parameter,
+                 theta=3., mu=4., sigma=.01 + position/10000 + tenor/1000)
+            for position, date in enumerate(dates)
+            if position >= yield_window + parameter_window - 2
+            for tenor in (1, 2) for parameter in workflow.PARAMETERS])
+        return yields, first, second
 
+    def test_rate_sigma_xi_mapping_and_exact_calibrated_history_warmup(self):
+        source, first, second = self.inputs()
+        history, dates = workflow.walk_history(source, first, second, 48)
+        self.assertEqual(history.shape, (48, 3, 2))
+        self.assertEqual(dates.tolist(), source.index[12:].tolist())
+        np.testing.assert_array_equal(history[:, 0], source.iloc[12:].to_numpy())
+        expected_sigma = first.pivot(index='observation_date', columns='maturity', values='sigma').loc[dates]
+        expected_xi = second.loc[second.parameter == 'sigma'].pivot(
+            index='observation_date', columns='maturity', values='sigma').loc[dates]
+        np.testing.assert_array_equal(history[:, 1], expected_sigma)
+        np.testing.assert_array_equal(history[:, 2], expected_xi)
+        self.assertLess(history[:, 0].max(), 5.)  # fitted long-run mu is above 30
+        with self.assertRaisesRegex(ValueError, 'insufficient calibrated history'):
+            workflow.walk_history(source, first, second, 49)
 
-class JointSimulationTests(unittest.TestCase):
-    def fixture(self):
-        state = np.array([[4.],[3.],[1.],[.4]])
-        c = np.array([[[.5],[3.],[.2]],[[.6],[1.],[.1]],[[.8],[.4],[.15]]])
-        corr = np.array([[1.,.2,-.1,.55],[.2,1.,.1,.2],[-.1,.1,1.,-.1],[.55,.2,-.1,1.]])
-        return state,c,np.linalg.cholesky(corr)
+    def test_ten_year_history_counts_calibrated_states_after_both_warmups(self):
+        source, first, second = self.inputs(rows=2520+8+6-2)
+        history, dates = workflow.walk_history(source, first, second, 2520)
+        self.assertEqual(len(history), 2520)
+        self.assertEqual(dates[0], source.index[12])
+        with self.assertRaisesRegex(ValueError, '2520 complete'):
+            workflow.walk_history(source.iloc[:-1],
+                                  first.loc[first.observation_date <= source.index[-2]],
+                                  second.loc[second.observation_date <= source.index[-2]], 2520)
 
-    def test_conditional_drift_covariance_and_cross_layer_dependence(self):
-        state,c,l = self.fixture()
-        rng = np.random.default_rng(53)
-        z = rng.normal(size=(100000,4,1))
-        z = np.concatenate([z,-z])  # antithetic exact zero mean
-        s = np.broadcast_to(state,z.shape)
-        dt = 1e-4
-        future,hits = core.step_hierarchy(s,c,z,l,dt)
-        self.assertEqual(hits.sum(),0)
-        changes = (future-s).reshape(-1,4)
-        expected_drift = np.array([-1.,0.,0.,0.])
-        np.testing.assert_allclose(changes.mean(axis=0)/dt,expected_drift,atol=1e-10)
-        diffusion = np.array([.4*2,.2*np.sqrt(3),.1,.15*np.sqrt(.4)])
-        expected_cov = np.outer(diffusion,diffusion)*(l@l.T)*dt
-        # Antithetic pairs provide 100,000 independent covariance observations.
-        # Relative error is inappropriate for small off-diagonal covariances.
-        covariance_se = np.sqrt((np.outer(np.diag(expected_cov), np.diag(expected_cov)) +
-                                 expected_cov**2) / 100000)
-        self.assertTrue(np.all(np.abs(np.cov(changes,rowvar=False,bias=True)-expected_cov)
-                               < 6*covariance_se))
+    def test_cutoff_and_row_order_preserve_only_the_known_history(self):
+        source, first, second = self.inputs()
+        cutoff = source.index[-5]
+        early_source = source.loc[:cutoff]
+        early_first = first.loc[first.observation_date <= cutoff]
+        early_second = second.loc[second.observation_date <= cutoff]
+        expected, dates = workflow.walk_history(early_source, early_first, early_second, 12)
+        actual, actual_dates = workflow.walk_history(early_source.iloc[::-1],
+            early_first.sample(frac=1, random_state=3), early_second.sample(frac=1, random_state=4), 12)
+        np.testing.assert_array_equal(actual, expected)
+        self.assertEqual(actual_dates.tolist(), dates.tolist())
+        self.assertEqual(actual_dates[-1], cutoff)
+        np.testing.assert_array_equal(actual[:, 0], source.loc[dates].to_numpy())
 
-    def test_updated_volatility_would_introduce_the_predicted_drift(self):
-        state,c,l = self.fixture()
-        rng = np.random.default_rng(63)
-        z = rng.normal(size=(200000,4))
-        z = np.vstack([z,-z])
-        dt = 1e-4
-        dw = z@l.T*np.sqrt(dt)
-        sigma_new = .4 + .15*np.sqrt(.4)*dw[:,3]
-        wrong_noise = sigma_new*2*dw[:,0]
-        predicted = .55*.15*np.sqrt(.4)*2
-        self.assertAlmostEqual(wrong_noise.mean()/dt,predicted,delta=.001)
-
-    def test_singular_and_constant_residuals_have_a_valid_joint_factor(self):
-        rng = np.random.default_rng(8)
-        x = rng.normal(size=(10,2))
-        r = np.column_stack([x,x,np.ones(10),x[:,0]])
-        corr,l,audit = core.innovation_correlation(r,.05)
-        np.testing.assert_allclose(l@l.T,corr,atol=1e-12)
-        np.testing.assert_allclose(np.diag(corr),1.)
-        self.assertGreaterEqual(audit['min_eigenvalue'],.05-1e-12)
-        self.assertEqual(audit['constant_columns'],[4])
-        self.assertAlmostEqual(corr[0,2],.95)
-
-    def test_reproducibility_projection_accounting_and_memory_limit(self):
-        state,c,l = self.fixture()
-        a,h = workflow.simulate(state,c,l,paths=20,steps=5,seed=8)
-        b,j = workflow.simulate(state,c,l,paths=20,steps=5,seed=8)
-        np.testing.assert_array_equal(a,b)
-        np.testing.assert_array_equal(h,j)
-        c[:,:,0] = [[0,0,20],[0,0,20],[0,0,20]]
-        s,hits = core.step_hierarchy(state,c,np.full_like(state,-10),np.eye(4),.1)
-        self.assertTrue((s>=0).all())
-        self.assertEqual(hits[1:].sum(),3)
-        with self.assertRaisesRegex(ValueError,'memory'):
-            workflow.simulate(state,c,l,paths=10**9)
-
-    def test_large_mean_reversion_requires_a_smaller_step(self):
-        state,c,l = self.fixture()
-        c[0,0,0] = 3000.
-        with self.assertRaisesRegex(ValueError,'substeps'):
-            workflow.simulate(state,c,l,paths=2,steps=2,substeps=1)
-        a,h = workflow.simulate(state,c,l,paths=2,steps=2,substeps=32)
-        self.assertTrue(np.isfinite(a).all())
-
-    def test_time_refinement_converges_to_known_deterministic_cir_mean(self):
-        state = np.array([[4.],[3.],[8.],[0.]])
-        c = np.zeros((3,3,1))
-        exact = 3+np.exp(-8/12)
-        errors = []
-        for refinement in [1,4,16]:
-            result,_ = workflow.simulate(state,c,np.eye(4),paths=1,steps=1,dt=1/12,
-                                         substeps=refinement)
-            errors.append(abs(result[0,-1,0,0]-exact))
-        self.assertGreater(errors[0],errors[1])
-        self.assertGreater(errors[1],errors[2])
-        self.assertLess(errors[2],.01)
+    def test_missing_and_duplicate_endogenous_states_are_not_filled(self):
+        source, first, second = self.inputs()
+        latest = (second.parameter == 'sigma') & (second.observation_date == source.index[-1])
+        bad = second.copy()
+        bad.loc[latest, 'sigma'] = np.nan
+        with self.assertRaisesRegex(ValueError, 'unavailable'):
+            workflow.walk_history(source, first, bad, 12)
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            workflow.walk_history(source, first, pd.concat([second, second.loc[latest]]), 12)
 
 
 class HierarchyWorkflowTests(unittest.TestCase):
@@ -304,16 +274,28 @@ class HierarchyWorkflowTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('--parameter-window', result.stdout)
 
-    def test_real_cli_exports_complete_hierarchy_and_existing_first_stage_schema(self):
+    def test_cli_defaults_export_full_year_contract_and_existing_rebuild_schema(self):
         out = self.directory/'result'
-        command = [sys.executable,'-B',str(ROOT/'src/RWA/models/parameter_hierarchy/workflow.py'),
-                   '--input',str(self.input),'--output',str(out),'--maturities','1','2',
-                   '--yield-window','64','--parameter-window','32','--paths','8','--steps','3']
-        # An absolute script entry point must also work from another directory;
-        # moving the source must not make data resolution depend on the caller.
-        result = subprocess.run(command,cwd=self.directory,capture_output=True,text=True,
-                                env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'))
-        self.assertEqual(result.returncode,0,result.stderr)
+        command = ['--input',str(self.input),'--output',str(out),'--maturities','1','2',
+                   '--yield-window','64','--parameter-window','32','--history-window','12']
+
+        def fixed_walk(history, maturities, steps, dt, substeps, archive, **settings):
+            # The serializer is tested independently of numerical evolution;
+            # actual ordered updates and fixed-shock identities have engine tests.
+            self.assertEqual((steps, dt, substeps), (252, 1/252, 1))
+            d = len(maturities)
+            states = history[-1] + np.arange(steps+1)[:, None, None]*.0001
+            identity = np.broadcast_to(np.eye(d), (3, d, d)).copy()
+            matrices = dict(factor_covariance=identity, correlation=identity,
+                            cholesky=identity, brownian_covariance=dt*identity)
+            for step in range(steps):
+                archive.append(step, step*dt, dt, matrices, states[step], states[step+1])
+            diagnostics = {'rng_state': {}, 'prior_thetas': np.ones((3,d)).tolist()}
+            trailing = np.concatenate([history, states[1:]])[-len(history):]
+            return states, np.zeros((3,d), dtype=int), diagnostics, trailing, np.full(len(history)-1, dt)
+
+        with mock.patch.object(workflow, 'simulate_walk', side_effect=fixed_walk), redirect_stdout(StringIO()):
+            workflow.main(command)
         manifest = json.loads((out/'manifest.json').read_text())
         self.assertEqual(manifest['status'],'complete')
         second = pd.read_csv(out/'parameter_dynamics.csv')
@@ -321,9 +303,30 @@ class HierarchyWorkflowTests(unittest.TestCase):
         raw = pd.read_csv(out/'RAW/DGS1_with_parameters.csv')
         self.assertEqual(list(raw.columns),['Unnamed: 0','observation_date','DGS1','yield_clean','theta','mu','sigma'])
         self.assertTrue(raw.iloc[:63][['theta','mu','sigma']].isna().all().all())
-        with np.load(out/'scenarios.npz') as data:
-            self.assertEqual(data['states'].shape,(8,4,4,2))
-            self.assertEqual(data['correlation'].shape,(8,8))
+        self.assertEqual(manifest['schema_version'], 2)
+        self.assertEqual(manifest['state_names'], ['rate', 'sigma', 'xi'])
+        self.assertEqual(manifest['walk_history_rows'], 12)
+        self.assertEqual(manifest['settings']['years'], 1)
+        self.assertEqual(manifest['settings']['steps_per_year'], 252)
+        self.assertEqual(manifest['settings']['dt'], 1/252)
+        self.assertEqual(manifest['settings']['substeps'], 1)
+        self.assertEqual(manifest['covariance_shape_per_set'], [3, 2, 2])
+        year = out/'year_0001'
+        with np.load(year/'trajectory.npz') as data:
+            self.assertEqual(data['states'].shape, (253,3,2))
+            self.assertEqual(data['state_names'].tolist(), ['rate', 'sigma', 'xi'])
+            np.testing.assert_allclose(data['elapsed_years'], np.arange(253)/252, rtol=0, atol=2e-16)
+        trajectory = pd.read_csv(year/'trajectory.csv')
+        self.assertEqual(list(trajectory.columns), ['step','elapsed_years','state','maturity','value'])
+        self.assertEqual(len(trajectory), 253*3*2)
+        archive = json.loads((year/'covariance/manifest.json').read_text())
+        self.assertEqual(archive['increments'], 252)
+        self.assertEqual(len(list((year/'covariance').glob('step_*.npz'))), 252)
+        with np.load(year/'covariance/step_000251.npz') as final:
+            self.assertEqual(final['factor_covariance'].shape, (3,2,2))
+            self.assertAlmostEqual(final['elapsed_end_years'].item(), 1.)
+        self.assertFalse((out/'scenarios.npz').exists())
+        self.assertFalse((out/'scenario_summary.csv').exists())
         # Exercise the actual existing rebuild consumer, not just CSV headers.
         rebuild = load_module('rwa_hierarchy_rebuild', 'data/parameters/rebuild.py')
         target = self.directory/'rebuilt'
@@ -339,9 +342,22 @@ class HierarchyWorkflowTests(unittest.TestCase):
                 original = pd.read_csv(out/'RAW'/(name+'_with_parameters.csv')).drop(columns='Unnamed: 0')
                 pd.testing.assert_frame_equal(rebuilt,original)
         snapshot = (out/'manifest.json').read_bytes()
-        repeat = subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
-        self.assertNotEqual(repeat.returncode,0)
+        with self.assertRaises(SystemExit) as repeated, redirect_stdout(StringIO()), \
+                mock.patch('sys.stderr', new_callable=StringIO):
+            workflow.main(command)
+        self.assertEqual(repeated.exception.code, 2)
         self.assertEqual(snapshot,(out/'manifest.json').read_bytes())
+
+    def test_default_history_rejects_2520_raw_rows_before_any_calibration(self):
+        source = rates(2520, d=2)
+        with mock.patch.object(workflow, 'read_yield_panel', return_value=(source, [])), \
+                mock.patch.object(workflow, 'calibrate_panel', side_effect=AssertionError('fit before warmup check')), \
+                mock.patch('sys.stderr', new_callable=StringIO) as error, self.assertRaises(SystemExit) as failure:
+            workflow.main(['--output', str(self.directory/'insufficient')])
+        self.assertEqual(failure.exception.code, 2)
+        self.assertIn('5290 common source observations', error.getvalue())
+        self.assertIn('2520 complete calibrated', error.getvalue())
+        self.assertFalse((self.directory/'insufficient').exists())
 
     def test_dates_causal_filling_and_as_of(self):
         frame = pd.read_csv(self.input/'DGS1.csv')
@@ -358,7 +374,7 @@ class HierarchyWorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'duplicate'):
             workflow.read_yield_panel(self.input,[1,2])
 
-    def test_pipeline_manager_executes_the_new_config_against_isolated_inputs(self):
+    def test_pipeline_manager_resolves_serial_config_against_isolated_inputs(self):
         config = yaml.safe_load((ROOT/'pipeline/rwa_hierarchy/config.yaml').read_text())
         self.assertEqual(
             (ROOT/'src'/config['scripts']['rwa_hierarchy']['path']).resolve(),
@@ -366,17 +382,20 @@ class HierarchyWorkflowTests(unittest.TestCase):
         )
         config['parameters'].update(output_dir=str(self.directory/'managed'),
                                     yield_window=64,parameter_window=32,recent_rows=0,
-                                    paths=8,steps=3)
+                                    history_window=12,years=1,steps_per_year=252,substeps=1)
         config['scripts']['rwa_hierarchy']['args'] += ['--input',str(self.input),'--maturities','1','2']
         config['scripts']['rwa_hierarchy']['inputs'] = [str(self.input/'DGS*.csv')]
         config['log_root'] = str(self.directory/'logs')
         path = self.directory/'workflow.yaml'
         path.write_text(yaml.safe_dump(config))
         result = subprocess.run([sys.executable,'-B',str(ROOT/'pipeline/Task_manager_Global_yaml_driven.py'),
-                                 '--config',str(path)],cwd=ROOT,capture_output=True,text=True,
+                                 '--config',str(path),'--dry-run'],cwd=ROOT,capture_output=True,text=True,
                                 env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'))
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
-        self.assertTrue((self.directory/'managed/manifest.json').is_file())
+        self.assertIn('--history-window 12', result.stdout)
+        self.assertIn('--years 1', result.stdout)
+        self.assertNotIn('--paths ', result.stdout)
+        self.assertFalse((self.directory/'managed').exists())
 
     def test_paths_cannot_escape_repository_including_symlinks(self):
         for path in ['../forbidden',ROOT.parent/'elsewhere']:

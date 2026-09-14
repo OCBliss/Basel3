@@ -6,6 +6,8 @@ import csv
 import io
 import hashlib
 import json
+import os
+import tempfile
 from pathlib import Path
 import sys
 
@@ -13,15 +15,13 @@ import numpy as np
 import pandas as pd
 
 if __package__:
-    from .core import (integer, positive_number, stabilize_panel,
-                               innovation_correlation, step_hierarchy, transition_steps,
-                               joint_standardized_residuals)
-    from .recursive import simulate_recursive
+    from .core import integer, positive_number, stabilize_panel, transition_steps
+    from .recursive import simulate_walk, walk_workload
+    from .covariance_archive import CovarianceArchive
 else:
-    from core import (integer, positive_number, stabilize_panel,
-                               innovation_correlation, step_hierarchy, transition_steps,
-                               joint_standardized_residuals)
-    from recursive import simulate_recursive
+    from core import integer, positive_number, stabilize_panel, transition_steps
+    from recursive import simulate_walk, walk_workload
+    from covariance_archive import CovarianceArchive
 
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -185,7 +185,7 @@ def parameter_panels(first_stage):
 
 def calibrate_parameters(first_stage, window, dt=1 / 252, nll_budget=2., fallback_theta=.25,
                          time_basis="observation"):
-    """Generalize the legacy sigma-only second pass to all three parameter states.
+    """Apply the same CIR estimation to all three estimated parameter histories.
 
     Never fill unavailable or failed first-stage estimates. Gaps raise an error
     with the affected parameter; warmup should be removed before this interface.
@@ -202,322 +202,265 @@ def calibrate_parameters(first_stage, window, dt=1 / 252, nll_budget=2., fallbac
         ["observation_date", "maturity", "parameter"]).reset_index(drop=True)
 
 
-def forecast_history(yields, first_stage, window):
-    """Assemble one causal trailing state window shared by both forecast modes."""
-    integer(window, "window", 5)
+
+def walk_history(yields, first_stage, second_stage, window):
+    """Align observed rates, estimated sigma and endogenous sigma-of-sigma.
+
+    Keep `window` complete dates AFTER both estimation warmups. The first-pass
+    fitted mu is a long-run mean; it is not the rate state in this array.
+    """
+    integer(window, 'history_window', 5)
     panels = parameter_panels(first_stage)
-    dates = panels["mu"].index
-    tenors = panels["mu"].columns.to_numpy()
+    sigma_rows = second_stage.loc[second_stage.parameter == 'sigma']
+    if sigma_rows.duplicated(['observation_date', 'maturity']).any():
+        raise ValueError('duplicate endogenous xi dates/maturities')
+    xi = sigma_rows.pivot(index='observation_date', columns='maturity', values='sigma').sort_index()
+    dates = xi.index
     if len(dates) < window:
-        raise ValueError("insufficient parameter history for joint dependence")
-    history = np.stack([yields.reindex(index=dates[-window:], columns=tenors).to_numpy()] +
-                       [panels[p].iloc[-window:].to_numpy() for p in PARAMETERS], axis=1)
+        raise ValueError('insufficient calibrated history: need %d complete days of rate, sigma and xi; '
+                         'pull more source history rather than shortening the required history' % window)
+    dates = dates[-window:]
+    maturities = yields.columns
+    history = np.stack([yields.reindex(index=dates, columns=maturities).to_numpy(),
+                        panels['sigma'].reindex(index=dates, columns=maturities).to_numpy(),
+                        xi.reindex(index=dates, columns=maturities).to_numpy()], axis=1)
     if not np.isfinite(history).all() or (history < 0).any():
-        raise ValueError("forecast history contains missing or inadmissible states")
-    return history
+        raise ValueError('rate/sigma/xi histories contain unavailable or inadmissible values')
+    return history, dates
 
 
-def forecast_inputs(yields, first_stage, second_stage, window, dt, shrinkage=.05,
-                    time_basis="observation"):
-    """Use only the origin's trailing observed/estimated history to fit dependence."""
-    integer(window, "window", 5)
-    panels = parameter_panels(first_stage)
-    dates = panels["mu"].index
-    if len(dates) < window:
-        raise ValueError("insufficient parameter history for joint dependence")
-    origin = dates[-1]
-    tenors = panels["mu"].columns.to_numpy()
-    selected = second_stage.loc[second_stage.observation_date == origin]
-    coeff = np.empty((3, 3, len(tenors)))
-    for k, p in enumerate(PARAMETERS):
-        rows = selected.loc[selected.parameter == p].set_index("maturity").reindex(tenors)
-        if len(rows) != len(tenors) or not {"theta", "mu", "sigma"}.issubset(rows):
-            raise ValueError("missing second-stage origin parameters")
-        coeff[k] = rows[["theta", "mu", "sigma"]].to_numpy().T
-    history = forecast_history(yields, first_stage, window)
-    if not np.isfinite(history).all() or not np.isfinite(coeff).all() or (history < 0).any() or (coeff < 0).any():
-        raise ValueError("forecast inputs contain missing or inadmissible states/parameters")
-    durations = observation_steps(dates[-window:], dt, time_basis)
-    residuals = joint_standardized_residuals(history, coeff, durations)
-    corr, factor, diagnostics = innovation_correlation(residuals.reshape(len(residuals), -1), shrinkage)
-    return history[-1], coeff, corr, factor, diagnostics
-
-
-def simulate(initial, coefficients, factor, paths=256, steps=20, dt=1 / 252, seed=1234,
-             substeps=4):
-    """Frozen second-level calibration baseline with stochastic X,mu,theta,sigma.
-
-    This mode evolves all four states while holding its nine second-level
-    coefficients fixed on every simulated path. Output records
-    boundary projections, so nonnegativity is not mistaken for discretization QA.
-    """
-    integer(paths, "paths", 1)
-    integer(steps, "steps", 1)
-    integer(seed, "seed", 0)
-    integer(substeps, "substeps", 1)
-    positive_number(dt, "dt")
-    initial = np.asarray(initial, dtype=float)
-    coefficients = np.asarray(coefficients, dtype=float)
-    if initial.ndim != 2 or initial.shape[0] != 4 or initial.shape[1] < 1:
-        raise ValueError("initial state must have shape (4,maturity)")
-    if paths * (steps + 1) * initial.size > 20_000_000:
-        raise ValueError("requested paths exceed the 20-million-state memory bound")
-    state = np.broadcast_to(initial, (paths,) + initial.shape).copy()
-    # Validate shapes/values before allocating the potentially large path array.
-    step_hierarchy(state, coefficients, np.zeros_like(state), factor, dt)
-    delta = dt / substeps
-    if np.max(coefficients[:, 0]) * delta > 1:
-        raise ValueError("parameter mean reversion exceeds the step scale; increase substeps")
-    result = np.empty((paths, steps + 1) + initial.shape)
-    result[:, 0] = state
-    projections = np.zeros(initial.shape, dtype=np.int64)
-    rng = np.random.default_rng(seed)
-    for t in range(steps):
-        for _ in range(substeps):
-            if np.max(state[:, 2]) * delta > 1:
-                raise ValueError("yield mean reversion exceeds the step scale; increase substeps")
-            state, hits = step_hierarchy(state, coefficients, rng.standard_normal(state.shape), factor, delta)
-            projections += hits.sum(axis=0)
-        result[:, t + 1] = state
-    return result, projections
-
-
-def parameter_noise_diagnostic(yields, first, second, yield_window, parameter_window,
-                               replicates=16, seed=1234, dt=1 / 252,
-                               nll_budget=2., fallback_theta=.25, shrinkage=.05,
-                               time_basis="observation"):
-    """Model-conditional constant-parameter bootstrap of the whole estimator.
-
-    Simulated yields have fixed first-stage parameters, but both rolling fits
-    and ridge regularization are rerun. Thus nonzero second-pass volatility
-    under this null is an estimator/repair artifact. Tail fractions here are
-    sensitivity diagnostics, not calibrated hypothesis-test p-values.
-    """
-    integer(replicates, "replicates", 2)
-    integer(seed, "seed", 0)
-    yields = _validate_panel(yields, yield_window)
-    tenors = yields.columns
-    latest = first.loc[first.observation_date == yields.index[-1]].set_index("maturity").reindex(tenors)
-    base = latest[["theta", "mu", "sigma"]].to_numpy().T
-    if not np.isfinite(base).all() or (base < 0).any():
-        raise ValueError("bootstrap requires usable origin parameters")
-    raw = yields.to_numpy()
-    durations = transition_steps(observation_steps(yields.index, dt, time_basis), len(raw) - 1)
-    if np.max(base[0]) * durations.max() > 1:
-        raise ValueError("bootstrap mean reversion exceeds a historical interval; shorten gaps or use a boundary-aware transition model")
-    residuals = np.diff(raw, axis=0) - base[0] * (base[1] - raw[:-1]) * durations[:, None]
-    denominator = base[2] * np.sqrt(raw[:-1] * durations[:, None])
-    if np.any((denominator == 0) & (np.abs(residuals) > 1e-10)):
-        raise ValueError("nonzero bootstrap innovations under zero diffusion")
-    residuals = np.divide(residuals, denominator, out=np.zeros_like(residuals), where=denominator > 0)
-    _, factor, _ = innovation_correlation(residuals, shrinkage)
-    origin_second = second.loc[second.observation_date == yields.index[-1]].set_index(["parameter", "maturity"])
-    observed = np.array([[origin_second.loc[(p, m), "sigma"] for m in tenors] for p in PARAMETERS])
-    rng = np.random.default_rng(seed)
-    null_estimates, failures = [], []
-    for replicate in range(replicates):
-        draws = rng.normal(size=(len(raw)-1, len(tenors))) @ factor.T
-        synthetic = np.empty_like(raw)
-        synthetic[0] = raw[0]
-        hit = False
-        for t in range(len(raw)-1):
-            x = synthetic[t]
-            future = (x + base[0]*(base[1]-x)*durations[t] +
-                      base[2]*np.sqrt(x*durations[t])*draws[t])
-            if not np.isfinite(future).all() or (future <= 0).any():
-                hit = True
-                break
-            synthetic[t+1] = future
-        if hit:
-            failures.append({"replicate": replicate, "reason": "nonpositive/nonfinite bootstrap yield"})
-            continue
-        try:
-            panel = pd.DataFrame(synthetic, index=yields.index, columns=tenors)
-            f = calibrate_panel(panel, yield_window, dt, nll_budget, fallback_theta, time_basis)
-            # Replay both complete rolling passes, including the previous-date
-            # anchors. Fitting only the final window would change the estimator.
-            b = calibrate_parameters(f, parameter_window, dt, nll_budget, fallback_theta, time_basis)
-            b = b.loc[b.observation_date == yields.index[-1]].set_index(["parameter", "maturity"])
-            null_estimates.append([[b.loc[(p,m),"sigma"] for m in tenors] for p in PARAMETERS])
-        except ValueError as error:
-            failures.append({"replicate": replicate, "reason": str(error)})
-    report = {"requested_replicates": replicates, "successful_replicates": len(null_estimates),
-              "seed": seed, "failures": failures, "time_basis": time_basis,
-              "historical_dt_years": durations.tolist(),
-              "interpretation": "Conditional estimation-noise benchmark; tail fractions are not p-values.",
-              "comparable": len(null_estimates) == replicates, "rows": []}
-    if null_estimates:
-        null = np.array(null_estimates)
-        for k,p in enumerate(PARAMETERS):
-            for j,m in enumerate(tenors):
-                distribution = null[:,k,j]
-                report["rows"].append({"parameter": p, "maturity": int(m),
-                                       "observed_diffusion": float(observed[k,j]),
-                                       "null_median": float(np.median(distribution)),
-                                       "null_q95": float(np.quantile(distribution,.95)),
-                                       "null_exceedance_fraction": float(np.mean(distribution >= observed[k,j]))})
-    return report
-
-
-def write_outputs(output, yields, first, second, manifest, forecast=None):
-    """Write a new output directory; existing products are never overwritten."""
+def write_calibration_outputs(output, yields, first, second, dt, time_basis):
+    """Export both calibration passes using the existing reconstruction schema."""
     output = repository_path(output)
-    if output.exists():
-        raise ValueError("output already exists; choose a new run directory")
-    settings = manifest.get("settings", {})
-    forecast_dt = settings.get("dt", 1 / 252)
-    durations = transition_steps(observation_steps(
-        yields.index, forecast_dt, settings.get("time_basis", "observation")), len(yields) - 1)
-    output.mkdir(parents=True)
-    first.to_csv(output / "yield_parameters.csv", index=False)
-    second.to_csv(output / "parameter_dynamics.csv", index=False)
-    (output / "RAW").mkdir()
-    (output / "CURVE").mkdir()
-    pd.DataFrame({"start_date": yields.index[:-1], "end_date": yields.index[1:],
-                  "dt_years": durations}).to_csv(output / "transition_intervals.csv", index=False)
+    output.mkdir(parents=True, exist_ok=False)
+    first.to_csv(output / 'yield_parameters.csv', index=False)
+    second.to_csv(output / 'parameter_dynamics.csv', index=False)
+    (output / 'RAW').mkdir()
+    (output / 'CURVE').mkdir()
+    durations = transition_steps(observation_steps(yields.index, dt, time_basis), len(yields) - 1)
+    pd.DataFrame({'start_date': yields.index[:-1], 'end_date': yields.index[1:],
+                  'dt_years': durations}).to_csv(output / 'transition_intervals.csv', index=False)
     for tenor in yields.columns:
-        rows = first.loc[first.maturity == tenor].set_index("observation_date")
-        original = pd.DataFrame({"DGS%d" % tenor: yields[tenor], "yield_clean": yields[tenor]})
-        original = original.join(rows[["theta", "mu", "sigma"]]).reset_index()
+        rows = first.loc[first.maturity == tenor].set_index('observation_date')
+        original = pd.DataFrame({'DGS%d' % tenor: yields[tenor], 'yield_clean': yields[tenor]})
+        original = original.join(rows[['theta', 'mu', 'sigma']]).reset_index()
         original.index = np.arange(1, len(original) + 1)
-        original.to_csv(output / "RAW" / ("DGS%d_with_parameters.csv" % tenor))
-    for p, panel in parameter_panels(first).items():
-        panel.columns = [p + str(t) + "y" for t in panel.columns]
-        panel.to_csv(output / "CURVE" / (p + "_curve.csv"))
-    if forecast is not None:
-        samples, projections, corr = forecast
-        elapsed = np.arange(samples.shape[1]) * forecast_dt
-        np.savez_compressed(output / "scenarios.npz", states=samples,
-                            maturities=yields.columns.to_numpy(),
-                            state_names=np.array(["X", *PARAMETERS]),
-                            correlation=corr, boundary_projections=projections,
-                            elapsed_years=elapsed)
-        records = []
-        for k, name in enumerate(["X", *PARAMETERS]):
-            for j, tenor in enumerate(yields.columns):
-                for t in range(samples.shape[1]):
-                    v = samples[:, t, k, j]
-                    records.append(dict(step=t, elapsed_years=float(elapsed[t]), maturity=tenor, state=name,
-                                        mean=float(v.mean()), q05=float(np.quantile(v, .05)),
-                                        q50=float(np.quantile(v, .5)), q95=float(np.quantile(v, .95))))
-        pd.DataFrame(records).to_csv(output / "scenario_summary.csv", index=False)
-    # Written last; absence of manifest denotes an incomplete output directory.
-    (output / "manifest.json").write_text(json.dumps(manifest, indent=2, allow_nan=False) + "\n")
+        original.to_csv(output / 'RAW' / ('DGS%d_with_parameters.csv' % tenor))
+    for parameter, panel in parameter_panels(first).items():
+        panel.columns = [parameter + str(tenor) + 'y' for tenor in panel.columns]
+        panel.to_csv(output / 'CURVE' / (parameter + '_curve.csv'))
+
+
+def calibration_hashes(output):
+    """Seal the initial history and historical exports in the run manifest."""
+    artifacts = [output / name for name in ('yield_parameters.csv', 'parameter_dynamics.csv',
+                                       'transition_intervals.csv', 'initial_history.npz')]
+    for directory in ('RAW', 'CURVE'):
+        artifacts.extend(sorted((output / directory).iterdir()))
+    return {str(path.relative_to(output)): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in artifacts}
+
+
+def _json_file(path, payload):
+    """Publish complete finite JSON atomically, without replacing an artifact."""
+    encoded = (json.dumps(payload, indent=2, allow_nan=False) + '\n').encode()
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.pending-', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        # An atomic exclusive link exposes only the completely written record.
+        # Unlike replace(), it fails if another writer has created this name.
+        os.link(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def run_years(output, history, maturities, years=1, steps_per_year=252,
+              dt=1/252, substeps=1, seed=1234, history_dt=None,
+              nll_budget=2., fallback_theta=.25, regularization=0.):
+    """Walk complete years sequentially, carrying history, clock, RNG and anchors.
+
+    There is one evolving trajectory and one year of reported states in memory.
+    No new year restarts at a historical origin. Each actual increment retains
+    its own covariance, coefficients, shocks and before/after states on disk.
+    """
+    integer(years, 'years', 1)
+    integer(steps_per_year, 'steps_per_year', 1)
+    positive_number(dt, 'dt')
+    if not np.isclose(steps_per_year * dt, 1., rtol=0., atol=1e-12):
+        raise ValueError('steps_per_year * dt must equal one year')
+    if years > 1000:
+        raise ValueError('years exceeds the explicit 1000-year local work limit')
+    walk_workload(len(history), len(maturities), steps_per_year, substeps)
+    output = repository_path(output)
+    rng_state = None
+    prior_thetas = None
+    summaries = []
+    for year in range(years):
+        destination = output / ('year_%04d' % (year + 1))
+        destination.mkdir(exist_ok=False)
+        archive = CovarianceArchive(destination / 'covariance', maturities, ('rate', 'sigma', 'xi'))
+        rng_state_before = rng_state
+        prior_thetas_before = prior_thetas
+        states, projections, diagnostics, history, history_dt = simulate_walk(
+            history, maturities, steps=steps_per_year, dt=dt, substeps=substeps,
+            seed=seed, history_dt=history_dt, nll_budget=nll_budget,
+            fallback_theta=fallback_theta, regularization=regularization,
+            archive=archive, rng_state=rng_state, prior_thetas=prior_thetas)
+        archive_manifest = archive.finish()
+        rng_state = diagnostics['rng_state']
+        prior_thetas = diagnostics['prior_thetas']
+        elapsed = year + np.arange(steps_per_year + 1) * dt
+        np.savez_compressed(destination / 'trajectory.npz', states=states,
+                            maturities=np.asarray(maturities), state_names=np.array(['rate', 'sigma', 'xi']),
+                            elapsed_years=elapsed, boundary_projections=projections)
+        with (destination / 'trajectory.csv').open('x', newline='') as stream:
+            writer = csv.writer(stream)
+            writer.writerow(['step', 'elapsed_years', 'state', 'maturity', 'value'])
+            for step, state in enumerate(states):
+                for family, name in enumerate(('rate', 'sigma', 'xi')):
+                    for tenor, maturity in enumerate(maturities):
+                        writer.writerow([step, format(elapsed[step], '.17g'), name, maturity,
+                                         format(state[family, tenor], '.17g')])
+        np.savez_compressed(destination / 'restart.npz', history=history, history_dt=history_dt,
+                            prior_thetas=prior_thetas, maturities=np.asarray(maturities))
+        files = {name: hashlib.sha256((destination / name).read_bytes()).hexdigest()
+                 for name in ('trajectory.npz', 'trajectory.csv', 'restart.npz', 'covariance/manifest.json')}
+        report = {'schema_version': 2, 'status': 'complete', 'year': year + 1,
+                  'elapsed_start_years': year, 'elapsed_end_years': year + 1,
+                  'covariance_elapsed_time': 'relative to this year start',
+                  'covariance_records': archive_manifest['increments'],
+                  'rng_state_before': rng_state_before,
+                  'prior_thetas_before': prior_thetas_before,
+                  'diagnostics': diagnostics, 'files_sha256': files}
+        _json_file(destination / 'manifest.json', report)
+        summaries.append({'directory': destination.name, 'year': year + 1,
+                          'manifest_sha256': hashlib.sha256((destination / 'manifest.json').read_bytes()).hexdigest(),
+                          'covariance_records': archive_manifest['increments'],
+                          'boundary_projections': int(projections.sum())})
+        print(json.dumps({'completed_year': year + 1, 'years_requested': years,
+                          'actual_increments': archive_manifest['increments']}), flush=True)
+        # Release the annual array and its final CSV-row view before allocating
+        # the following year. The rolling history and continuation state remain.
+        del state, states, elapsed, projections
+    return summaries
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", default="RWA/FRED")
-    parser.add_argument("--input-manifest", help="verify an acquired snapshot before reading its input series")
-    parser.add_argument("--output", required=True, help="new directory inside the repository")
-    parser.add_argument("--maturities", type=int, nargs="+", default=list(TENORS))
-    parser.add_argument("--as-of")
-    parser.add_argument("--yield-window", type=int, default=2520)
-    parser.add_argument("--parameter-window", type=int, default=252)
-    parser.add_argument("--recent-rows", type=int, default=0,
-                        help="explicit history truncation; zero uses all common rows")
-    parser.add_argument("--dt", type=float, default=1 / 252,
-                        help="future reported interval in years; also historical interval under observation clock")
-    parser.add_argument("--time-basis", choices=("observation", "act365f"), default="observation",
-                        help="historical clock: equal dt per row or actual calendar days divided by 365")
-    parser.add_argument("--missing-policy", choices=("forward-fill", "observed"), default="forward-fill",
-                        help="causally fill missing raw quotes or keep only genuine common quote dates")
-    parser.add_argument("--nll-budget", type=float, default=2.)
-    parser.add_argument("--fallback-theta", type=float, default=.25)
-    parser.add_argument("--shrinkage", type=float, default=.05)
-    parser.add_argument("--paths", type=int, default=256)
-    parser.add_argument("--steps", type=int, default=20)
-    parser.add_argument("--substeps", type=int, default=4,
-                        help="Euler increments per reported time step; check refinement sensitivity")
-    parser.add_argument("--seed", type=int, default=1234)
-    parser.add_argument("--noise-replicates", type=int, default=0,
-                        help="zero disables the constant-parameter estimation-noise benchmark")
-    parser.add_argument("--forecast-mode", choices=("frozen", "recursive"), default="frozen")
-    parser.add_argument("--recalibrate-every", type=int, default=1,
-                        help="recursive mode: reported-step interval for pathwise refits; zero is the frozen benchmark")
+    parser = argparse.ArgumentParser(description='Self-calibrate and advance rate, sigma and xi at every increment.')
+    parser.add_argument('--input', default='RWA/FRED')
+    parser.add_argument('--input-manifest', help='verify an acquired snapshot before reading its input series')
+    parser.add_argument('--output', required=True, help='new directory inside the repository')
+    parser.add_argument('--maturities', type=int, nargs='+', default=list(TENORS))
+    parser.add_argument('--as-of')
+    parser.add_argument('--yield-window', type=int, default=2520)
+    parser.add_argument('--parameter-window', type=int, default=252)
+    parser.add_argument('--history-window', type=int, default=2520,
+                        help='complete calibrated daily history retained after both warmups')
+    parser.add_argument('--recent-rows', type=int, default=0,
+                        help='explicit raw-history truncation; zero uses every common observation')
+    parser.add_argument('--dt', type=float, default=1/252, help='reported daily interval in years')
+    parser.add_argument('--time-basis', choices=('observation', 'act365f'), default='observation')
+    parser.add_argument('--missing-policy', choices=('forward-fill', 'observed'), default='forward-fill')
+    parser.add_argument('--nll-budget', type=float, default=2.)
+    parser.add_argument('--fallback-theta', type=float, default=.25)
+    parser.add_argument('--correlation-regularization', type=float, default=0.,
+                        help='explicit alpha in (1-alpha)*R + alpha*I; zero preserves empirical dependence')
+    parser.add_argument('--years', type=int, default=1, help='consecutive full years; history continues across years')
+    parser.add_argument('--steps-per-year', type=int, default=252)
+    parser.add_argument('--substeps', type=int, default=1,
+                        help='actual Euler increments per daily output; all recalibrate independently')
+    parser.add_argument('--seed', type=int, default=1234)
     args = parser.parse_args(argv)
     try:
         output = repository_path(args.output)
         if output.exists():
-            raise ValueError("output already exists; choose a new run directory")
-        integer(args.recent_rows, "recent_rows", 0)
-        integer(args.noise_replicates, "noise_replicates", 0)
-        if args.noise_replicates == 1:
-            raise ValueError("noise_replicates must be zero or at least two")
-        integer(args.parameter_window, "parameter_window", 5)
-        integer(args.recalibrate_every, "recalibrate_every", 0)
-        positive_number(args.dt, "dt")
+            raise ValueError('output already exists; choose a new run directory')
+        for value, name, minimum in ((args.recent_rows, 'recent_rows', 0),
+                                     (args.yield_window, 'yield_window', 4),
+                                     (args.parameter_window, 'parameter_window', 4),
+                                     (args.history_window, 'history_window', 5),
+                                     (args.years, 'years', 1),
+                                     (args.steps_per_year, 'steps_per_year', 1),
+                                     (args.substeps, 'substeps', 1), (args.seed, 'seed', 0)):
+            integer(value, name, minimum)
+        if args.years > 1000:
+            raise ValueError('years exceeds the explicit 1000-year local work limit')
+        positive_number(args.dt, 'dt')
+        positive_number(args.nll_budget, 'nll_budget', allow_zero=True)
+        positive_number(args.fallback_theta, 'fallback_theta')
+        positive_number(args.correlation_regularization, 'correlation_regularization', allow_zero=True)
+        if args.correlation_regularization > 1:
+            raise ValueError('correlation_regularization must be at most one')
+        if not np.isclose(args.steps_per_year * args.dt, 1., rtol=0., atol=1e-12):
+            raise ValueError('steps_per_year * dt must equal one year')
+        walk_workload(args.history_window, len(args.maturities), args.steps_per_year, args.substeps)
         acquisition = (verify_snapshot(args.input_manifest, args.input, args.maturities)
                        if args.input_manifest else None)
         yields, sources = read_yield_panel(args.input, args.maturities, args.as_of, args.missing_policy)
-        # Sort maturities consistently with parameter-panel pivot ordering.
         yields = yields.reindex(sorted(yields.columns), axis=1)
         if args.recent_rows:
             yields = yields.iloc[-args.recent_rows:]
+        required = args.yield_window + args.parameter_window + args.history_window - 2
+        if len(yields) < required:
+            raise ValueError('need at least %d common source observations to produce %d complete calibrated '
+                             'history days after both warmups; only %d available' %
+                             (required, args.history_window, len(yields)))
+        print(json.dumps({'stage': 'historical_calibration', 'source_rows': len(yields),
+                          'required_source_rows': required}), flush=True)
         first = calibrate_panel(yields, args.yield_window, args.dt,
                                 args.nll_budget, args.fallback_theta, args.time_basis)
+        print(json.dumps({'stage': 'parameter_calibration', 'first_stage_rows': len(first)}), flush=True)
         second = calibrate_parameters(first, args.parameter_window, args.dt,
                                       args.nll_budget, args.fallback_theta, args.time_basis)
-        initial, coefficients, corr, factor, diagnostics = forecast_inputs(
-            yields, first, second, args.parameter_window, args.dt, args.shrinkage, args.time_basis)
-        recursive_diagnostics = None
-        if args.forecast_mode == "recursive":
-            history = forecast_history(yields, first, args.parameter_window)
-            samples, projections, recursive_diagnostics = simulate_recursive(
-                history, coefficients, factor, yields.columns.to_numpy(), args.paths,
-                args.steps, args.dt, args.seed, args.substeps, args.recalibrate_every,
-                args.nll_budget, args.fallback_theta, args.shrinkage,
-                history_dt=(observation_steps(parameter_panels(first)["mu"].index[-args.parameter_window:],
-                                              args.dt, args.time_basis)
-                            if args.time_basis != "observation" else None))
-        else:
-            samples, projections = simulate(initial, coefficients, factor, args.paths,
-                                            args.steps, args.dt, args.seed, args.substeps)
-        noise = None
-        if args.noise_replicates:
-            noise = parameter_noise_diagnostic(yields, first, second, args.yield_window,
-                args.parameter_window, args.noise_replicates, args.seed, args.dt,
-                args.nll_budget, args.fallback_theta, args.shrinkage, args.time_basis)
-        durations = transition_steps(observation_steps(yields.index, args.dt, args.time_basis), len(yields) - 1)
-        clock = {"basis": args.time_basis, "historical_interval_count": len(durations),
-                 "min_historical_dt_years": float(durations.min()),
-                 "max_historical_dt_years": float(durations.max()),
-                 "sum_historical_dt_years": float(durations.sum()),
-                 "forecast_dt_years": args.dt}
-        manifest = {"schema_version": 1, "status": "complete", "settings": vars(args),
-                    "source_files": sources, "units": "FRED percentage points",
-                    "yield_acquisition": acquisition, "time_convention": clock,
-                    "history_start": str(yields.index[0].date()),
-                    "forecast_origin": str(yields.index[-1].date()),
-                    "first_stage_rows": len(first), "second_stage_rows": len(second),
-                    "first_stage_weak": int(first.weak.sum()),
-                    "first_stage_regularized": int(first.regularized.sum()),
-                    "second_stage_weak": int(second.weak.sum()),
-                    "second_stage_regularized": int(second.regularized.sum()),
-                    "max_first_stage_nll_cost": float(first.nll_cost.max()),
-                    "max_second_stage_nll_cost": float(second.nll_cost.max()),
-                    "joint_dependence": diagnostics,
-                    "estimation_noise": noise,
-                    "boundary_projections": projections.tolist(),
-                    "forecast_mode": ("pathwise recursive parameter calibration and dependence"
-                                      if args.forecast_mode == "recursive" else
-                                      "stochastic parameters; frozen second-level calibration"),
-                    "recursive_calibration": recursive_diagnostics,
-                    "limitations": ["Estimated parameter dynamics include estimation noise.",
-                                    "Regularization does not identify weak parameters.",
-                                    "No exposure valuation or RWA capital mapping.",
-                                    "Finite parameter hierarchy; no additional independently simulated xi level.",
-                                    "Clock and missing-quote policy are explicit assumptions; ACT/365F does not establish weekend variance scaling.",
-                                    "Forecast increments are regular year fractions, not a future trading calendar.",
-                                    "Gaussian Euler transitions may be inaccurate across large gaps."]}
-        write_outputs(output, yields, first, second, manifest, (samples, projections, corr))
-        print(json.dumps({"output": str(output), "first_stage_rows": len(first),
-                          "second_stage_rows": len(second),
-                          "joint_dimensions": len(corr),
-                          "boundary_projections": int(projections.sum())}))
+        history, dates = walk_history(yields, first, second, args.history_window)
+        durations = observation_steps(dates, args.dt, args.time_basis)
+        write_calibration_outputs(output, yields, first, second, args.dt, args.time_basis)
+        np.savez_compressed(output / 'initial_history.npz', history=history,
+                            history_dt=transition_steps(durations, len(history)-1),
+                            maturities=yields.columns.to_numpy(),
+                            state_names=np.array(['rate', 'sigma', 'xi']),
+                            dates=dates.strftime('%Y-%m-%d').to_numpy(dtype=str))
+        years = run_years(output, history, yields.columns.to_numpy(), args.years,
+                          args.steps_per_year, args.dt, args.substeps, args.seed, durations,
+                          args.nll_budget, args.fallback_theta, args.correlation_regularization)
+        historical_dt = transition_steps(observation_steps(yields.index, args.dt, args.time_basis), len(yields)-1)
+        manifest = {'schema_version': 2, 'status': 'complete', 'settings': vars(args),
+                    'source_files': sources, 'units': 'FRED percentage points for rates',
+                    'files_sha256': calibration_hashes(output),
+                    'yield_acquisition': acquisition,
+                    'time_convention': {'basis': args.time_basis, 'forecast_dt_years': args.dt,
+                                        'actual_increment_years': args.dt/args.substeps,
+                                        'min_historical_dt_years': float(historical_dt.min()),
+                                        'max_historical_dt_years': float(historical_dt.max()),
+                                        'sum_historical_dt_years': float(historical_dt.sum()),
+                                        'historical_interval_count': len(historical_dt)},
+                    'history_start': str(yields.index[0].date()),
+                    'walk_history_start': str(dates[0].date()),
+                    'walk_history_rows': len(history),
+                    'forecast_origin': str(yields.index[-1].date()),
+                    'first_stage_rows': len(first), 'second_stage_rows': len(second),
+                    'max_first_stage_nll_cost': float(first.nll_cost.max()),
+                    'max_second_stage_nll_cost': float(second.nll_cost.max()),
+                    'state_names': ['rate', 'sigma', 'xi'],
+                    'update_order': ['self_calibration_and_covariance', 'xi', 'sigma', 'rate', 'append_history'],
+                    'covariance_shape_per_set': [3, len(yields.columns), len(yields.columns)],
+                    'covariance_sets': ['factor_covariance', 'brownian_covariance'],
+                    'years': years,
+                    'limitations': ['Estimated volatility histories contain calibration and ridge-estimation effects.',
+                                    'Xi evolves as the CIR process described in the ordered update; it is not reset to a fitted diffusion after each step.',
+                                    'Independent family Gaussian drivers; no additional cross-family rho is introduced.',
+                                    'Gaussian Euler likelihood and nonnegative projection require numerical and empirical assessment.',
+                                    'No exposure valuation, arbitrage-free curve construction or RWA capital mapping.']}
+        _json_file(output / 'manifest.json', manifest)
+        print(json.dumps({'output': str(output), 'status': 'complete', 'completed_years': len(years)}), flush=True)
     except (ValueError, KeyError, OSError) as error:
-        parser.exit(2, "Hierarchy failed: " + str(error) + "\n")
+        parser.exit(2, 'Hierarchy failed: ' + str(error) + '\n')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -11,7 +11,7 @@ Install [requirements](../../../requirements.txt) and run from the repository ro
 ```bash
 python3 src/RWA/data/yields/acquire.py \
   --output RWA/FRED/snapshots/my-run \
-  --start 2010-01-01 --max-fill-days 7 --max-age-days 7
+  --start 2000-01-01 --max-fill-days 7 --max-age-days 7
 ```
 
 Choose a new name and do not create that child directory beforehand. `--end`
@@ -40,14 +40,19 @@ gap bounds and failure behavior.
 
 ## Model consumer
 
+Default model initialization needs at least 5,290 common source observations to
+retain 2,520 aligned rate/sigma/xi estimate dates after both calibration warmups.
+The acquisition example requests an early start; actual usable counts, including
+missing-date selection, determine whether the snapshot is sufficient.
+
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --input RWA/FRED/snapshots/my-run/series \
   --input-manifest RWA/FRED/snapshots/my-run/snapshot.json \
   --output RWA/Experimental/HIERARCHY/my-elapsed-run \
   --time-basis act365f --missing-policy observed \
-  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
-  --paths 32 --steps 10 --substeps 8
+  --yield-window 2520 --parameter-window 252 --history-window 2520 \
+  --years 1 --steps-per-year 252 --substeps 1 --seed 1234
 ```
 
 The model verifies hashes and regenerates preparation from raw bytes before using
@@ -55,7 +60,9 @@ the snapshot. In the optional observed/ACT/365F mode above, it fits original DGS
 quotes only on genuine common dates and divides historical calendar gaps by 365
 days; the preserved prepared series and their fill audit stay unchanged. Defaults
 remain forward-fill and the fixed observation clock. Windows count observations,
-and future `--dt` is a separate scalar year fraction. Model outputs and exact
+and future `--dt` is a scalar year fraction whose product with steps per year
+must equal one. Every numerical substep recalculates dependence and state fits;
+additional forecast years continue the ending history and random stream. Model outputs and exact
 historical intervals belong in the [model run directory](../../Experimental/HIERARCHY/readme.md).
 
 Verification uses the snapshot's recorded observation cutoff; an old snapshot

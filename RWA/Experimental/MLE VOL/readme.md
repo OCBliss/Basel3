@@ -3,9 +3,10 @@
 The first yield calibration produces mu, theta and sigma histories. Applying a
 second rolling calibration to those histories estimates dynamics of the
 parameters themselves. For the sigma branch, the second-pass diffusion coefficient
-supplies xi under the model's stated identification of the volatility state.
+initializes the historical xi state. During forecasts, xi evolves under its own
+recalibrated CIR process; it is not reset to each new fitted diffusion estimate.
 The [model guide](../../../src/RWA/models/parameter_hierarchy/readme.md) specifies the notation,
-finite hierarchy, units and limitations.
+three-state update, units and limitations.
 
 ## Active executable workflow
 
@@ -15,17 +16,20 @@ directory each time:
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/parameter-run \
-  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
-  --paths 256 --steps 20 --substeps 4 --noise-replicates 16
+  --yield-window 2520 --parameter-window 252 --history-window 2520 \
+  --years 1 --steps-per-year 252 --substeps 1 --seed 1234
 ```
 
-This reads all eight FRED maturities, fits and stabilizes first-pass yield
-parameters, then fits separate mu/theta/sigma processes. It generates joint
-rate/parameter scenarios and an optional constant-parameter reference for apparent
-estimation-induced dynamics. It writes `parameter_dynamics.csv`, first-pass
-outputs, `scenarios.npz`, `scenario_summary.csv` and a completion `manifest.json`
-under the chosen new output directory. It does not overwrite this legacy folder.
-Use `--noise-replicates 0` to omit that diagnostic when it is not needed for a run.
+This fits historical yields and every mu/theta/sigma branch across eight
+maturities. The default initialization needs at least 5,290 common source rows
+to retain 2,520 aligned rate/sigma/xi history dates after both warmups. It then
+advances one serial trajectory, refreshing dependence and coefficients at every
+actual increment in the order xi → sigma using new xi → rate using new sigma.
+
+Historical calibration tables and RAW/CURVE exports accompany yearly trajectories,
+per-increment covariance/shock archives and completion manifests. No independent
+ensemble paths or ensemble-quantile summaries are generated. The chosen new output
+directory preserves this legacy folder. See the [output guide](../HIERARCHY/readme.md).
 
 ## What is in this folder
 
@@ -50,20 +54,18 @@ as research history and is not the runnable entry point documented above.
 ## Interpretation and verification
 
 Second-pass volatility can arise from noisy rolling estimates and repair
-transitions even when the generating parameters are constant. Use the optional
-`--noise-replicates` diagnostic to compare fitted dynamics with a simulated
-constant-parameter reference. Keep its generated evidence and settings in the
-run manifest; this comparison does not establish forecasting superiority or
-complete recursive valuation. The current hierarchy offers frozen and pathwise
-recursive second-level calibration. Optional ACT/365F/observed mode uses genuine
-common-date quotes and historical calendar intervals in both passes, dependence,
-noise controls and recursive buffers. This does not remove measurement error
-from estimated parameter histories. See the [active output guide](../HIERARCHY/readme.md)
-for historical interval records, run provenance and the RAW/CURVE interfaces.
+transitions even when underlying parameters are constant. Recalibration does not
+separate that estimation noise from latent risk. Optional ACT/365F/observed mode
+uses genuine common-date quotes and historical year fractions in both passes and
+recursive buffers. This does not establish economic identification or forecasting
+superiority.
+
+Read the [model guide](../../../src/RWA/models/parameter_hierarchy/readme.md) for
+the distinction between fitted diffusion coefficients and evolved volatility
+states. Retain the [generated covariance and calibration records](../HIERARCHY/readme.md)
+when examining the ordered recursion. Use the [test guide](../../../tests/readme.md)
+for deterministic, covariance, replay and integration checks:
 
 ```bash
-python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v
+python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
-
-See [tests](../../../tests/readme.md) for isolated temporary/cache settings and the
-broader regression suite.

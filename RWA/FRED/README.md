@@ -16,6 +16,12 @@ forecast `--dt` remains a separate scalar year fraction. See the [model guide](.
 for commands, audit outputs and the distinction between elapsed-time handling
 and inference about latent parameter risk.
 
+Model-ready history must include estimation warmups. The default yield window
+of 2,520 and parameter window of 252 precede a retained 2,520-date estimate history,
+so the model needs at least 5,290 common source observations. A date range with
+only 2,520 quotes is insufficient. See the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
+for serial-year continuation and every-increment covariance/calibration records.
+
 ## Treasury nominal and inflation-indexed constant maturity series
 
 Yields on nominal U.S. Treasury securities with **constant maturity** (**CMT**) are interpolated by the U.S. Treasury from the daily yield curve of non-inflation-indexed Treasury securities. This curve, which relates a bond’s yield to its remaining time to maturity, is based on closing bid yields for actively traded securities in the over-the-counter (OTC) market. These market yields are derived from compilations of price quotations obtained by the **Federal Reserve Bank of New York**.

@@ -6,12 +6,12 @@ outcomes and interest-rate exposure. It contains two executable workflows:
 - **Call Report analysis:** retrieve quarterly FFIEC data, calculate bank ratios,
   construct outcome cohorts and compare their distributions across horizons.
 - **Interest-rate modeling:** retrieve Treasury yields, estimate and stabilize
-  CIR parameters, model the dynamics of those parameters and simulate joint
-  paths across maturities.
+  CIR parameters, model all parameter branches and recursively advance a
+  rate/sigma/xi trajectory across maturities.
 
 The Call Report workflow currently ends with filtered pairwise distribution
 distances. The interest-rate workflow ends with calibrated parameter histories,
-joint scenarios and diagnostic records. Exposure valuation, loss distributions
+serial trajectories and per-increment covariance/calibration records. Exposure valuation, loss distributions
 and a duration-sensitive capital mapping remain research objectives.
 
 ## Installation
@@ -139,15 +139,22 @@ those stages are not implemented.
 The [RWA execution guide](src/RWA/readme.md) explains the complete implemented
 sequence and distinguishes the integrated model from the legacy calibration
 scripts. It covers acquisition, quote selection, both parameter-estimation
-passes, ridge treatment, dependence, noise diagnostics, recursive simulation
-and generated results.
+passes, ridge treatment, separate family dependence, serial recursion and
+per-increment audit records.
 
 The model applies calibration to yield histories and then separately to the
 estimated `mu`, `theta` and `sigma` histories across maturities. The resulting
-parameter processes drive joint yield and parameter scenarios. Historical
-intervals can use an observation clock or actual calendar year fractions;
-future simulation intervals are configured explicitly. Pathwise recursion
-recalibrates parameter dynamics from each simulated path's available history.
+histories initialize rate, sigma and xi. Default initialization retains 2,520
+complete estimate dates after both rolling warmups, requiring at least 5,290 common
+source observations. Every actual Euler increment refreshes three separate family
+dependence structures and recalibrates all three state processes before xi,
+sigma using new xi, and rate using new sigma advance in that order.
+
+Forecast years continue serially from the previous year's history, random stream
+and ridge anchors. Historical intervals can use an observation clock or actual
+calendar year fractions; future intervals are configured explicitly. Yearly
+trajectories have no ensemble axis, and every increment retains its applied
+matrices, coefficients, shocks and before/after states.
 
 These are research estimates. Calibration noise and overlapping windows can
 produce apparent parameter dynamics. Positive scenarios and passing regression
@@ -168,7 +175,7 @@ describes the broader research objective.
 | [PDF/](PDF/readme.md) | Research model and saved bank-report reference PDFs |
 | [tests/](tests/readme.md) | Regression and integration tests |
 
-Downloaded archives, caches, run logs and generated model scenarios remain
+Downloaded archives, caches, run logs and generated model trajectories remain
 local. Their producing workflows create manifests and audit records so each
 result can be traced to its inputs and settings. Shipped historical tables are
 identified in their directory guides; new outputs are not assumed to exist in

@@ -47,16 +47,21 @@ python3 pipeline/Task_manager_Global_yaml_driven.py \
 
 Before each execution, set a new `parameters.output_dir` in that YAML. The default
 is `RWA/Experimental/HIERARCHY/run`; an existing output directory is an error.
-The configuration fits all eight FRED tenors, uses 2,520-observation yield windows
-and 252-observation parameter windows, retains 3,024 observations, and simulates
-256 paths over 20 reported steps with four internal increments each. Its forecast mode defaults to recursive pathwise recalibration. Its optional
-estimation-noise benchmark defaults to disabled; `noise_replicates: 16` enables a
-small diagnostic at additional cost. Do not pre-create the output directory.
+The configuration fits all eight FRED tenors and retains 2,520 aligned estimate
+dates after rolling warmups. Default yield and parameter windows are 2,520 and
+252, requiring at least 5,290 common source rows. It uses all selected source
+history by default and advances one serial year in 252 reported increments.
+Every actual increment, including numerical substeps, recalculates three separate
+family dependence structures and recalibrates rate, sigma and xi. The update
+order is xi → sigma using new xi → rate using new sigma. Do not pre-create the
+output directory.
 
-The declared artifacts include the completion manifest, parameter dynamics,
-scenario summary and scenario array. See the [RWA guide](../src/RWA/readme.md)
-for direct execution and the [model specification](../src/RWA/models/parameter_hierarchy/readme.md)
-for assumptions and unfinished work.
+Historical calibration tables and RAW/CURVE exports accompany each year's
+trajectory, covariance/shock archive, restart state and completion manifest.
+Multiple years continue the same evolving history and RNG; they are not
+independent ensemble paths. See the [RWA execution guide](../src/RWA/readme.md),
+[configuration guide](rwa_hierarchy/readme.md) and
+[model specification](../src/RWA/models/parameter_hierarchy/readme.md).
 
 ## Call Report/JSD horizon and bin settings
 

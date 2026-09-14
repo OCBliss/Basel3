@@ -31,8 +31,13 @@ require private research records or previously generated analytical outputs.
 | `test_repository_portability.py` | Checkout names, local path boundaries and interpreter handling |
 | `test_pipeline_manager.py` | Configuration validation, parameters, dependencies and task execution |
 | `test_rwa_calibration.py` | Chronological calibration, curve repair and downstream file contracts |
-| `test_rwa_hierarchy.py` | Independent likelihood comparisons, ridge budgets, all maturity/parameter branches, dependence, noise controls and simulation |
-| `test_rwa_recursive.py` | Frozen-mode equivalence, causal path histories, recalibration, correlation and resource guards |
+| `test_rwa_hierarchy.py` | Historical calibration, likelihood/ridge contracts and all parameter branches |
+| `test_rwa_recursive.py` | Ordered xi/sigma/rate updates, every-increment recalibration, causal histories and serial continuation |
+| `test_rwa_covariance.py` | Three separate family covariances, factor identities, regularization and Brownian transforms |
+| `test_rwa_covariance_archive.py` | Complete increment records, checksums, coefficient/shock replay data and interrupted writes |
+| `test_rwa_annual_walk.py` | Historical initialization, preserved starting histories, yearly continuation and model-output integration |
+| `test_rwa_conditioned_fit.py` | Conditional drift likelihoods with varying right-endpoint diffusion histories and ridge constraints |
+| `test_rwa_walk_verification.py` | File integrity, rolling covariance/shock replay, yearly restart continuity and optional recalibration |
 | `test_rwa_elapsed_time.py` | Irregular historical intervals, time units, both estimation passes, recursion and verified-input integration |
 | `test_rwa_yield_data.py` | Response failures, freshness/gap rules, immutable outputs and raw-to-clean provenance |
 

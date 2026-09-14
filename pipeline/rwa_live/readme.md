@@ -1,17 +1,17 @@
-# Acquire Treasury yields and run the parameter model
+# Acquire yields and run the recursive interest-rate model
 
-[config.yaml](config.yaml) connects current yield retrieval and preparation to the
-existing interest-rate parameter hierarchy. Both stages run through the real
-pipeline manager with an explicit dependency. This workflow produces verified
-input snapshots, parameter estimates and scenarios; it does not calculate
-security-level duration losses or duration-adjusted RWA.
+[config.yaml](config.yaml) connects verified Treasury yield acquisition to the
+recursive rate/sigma/xi model. Historical calibration retains all mu/theta/sigma
+branches. Simulation advances one continuing trajectory, refreshing three separate
+family dependence structures and CIR fits at every actual Euler increment.
+It does not produce security-level valuation or duration-adjusted RWA.
 
 ## Run from the repository root
 
-Install [requirements](../../requirements.txt). Before running, edit
-`parameters.snapshot_dir` and `parameters.output_dir` in [config.yaml](config.yaml)
-to two new directory names inside the repository. Do not create those directories;
-the producing stages create them after their validation succeeds.
+Install [requirements](../../requirements.txt), then set `snapshot_dir` and
+`output_dir` in the configuration to two new repository-local directories. Do not
+create them beforehand. Select an acquisition `start` early enough to supply
+all historical calibration warmups and the ongoing estimate history.
 
 ```bash
 python3 -m pip install -r requirements.txt
@@ -21,21 +21,18 @@ python3 pipeline/Task_manager_Global_yaml_driven.py \
   --config pipeline/rwa_live/config.yaml
 ```
 
-The preview resolves the plan without downloading yields or running calibration.
-The live command performs an HTTPS download. Existing snapshot/model output
-locations are rejected; changing only the model output name is insufficient for
-another complete acquisition run. Use new values for both on each repeat.
+The preview downloads nothing and performs no calibration. The real command
+retrieves a new FRED snapshot and runs the model after verifying it. For another
+full run, choose two new output names; completed destinations are not overwritten.
 
-## Stages and dependency direction
+## Stage order and provenance
 
-| Stage | Source entry point | Output consumed next |
+| Task | Executable | Result |
 | --- | --- | --- |
-| `acquire_yields` | `src/RWA/data/yields/acquire.py` | `snapshot.json`, preserved `raw/fred.csv`, prepared `series/DGS*.csv` |
-| `rwa_hierarchy` | `src/RWA/models/parameter_hierarchy/workflow.py` | Calibration tables, scenarios and result `manifest.json` |
+| `acquire_yields` | `src/RWA/data/yields/acquire.py` | Preserved raw response, prepared `series/DGS*.csv` and `snapshot.json` |
+| `rwa_hierarchy` | `src/RWA/models/parameter_hierarchy/workflow.py` | Historical calibration tables, serial-year trajectories and covariance archives |
 
-Script `path` entries in YAML are relative to `src/`. Data paths and parameterized
-output locations resolve from the repository root. The manager's dependency map
-runs from producer to dependent:
+The manager's dependency map runs from producer to dependent:
 
 ```yaml
 dependencies:
@@ -45,129 +42,107 @@ execution:
   - sequential: [acquire_yields, rwa_hierarchy]
 ```
 
-The model receives both `--input {snapshot_dir}/series` and
-`--input-manifest {snapshot_dir}/snapshot.json`. It verifies hashes, source paths
-and the maturity contract, and independently regenerates prepared CSVs and
-quality metadata from the preserved raw bytes before calibration. Its result
-manifest records this acquisition provenance. Reversing the dependency map would
-require the acquisition stage to wait for its own downstream consumer.
+Script paths in YAML are relative to `src/`; artifact paths resolve from the
+repository root. The model receives both the prepared series directory and
+`snapshot.json`. It verifies hashes and the maturity/path contract, regenerates
+prepared CSVs and quality metadata from the preserved bytes, and records the
+snapshot provenance in its result manifest. Acquisition failure prevents the
+model from running.
 
-The default Call Report/JSD pipeline remains separate. The existing
-[local-input hierarchy configuration](../rwa_hierarchy/readme.md) also remains
-available when retrieval is not part of the requested run.
+The default [Call Report/JSD pipeline](../readme.md) is separate. The
+[existing-input model configuration](../rwa_hierarchy/readme.md) skips retrieval.
 
-## Settings
+## History must contain estimates after warmup
 
-| Parameter | Default | Effect |
-| --- | --- | --- |
-| `snapshot_dir` | `RWA/FRED/snapshots/run` | New raw/prepared input snapshot |
-| `output_dir` | `RWA/Experimental/HIERARCHY/live-run` | New model result directory |
-| `start` | `2010-01-01` | First permitted observation date |
-| `max_fill_days` | `7` | Calendar-day quote-gap/fill limit |
-| `max_age_days` | `7` | Maximum last-genuine-quote age relative to requested end |
-| `yield_window` | `2520` | Observations in each first-pass calibration window |
-| `parameter_window` | `252` | Observations in each parameter-process window |
-| `recent_rows` | `3024` | Last common-history rows used by the model; `0` uses all |
-| `paths`, `steps`, `substeps` | `256`, `20`, `4` | Scenario count, reported steps and internal Euler increments per step |
-| `seed` | `1234` | Reproducible simulation random seed for fixed inputs/settings |
-| `forecast_mode` | `recursive` | Pathwise recalibration; use `frozen` for origin coefficients and dependence. |
-| `recalibrate_every` | `1` | Reported-step cadence for recursive updates; zero disables updates. |
-| `time_basis` | `observation` | Historical transition clock: `observation` or `act365f`. |
-| `missing_policy` | `forward-fill` | Causal fills or `observed` genuine common-date quotes. |
-| `dt` | `0.003968253968253968` | Future reported-step year fraction (1/252); also the historical interval in observation mode. |
+The model defaults to `yield_window: 2520`, `parameter_window: 252` and
+`history_window: 2520`. It needs at least **5,290 common source observations**:
 
-Acquisition defaults to all eight supported maturities and a requested end of the
-local current date. The YAML does not currently expose an `end` parameter; use
-the [acquisition CLI](../../src/RWA/data/yields/readme.md) for a fixed cutoff, or
-explicitly add and pass `--end` when adapting a copy of this configuration.
-The estimation-noise benchmark is disabled unless explicitly added to the
-model arguments; use zero or at least two replicates.
+```text
+yield_window + parameter_window + history_window - 2
+```
 
-The 2010 start is a bounded history choice. Validation still checks the actual
-returned data; the chosen start does not justify imputing arbitrary gaps or
-assuming every series is continuous. Freshness is measured from each last
-**genuine** quote, not from a filled endpoint.
+The last window represents 2,520 dates of rate/sigma/xi history after both fitting
+passes, not 2,520 raw observations before estimation. First-pass mu/theta/sigma
+histories and all three second-pass branches are retained. Use an early source
+start, such as `2000-01-01`, and let the actual common count determine sufficiency;
+a calendar start is not proof that every needed quote exists.
 
-## Configure elapsed-time calibration
+`recent_rows: 0` uses all selected data. An explicit positive cap must still
+satisfy the full minimum and changes the starting ridge anchors. Missing-date
+selection can reduce usable observations. Neither missing quotes nor unavailable
+parameter estimates are manufactured to satisfy the history requirement.
 
-The saved YAML preserves the historical observation-clock/forward-fill defaults.
-To fit genuine observations using actual historical year fractions, set these
-existing entries in its `parameters` block:
+Acquisition enforces `max_fill_days: 7` and `max_age_days: 7` by default. The
+[yield-data guide](../../src/RWA/data/yields/readme.md) specifies transport limits,
+source validation and supported maturity selection. It uses the public FRED graph
+CSV HTTPS GET endpoint without an API key; it does not use the separate keyed
+observations API. Freshness refers to each last genuine quote, not a filled row.
+
+## Forecast and clock settings
+
+The forecast defaults are one year, 252 reported steps per year, `dt=1/252`, one
+substep per reported step, seed 1234 and zero correlation regularization.
+`steps_per_year * dt` must equal one. `years: 2` continues year two from year one's
+ending history, RNG and ridge anchors; it is not a second independent path.
+Each additional substep triggers its own dependence calculation, calibration,
+ordered xi → sigma → rate update and archive record.
+
+The default historical settings are `time_basis: observation` and
+`missing_policy: forward-fill`. To use genuine common-date quotes and actual
+historical date gaps, set:
 
 ```yaml
 time_basis: act365f
 missing_policy: observed
-dt: 0.003968253968253968
 ```
 
-The model arguments already pass these settings. `observed` reads original
-`DGS<n>` values and retains only dates genuinely observed across all selected
-tenors; it does not fit prepared fill values. ACT/365F divides the calendar time
-between retained dates by 365 days, including weekends, gaps and leap years.
-Both rolling calibration passes, dependence residuals, the optional noise
-benchmark and recursive history buffers use those historical intervals.
+ACT/365F divides historical calendar gaps by 365. Windows count observations or
+estimates, while future intervals use their configured year fractions. There is
+no future holiday calendar. The preserved snapshot retains its original quotes
+and filling audit even when the model selects only genuinely observed dates.
 
-Windows and `recent_rows` remain observation counts, so a common count can span
-different dates under the two policies. `dt` remains the regular **future**
-year-fraction increment; use `0.0027397260273972603` for 1/365 if that forecast grid
-is intended. No business-day/holiday forecast calendar is generated. Substeps
-refine each future increment without creating extra calibration observations.
+`correlation_regularization: 0` keeps empirical correlations. A positive alpha
+must be explicitly chosen; it and the unadjusted matrices are archived. Undefined
+zero-variance correlations cannot be repaired by that setting. The
+[model guide](../../src/RWA/models/parameter_hierarchy/readme.md) details numerical
+assumptions, boundary behavior and the distinction between estimated diffusion
+coefficients and evolved volatility states.
 
-Review `transition_intervals.csv`, the manifest's `time_convention`, source
-exclusions and fitted-parameter audits. Retaining actual durations does not remove
-Euler approximation error, informative-missingness bias or estimation noise, and
-it does not construct an arbitrage-free spot curve. See the [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
-and [elapsed-time tests](../../tests/test_rwa_elapsed_time.py).
+## Outputs, failures and repeats
 
-## Outputs, failures and reruns
+The root output retains `yield_parameters.csv`, `parameter_dynamics.csv`,
+`RAW/`, `CURVE/`, `transition_intervals.csv` and `initial_history.npz`.
+Every `year_NNNN/` contains a
+three-state trajectory, an archive for all actual increments, restart data and a
+completion manifest. The root manifest is written after all requested years
+finish. See the [output contract](../../RWA/Experimental/HIERARCHY/readme.md).
+The previous four-state ensemble scenario files are not the current interface.
 
-The [yield-data guide](../../src/RWA/data/yields/readme.md) specifies the five-column
-prepared series, raw-response retention, seven-day defaults, bounded retries and
-8 MiB response cap. This is FRED's public graph CSV HTTPS GET route and needs no
-API key; it is not an implementation of the separate keyed observations API.
+If acquisition succeeds but modeling fails, its verified snapshot remains usable.
+Retry the model directly against that snapshot with a new model destination;
+do not redownload into an existing snapshot directory. Streamed model records
+without the required completion manifests are partial evidence, not a completed
+result. Inspect source exclusions, fit/ridge audits, correlations and projections.
 
-The [model guide](../../src/RWA/models/parameter_hierarchy/readme.md) describes
-`yield_parameters.csv`, `parameter_dynamics.csv`, RAW/CURVE exports,
-`scenario_summary.csv`, `scenarios.npz`, historical `transition_intervals.csv`
-and the final completion manifest. Forecast outputs include `elapsed_years`. Check
-both the snapshot's quality report and the model's diagnostics. Successful
-execution does not establish statistical identification or forecast superiority.
-
-If acquisition fails, the dependent model must not run. If modeling fails after
-acquisition succeeds, the completed source snapshot remains usable; a model
-directory without a completion manifest is incomplete. To retry modeling against
-that same verified snapshot, use the direct model command in the yield-data guide
-with a new model output directory instead of redownloading into an existing path.
-For a fresh full run, choose two new paths and run the manager again.
-
-Retrieved history reflects revisions available at download time. Restricting
-observation dates is not historical real-time-vintage retrieval. The model still
-uses a finite parameter hierarchy with pathwise recalibration of the second-level
-coefficients and full joint dependence. Exposure valuation is a separate stage.
+Downloaded history includes revisions available at retrieval. An earlier date
+cutoff is not historical real-time-vintage retrieval. Successful simulation does
+not identify latent risk, establish forecast superiority or provide portfolio
+valuation and capital mapping.
 
 ## Verification
+The [model verifier](../../src/RWA/models/parameter_hierarchy/readme.md#verify-a-completed-run)
+checks a completed run from its preserved starting history, file hashes and
+per-increment records. Its optional recalibration check repeats the fitted model
+coefficients as well as replaying the saved transitions.
 
-Use the repository-local temporary/cache setup in the
-[test guide](../../tests/readme.md) for isolated checks:
+
+Use the [test guide](../../tests/readme.md) for isolated checks:
 
 ```bash
-python3 -B -m unittest discover -s tests -p test_rwa_yield_data.py -v
-python3 -B -m unittest discover -s tests -p test_rwa_hierarchy.py -v
+python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
+python3 -B -m unittest discover -s tests -p test_pipeline_manager.py -v
 ```
 
-The acquisition tests exercise malformed/network failures, chronological filling,
-freshness, publication and provenance verification; hierarchy checks cover model
-contracts and actual manager execution on isolated inputs. A live run additionally
-checks the current source response and produces its own snapshot and model
-manifests; inspect both before treating the pipeline as complete.
-
-
-## Forecast mode and update cadence
-
-The configuration selects `forecast_mode: recursive` and `recalibrate_every: 1`.
-Each path recalibrates mu/theta/sigma dynamics and full joint dependence from its
-own rolling history before its next reported step. Set `forecast_mode: frozen`
-for the origin-calibration benchmark, or increase `recalibrate_every` to compare
-less frequent updates. Changes to a path's calibration cannot use future draws
-or another path's simulated observations. The model guide specifies numerical
-bounds, failure behavior and per-path diagnostics in `recursive_calibration`.
+Check actual results for acquisition failures, provenance verification,
+three-family covariance identities, ordered-step replay and configured execution.
+A live run supplies its own source snapshot and model manifests for review.

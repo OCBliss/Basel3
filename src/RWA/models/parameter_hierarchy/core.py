@@ -23,6 +23,23 @@ class CIRFit:
     deterministic: bool = False
 
 
+@dataclass(frozen=True)
+class DriftFit:
+    """CIR drift fitted conditional on a supplied volatility history.
+
+    There is no fitted diffusion parameter: each transition variance is known
+    from its matched higher-layer state. Constant observations do not make that
+    positive-variance conditional model deterministic.
+    """
+    a: float
+    theta: float
+    mu: float
+    theta_se: float
+    nll: float
+    weak: bool
+    deterministic: bool = False
+
+
 def positive_number(value, name, allow_zero=False):
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float, np.integer, np.floating)):
         raise ValueError(name + " must be a finite number")
@@ -209,99 +226,159 @@ def stabilize_panel(histories, maturities, dt=1 / 252, nll_budget=2.0,
     return healed, audit
 
 
-def innovation_correlation(residuals, shrinkage=.05):
-    """Estimate a full joint correlation, shrink to identity, return its factor.
+def _conditioned_array(values, name):
+    try:
+        raw = np.asarray(values)
+    except (TypeError, ValueError) as error:
+        raise ValueError(name + " must contain finite real numeric values") from error
+    if raw.dtype.kind not in "iuf":
+        raise ValueError(name + " must contain real numbers, not strings or booleans")
+    with np.errstate(over="ignore", invalid="ignore"):
+        array = raw.astype(float, copy=False)
+    if not np.isfinite(array).all():
+        raise ValueError(name + " must remain finite in float64 precision")
+    return array
 
-    Constant residual columns have zero off-diagonal correlation. Their diffusion
-    coefficient remains zero; identity diagonal does not add noise to that state.
+
+def fit_conditioned_cir(values, diffusion_history, dt=1 / 252, fixed_theta=None):
+    """Fit drift a-theta*Y with the ordered update's known conditional variance.
+
+    For each transition t -> t+1, variance is A[t+1]**2 * Y[t] * h[t].
+    Thus the supplied higher-layer history has the same length as Y and its
+    right endpoints determine the weights. No constant sigma is estimated.
+    The derivative regression weights are h/(A_right**2 * Y_left), including
+    each actual elapsed interval. All drift constraint edges are evaluated.
+
+    Mu has a relative positivity boundary at 1e-12 times the mean state. At
+    theta=0, mu is undefined. Theta SE is a local regression-information
+    diagnostic, not a boundary confidence interval. Zero states or nonpositive
+    known transition variances require a boundary-aware likelihood and fail.
     """
-    positive_number(shrinkage, "shrinkage")
-    if shrinkage > 1:
-        raise ValueError("shrinkage must be at most one")
-    r = np.asarray(residuals, dtype=float)
-    if r.ndim != 2 or r.shape[0] < 4 or r.shape[1] < 1 or not np.isfinite(r).all():
-        raise ValueError("joint residuals need at least four finite aligned rows")
-    centered = r - r.mean(axis=0)
-    norms = np.linalg.norm(centered, axis=0)
-    z = np.divide(centered, norms, out=np.zeros_like(centered), where=norms > 0)
-    empirical = z.T @ z
-    np.fill_diagonal(empirical, 1.)
-    correlation = (1 - shrinkage) * empirical + shrinkage * np.eye(r.shape[1])
-    correlation = (correlation + correlation.T) / 2
-    factor = np.linalg.cholesky(correlation)
-    return correlation, factor, {
-        "observations": len(r), "shrinkage": shrinkage,
-        "constant_columns": np.flatnonzero(norms == 0).tolist(),
-        "min_eigenvalue": float(np.linalg.eigvalsh(correlation)[0]),
-        "max_correlation_adjustment": float(np.max(np.abs(correlation - empirical)))}
+    v = _conditioned_array(values, "conditioned state history")
+    driver = _conditioned_array(diffusion_history, "diffusion history")
+    if v.ndim != 1 or len(v) < 4 or (v < 0).any():
+        raise ValueError("conditioned CIR history needs at least four nonnegative states")
+    if driver.shape != v.shape or (driver < 0).any():
+        raise ValueError("diffusion history must match states with nonnegative amplitudes")
+    intervals = transition_steps(dt, len(v) - 1)
+    if fixed_theta is not None:
+        positive_number(fixed_theta, "fixed_theta", allow_zero=True)
+    if (v == 0).any():
+        raise ValueError("zero states require a boundary-aware conditioned fit")
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        variance = driver[1:]**2 * v[:-1] * intervals
+    if not np.isfinite(variance).all():
+        raise ValueError("nonfinite known transition variance; inspect state, driver and time units")
+    if (variance <= 0).any():
+        raise ValueError("nonpositive known transition variance requires a boundary-aware conditioned fit")
+    # Normalize both response and regressor by the same state scale, retaining
+    # the exact inverse-variance weights for that normalized regression. This
+    # preserves physical-unit likelihoods and regression information.
+    scale = float(np.max(v))
+    relative_mean = float(np.mean(v / scale))
+    scale *= relative_mean
+    x = v[:-1] / scale
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        y = np.diff(v / scale) / intervals
+        w = scale * intervals / (driver[1:]**2 * x)
+    if not np.isfinite(y).all() or not np.isfinite(w).all() or (w <= 0).any():
+        raise ValueError("nonfinite conditioned regression weights; inspect numeric scale")
+    xbar = float(np.average(x, weights=w))
+    ybar = float(np.average(y, weights=w))
+    sx = float(np.sum(w * (x - xbar)**2))
+    mu_min = 1e-12
+
+    def profile(theta):
+        intercept = max(ybar + theta*xbar, theta*mu_min)
+        loss = float(np.sum(w * (y - intercept + theta*x)**2))
+        return loss, intercept, theta
+
+    if fixed_theta is None:
+        candidates = [profile(0.)]
+        if sx > 0:
+            theta = max(0., -float(np.sum(w*(x-xbar)*(y-ybar))) / sx)
+            candidates.append(profile(theta))
+        z = mu_min-x
+        edge = max(0., float(np.sum(w*z*y) / np.sum(w*z*z)))
+        candidates.append(profile(edge))
+        _, intercept, theta = min(candidates)
+    else:
+        _, intercept, theta = profile(float(fixed_theta))
+    a = intercept * scale
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        residual = np.diff(v) - (a-theta*v[:-1])*intervals
+        nll = .5*float(np.sum(np.log(2*np.pi) + np.log(variance) + residual**2/variance))
+    if not np.isfinite([a, theta, nll]).all():
+        raise ValueError("nonfinite conditioned drift or likelihood; inspect numeric scale")
+    se = 1 / np.sqrt(sx) if sx > 0 else float("inf")
+    mu = a/theta if theta > 0 else float("nan")
+    return DriftFit(float(a), float(theta), float(mu), float(se), nll,
+                    bool(theta < 1e-4 or theta <= se))
 
 
-def joint_standardized_residuals(history, coefficients, dt):
-    """Standardize simultaneous Euler innovations on each historical interval.
+def stabilize_conditioned_panel(histories, driver_histories, maturities,
+                                dt=1 / 252, nll_budget=2., fallback_theta=.25,
+                                prior_thetas=None):
+    """Couple weak conditional drift fits within their known-variance NLL budget.
 
-    History is (observations, X/mu/theta/sigma, maturity); coefficient order is
-    (mu/theta/sigma process, theta/mu/sigma coefficient, maturity). Yield drift
-    and diffusion use left-point parameter states; parameter innovations use the
-    supplied second-level fit. A zero diffusion with a nonzero innovation fails.
+    Driver columns align exactly with each maturity's state history. Healthy
+    tenor speeds, otherwise causal prior speeds or the explicit fallback,
+    provide the same regularization targets as stabilize_panel. Reprofiling
+    changes drift only; supplied diffusion histories and variances stay fixed.
     """
-    h = np.asarray(history, dtype=float)
-    c = np.asarray(coefficients, dtype=float)
-    if (h.ndim != 3 or h.shape[0] < 2 or h.shape[1] != 4 or h.shape[2] < 1
-            or not np.isfinite(h).all() or (h < 0).any()):
-        raise ValueError("joint history needs finite nonnegative (observations,4,maturity) states")
-    if c.shape != (3, 3, h.shape[2]) or not np.isfinite(c).all() or (c < 0).any():
-        raise ValueError("joint coefficients need finite nonnegative (3,3,maturity) values")
-    intervals = transition_steps(dt, len(h) - 1)[:, None, None]
-    earlier = h[:-1]
-    drift = np.empty_like(earlier)
-    diffusion = np.empty_like(earlier)
-    drift[:, 0] = earlier[:, 2] * (earlier[:, 1] - earlier[:, 0])
-    diffusion[:, 0] = earlier[:, 3] * np.sqrt(earlier[:, 0])
-    drift[:, 1:] = c[:, 0] * (c[:, 1] - earlier[:, 1:])
-    diffusion[:, 1:] = c[:, 2] * np.sqrt(earlier[:, 1:])
-    innovations = np.diff(h, axis=0) - drift * intervals
-    if not np.isfinite(innovations).all() or not np.isfinite(diffusion).all():
-        raise ValueError("nonfinite joint transition moments; inspect states and intervals")
-    if np.any((diffusion == 0) & (np.abs(innovations) > 1e-10)):
-        raise ValueError("nonzero innovations under a zero diffusion coefficient")
-    residuals = np.divide(innovations, diffusion * np.sqrt(intervals),
-                          out=np.zeros_like(innovations), where=diffusion > 0)
-    if not np.isfinite(residuals).all():
-        raise ValueError("nonfinite standardized innovations; inspect states and transition intervals")
-    return residuals
-
-
-def step_hierarchy(state, coefficients, normal_shocks, factor, dt):
-    """One simultaneous left-point projected Euler step.
-
-    State last axes: [X, mu, theta, sigma], maturity. Coefficients have axes
-    [parameter(mu,theta,sigma), fitted(theta,mu,sigma), maturity]. Normal shocks
-    have the state shape. All coefficients multiplying shocks use the old state.
-    """
-    positive_number(dt, "dt")
-    s = np.asarray(state, dtype=float)
-    c = np.asarray(coefficients, dtype=float)
-    z = np.asarray(normal_shocks, dtype=float)
-    if s.ndim < 2 or s.shape[-2] != 4 or s.shape[-1] < 1 or z.shape != s.shape:
-        raise ValueError("state and shocks must have matching (...,4,maturity) shapes")
-    d = s.shape[-1]
-    if c.shape != (3, 3, d):
-        raise ValueError("coefficient shape must be (3,3,maturity)")
-    l = np.asarray(factor, dtype=float)
-    if l.shape != (4 * d, 4 * d) or not np.isfinite(l).all():
-        raise ValueError("joint factor must have shape (4*maturity,4*maturity)")
-    if not np.allclose(np.diag(l @ l.T), 1., atol=1e-10):
-        raise ValueError("factor must produce unit marginal shock variances")
-    if not np.isfinite(s).all() or (s < 0).any() or not np.isfinite(c).all() or (c < 0).any() or not np.isfinite(z).all():
-        raise ValueError("states/coefficients must be finite nonnegative and shocks finite")
-    dw = (z.reshape(-1, 4 * d) @ l.T).reshape(s.shape) * np.sqrt(dt)
-    drift = np.empty_like(s)
-    diffusion = np.empty_like(s)
-    drift[..., 0, :] = s[..., 2, :] * (s[..., 1, :] - s[..., 0, :])
-    diffusion[..., 0, :] = s[..., 3, :] * np.sqrt(s[..., 0, :])
-    drift[..., 1:, :] = c[:, 0, :] * (c[:, 1, :] - s[..., 1:, :])
-    diffusion[..., 1:, :] = c[:, 2, :] * np.sqrt(s[..., 1:, :])
-    unprojected = s + drift * dt + diffusion * dw
-    if not np.isfinite(unprojected).all():
-        raise ValueError("nonfinite simulated state; inspect calibration and step size")
-    return np.maximum(unprojected, 0.), unprojected < 0
+    positive_number(nll_budget, "nll_budget", allow_zero=True)
+    positive_number(fallback_theta, "fallback_theta")
+    h = _conditioned_array(histories, "conditioned histories")
+    drivers = _conditioned_array(driver_histories, "driver histories")
+    tenors = _conditioned_array(maturities, "maturities")
+    if (h.ndim != 2 or drivers.shape != h.shape or tenors.ndim != 1
+            or tenors.size == 0 or h.shape[1] != len(tenors)):
+        raise ValueError("state and driver history columns must match maturities")
+    if (tenors <= 0).any() or len(np.unique(tenors)) != len(tenors):
+        raise ValueError("maturities must be distinct, finite and positive")
+    if prior_thetas is not None:
+        prior_thetas = _conditioned_array(prior_thetas, "prior_thetas")
+        if prior_thetas.shape != tenors.shape or (prior_thetas <= 0).any():
+            raise ValueError("prior_thetas must contain a positive speed per maturity")
+    raw = [fit_conditioned_cir(h[:, j], drivers[:, j], dt) for j in range(len(tenors))]
+    anchors = sorted((j for j, fit in enumerate(raw) if not fit.weak), key=lambda j: tenors[j])
+    healed, audit = [], []
+    for j, original in enumerate(raw):
+        target, source = original.theta, "unmodified"
+        if original.weak:
+            if anchors:
+                target = float(np.exp(np.interp(np.log(tenors[j]), np.log(tenors[anchors]),
+                                                np.log([raw[k].theta for k in anchors]))))
+                source = "tenor_anchors"
+            elif prior_thetas is not None:
+                target, source = float(prior_thetas[j]), "previous_date"
+            else:
+                target, source = fallback_theta, "explicit_fallback"
+        chosen = original
+        if original.weak and target != original.theta:
+            candidate = fit_conditioned_cir(h[:, j], drivers[:, j], dt, fixed_theta=target)
+            if candidate.nll-original.nll <= nll_budget:
+                chosen = candidate
+            else:
+                lower, upper = 0., 1.
+                for _ in range(45):
+                    fraction = (lower+upper)/2
+                    trial = fit_conditioned_cir(h[:, j], drivers[:, j], dt,
+                                               fixed_theta=original.theta+fraction*(target-original.theta))
+                    if trial.nll-original.nll <= nll_budget:
+                        lower, chosen = fraction, trial
+                    else:
+                        upper = fraction
+        chosen = replace(chosen, weak=original.weak)
+        healed.append(chosen)
+        audit.append({"raw_theta": original.theta, "raw_mu": original.mu,
+                      "raw_a": original.a, "raw_nll": original.nll,
+                      "theta_se": original.theta_se, "weak": original.weak,
+                      "deterministic": original.deterministic,
+                      "target_theta": target, "anchor_source": source,
+                      "regularized": chosen.theta != original.theta,
+                      "nll_cost": max(0., chosen.nll-original.nll),
+                      "diffusion_source": "observed_right_endpoint_higher_layer",
+                      "variance_source": "observed_right_endpoint_higher_layer",
+                      "usable": np.isfinite(chosen.mu) and chosen.theta > 0})
+    return healed, audit

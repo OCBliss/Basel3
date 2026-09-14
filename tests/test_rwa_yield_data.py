@@ -4,12 +4,12 @@ import copy
 import hashlib
 import importlib
 import json
-import os
 from pathlib import Path
 import sys
-import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
 
@@ -471,7 +471,7 @@ class YieldSnapshotTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             acquisition.verify_snapshot(self.output/'snapshot.json', self.output/'series', (1, 2))
 
-    def test_real_hierarchy_cli_records_verified_snapshot_and_rejects_later_tampering(self):
+    def test_serial_command_preserves_verified_snapshot_and_rejects_later_tampering(self):
         rng = np.random.default_rng(417)
         dates = pd.bdate_range('2010-01-04', periods=96)
         means = np.array([3., 4.])
@@ -487,20 +487,25 @@ class YieldSnapshotTests(unittest.TestCase):
         manifest_path = self.output/'snapshot.json'
         expected_sha = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
         result_directory = self.directory/'model-results'
-        command = [sys.executable, '-B', str(ROOT/'src/RWA/models/parameter_hierarchy/workflow.py'),
-                   '--input', str(self.output/'series'), '--input-manifest', str(manifest_path),
+        command = ['--input', str(self.output/'series'), '--input-manifest', str(manifest_path),
                    '--output', str(result_directory), '--maturities', '1', '2',
                    '--yield-window', '32', '--parameter-window', '16',
-                   '--steps', '2', '--paths', '4', '--substeps', '8']
-        result = subprocess.run(command, cwd=self.directory, capture_output=True, text=True,
-                                env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                   '--history-window', '12', '--years', '1']
+        with mock.patch.object(hierarchy, 'run_years', return_value=[{'year': 1}]) as run, \
+                redirect_stdout(StringIO()):
+            hierarchy.main(command)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.args[1].shape, (12,3,2))
+        np.testing.assert_allclose(run.call_args.args[1][:,0], values[-12:], rtol=1e-14)
         model = json.loads((result_directory/'manifest.json').read_text())
         self.assertEqual(model['yield_acquisition']['sha256'], expected_sha)
         self.assertEqual(model['yield_acquisition']['quality'], snapshot['quality'])
         self.assertEqual(model['forecast_origin'], dates[-1].date().isoformat())
-        with np.load(result_directory/'scenarios.npz') as scenarios:
-            self.assertEqual(scenarios['states'].shape, (4, 3, 4, 2))
+        self.assertEqual(model['schema_version'], 2)
+        self.assertEqual(model['state_names'], ['rate', 'sigma', 'xi'])
+        self.assertEqual(model['walk_history_rows'], 12)
+        self.assertEqual(run.call_args.args[3:7], (1,252,1/252,1))
+        self.assertEqual(model['units'], 'FRED percentage points for rates')
 
         # The CLI must check acquisition integrity before it can publish another
         # model result; a successful old result remains intact after rejection.
@@ -509,10 +514,10 @@ class YieldSnapshotTests(unittest.TestCase):
         changed.write_bytes(changed.read_bytes() + b'\n')
         rejected_output = self.directory/'tampered-model-results'
         command[command.index('--output') + 1] = str(rejected_output)
-        rejected = subprocess.run(command, cwd=self.directory, capture_output=True, text=True,
-                                  env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'))
-        self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn('hash', rejected.stderr.lower())
+        with self.assertRaises(SystemExit) as rejected, mock.patch('sys.stderr', new_callable=StringIO) as error:
+            hierarchy.main(command)
+        self.assertEqual(rejected.exception.code, 2)
+        self.assertIn('hash', error.getvalue().lower())
         self.assertFalse(rejected_output.exists())
         self.assertEqual((result_directory/'manifest.json').read_bytes(), previous_manifest)
 

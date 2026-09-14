@@ -33,5 +33,5 @@ parameters.
 
 Prepared yield data is consumed by [calibration](../calibration/readme.md) and
 [models](../models/readme.md). Keep raw sources, cleaned observations, estimated
-parameters and simulated scenarios distinguishable by their schema and provenance.
+parameters and simulated trajectories distinguishable by their schema and provenance.
 No data component calculates exposure-level losses or duration-adjusted RWA.

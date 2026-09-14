@@ -26,7 +26,7 @@ chain before treating old and new outputs as comparable. The NS/NSS stage only
 repairs its configured finite-value threshold violations, not every identification
 problem, and reconstruction does not propagate the repair audit columns.
 
-For jointly simulated mu/theta/sigma dynamics and an estimation-noise diagnostic,
-use the separate [endogenous hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md).
+For historical calibration of all mu/theta/sigma branches followed by the
+every-increment rate/sigma/xi recursion, use the separate [endogenous hierarchy](../../../src/RWA/models/parameter_hierarchy/readme.md).
 It generates its own RAW/CURVE exports in a new chosen output folder. The default
 Call Report/JSD pipeline does not run either RWA workflow automatically.

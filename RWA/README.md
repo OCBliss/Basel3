@@ -16,25 +16,29 @@ use a new generated run and its manifest for reproducible analysis.
 | Rebuild per-tenor parameter inputs | [MLE VOL/RAW](Experimental/MLE%20VOL/RAW/readme.md) |
 | Retrieve and prepare current yields | [Yield data and snapshots](../src/RWA/data/yields/readme.md) |
 | Run retrieval through simulation | [Live pipeline](../pipeline/rwa_live/readme.md) |
-| Fit and simulate mu/theta/sigma dynamics | [Active parameter hierarchy](../src/RWA/models/parameter_hierarchy/readme.md) |
+| Fit parameter histories and advance rate/sigma/xi | [Active parameter hierarchy](../src/RWA/models/parameter_hierarchy/readme.md) |
 | Understand legacy experiments | [Experimental overview](Experimental/readme.md) |
 | Understand the historical yield-shock approach | [Practical workflow](Practical/readme.md) |
 | Check expected-loss implementation status | [Expected Loss](Practical/Expected%20Loss/readme.md) |
 
-The current implementation calibrates interest-rate processes and simulates their
-parameter dynamics, including pathwise recursive recalibration of parameter
-processes and joint dependence. Portfolio valuation and a final capital/RWA
-mapping are downstream stages. Optional ACT/365F calibration uses genuine
-common-date Treasury observations and their actual historical year fractions
-through both estimation passes, dependence, noise controls and recursive buffers.
-Defaults retain the observation clock and forward-fill for reproducibility.
-Window sizes count observations; the future forecast step remains a scalar
-year fraction. The [model output guide](Experimental/HIERARCHY/readme.md) explains
-the generated manifest, historical interval table, parameter audits and scenario
-outputs. Retain these together: a parameter CSV alone does not identify its input
-snapshot, calibration clock, missingness policy or simulation settings. See the
-[test guide](../tests/readme.md) for portable implementation checks; successful
-execution does not establish forecast superiority or economic validity.
+The implementation retains historical mu/theta/sigma estimates and all three
+second-pass parameter branches, then advances a rate/sigma/xi trajectory. Its
+default rolling history contains 2,520 estimate dates after both calibration
+warmups, requiring at least 5,290 common source observations. Every actual
+increment recalculates separate family dependence and refits all three CIR
+processes before updating xi, sigma with new xi, and rate with new sigma.
+
+Forecast years continue serially from the preceding year's history, RNG and ridge
+anchors. The [model output guide](Experimental/HIERARCHY/readme.md) describes
+historical tables, yearly trajectories and the exact matrices/shocks archived for
+every increment. Optional ACT/365F/observed calibration uses genuine common-date
+quotes and actual historical intervals. Default history uses an observation clock
+and causal filling; future increments use explicit year fractions.
+
+Portfolio valuation and a capital/RWA mapping remain downstream work. Retain
+source provenance, time conventions and calibration audits with generated tables.
+See the [test guide](../tests/readme.md) for computational checks; replay and
+successful execution do not establish forecast superiority or economic validity.
 
 This project utilizes **CMT data** (Constant Maturity Treasury) from **FRED** (Federal Reserve Economic Data), published daily by the **Board of Governors of the Federal Reserve System (US)** via the *H.15 Selected Interest Rates* release.
 
@@ -54,8 +58,9 @@ CMT data supports the following research sequence:
 
 1. **Implemented:** estimate yield-process mu, theta and sigma for each tenor.
 2. **Implemented:** estimate second-level dynamics from all three parameter
-   histories and simulate their joint evolution with rates. The fitted histories
-   contain estimation noise, so their dynamics are not automatically latent risk.
+   histories; initialize rate/sigma/xi and self-calibrate their serial evolution at
+   every increment. Fitted histories contain estimation noise, so their dynamics
+   are not automatically latent risk.
 3. **Unfinished:** reprice securities or maturity-bucket exposures under the
    simulated rates, with cash flows and an explicit valuation convention.
 4. **Unfinished:** quantify duration-related losses on government-security

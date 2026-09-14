@@ -16,7 +16,7 @@ python3 -m pip install -r requirements.txt
 python3 src/RWA/data/yields/acquire.py --help
 python3 src/RWA/data/yields/acquire.py \
   --output RWA/FRED/snapshots/my-yield-snapshot \
-  --start 2010-01-01 --max-fill-days 7 --max-age-days 7
+  --start 2000-01-01 --max-fill-days 7 --max-age-days 7
 ```
 
 Do not create the snapshot directory first. Each new download uses a new name;
@@ -26,7 +26,7 @@ This is a complete snapshot download, not an incremental append to old CSVs.
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `--output` | Required | New snapshot directory inside the repository |
-| `--start` | `2010-01-01` | Inclusive first permitted observation date; a bounded recent-history default |
+| `--start` | `2000-01-01` | Inclusive first permitted observation date; the model separately checks estimate-history warmups |
 | `--end` | Local current date | Inclusive last permitted observation date, in `YYYY-MM-DD` form |
 | `--maturities` | `1 2 3 5 7 10 20 30` | Distinct supported maturities; a subset can be requested explicitly |
 | `--max-fill-days` | `7` | Maximum calendar-day separation between genuine quotes and permitted fill age; must be at least 1 |
@@ -113,13 +113,20 @@ completed snapshot.
 
 ## Pass a verified snapshot into the model
 
+The default model requires 2,520 aligned estimate dates **after** both calibration
+warmups. Its minimum common source count is `2520 + 252 + 2520 - 2 = 5290`.
+The explicit early start in the acquisition example provides a longer candidate
+history; the actual usable common count is checked by the model. Acquisition's
+own start setting does not guarantee sufficient calibration history. Do not pad
+missing estimates or truncate the inputs below the model's full requirement.
+
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --input RWA/FRED/snapshots/my-yield-snapshot/series \
   --input-manifest RWA/FRED/snapshots/my-yield-snapshot/snapshot.json \
   --output RWA/Experimental/HIERARCHY/my-snapshot-model \
-  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
-  --paths 256 --steps 20 --substeps 4 --seed 1234
+  --yield-window 2520 --parameter-window 252 --history-window 2520 \
+  --years 1 --steps-per-year 252 --substeps 1 --seed 1234
 ```
 
 To use genuine common-date quotes with historical elapsed-time calibration, add
@@ -127,11 +134,14 @@ To use genuine common-date quotes with historical elapsed-time calibration, add
 reads the original `DGS<n>` values, removes missing observations and intersects
 genuine dates across maturities. It leaves this snapshot and its bounded fills
 unchanged. ACT/365F uses actual retained-date gaps divided by 365 days throughout
-both calibration passes, dependence and the optional noise benchmark. Windows
-still count observations. Defaults remain `observation` and `forward-fill`.
+both historical calibration passes and recursive state refits. Windows count
+observations or fitted dates; every simulated substep enters the rolling history
+with its own year fraction. Defaults remain `observation` and `forward-fill`.
 
-The model's scalar `--dt` remains the future year-fraction increment (default
-1/252), even with ACT/365F history; it does not supply a holiday forecast calendar.
+The model's scalar `--dt` is the reported future year-fraction increment (default
+1/252); its product with `--steps-per-year` must equal one. Every numerical substep
+recalculates dependence and calibration. ACT/365F history does not supply a future
+holiday calendar. Years continue serially from the previous ending history and RNG.
 The model writes exact historical intervals and elapsed forecast times in its own
 [output directory](../../../../RWA/Experimental/HIERARCHY/readme.md). See the
 [model guide](../../models/parameter_hierarchy/readme.md) for mathematics and limits.

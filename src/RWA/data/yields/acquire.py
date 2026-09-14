@@ -60,7 +60,7 @@ def _settings(maturities, start, end, max_fill_days, max_age_days):
     return maturities
 
 
-def parse_yields(payload, maturities=TENORS, start="2010-01-01", end=None,
+def parse_yields(payload, maturities=TENORS, start="2000-01-01", end=None,
                  max_fill_days=7, max_age_days=7):
     """Keep genuine quotes and produce bounded causal fills for CIR consumers.
 
@@ -194,7 +194,7 @@ def _sha(payload):
     return hashlib.sha256(payload).hexdigest()
 
 
-def acquire_snapshot(output, start="2010-01-01", end=None, maturities=TENORS,
+def acquire_snapshot(output, start="2000-01-01", end=None, maturities=TENORS,
                      max_fill_days=7, max_age_days=7, session=None):
     """Publish a fresh snapshot only after all maturity histories validate."""
     end = end or date.today().isoformat()
@@ -297,7 +297,7 @@ def verify_snapshot(manifest_path, input_directory, maturities=TENORS):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True, help="new snapshot directory inside the repository")
-    parser.add_argument("--start", default="2010-01-01")
+    parser.add_argument("--start", default="2000-01-01")
     parser.add_argument("--end", default=date.today().isoformat())
     parser.add_argument("--maturities", nargs="+", type=int, default=list(TENORS))
     parser.add_argument("--max-fill-days", type=int, default=7)

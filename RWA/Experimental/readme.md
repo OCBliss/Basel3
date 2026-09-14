@@ -1,7 +1,7 @@
 # Experimental interest-rate workflows
 
 The current code supports both the legacy sequence of separately stored calibration
-and NS/NSS repair files and a finite parameter hierarchy. This directory also
+and NS/NSS repair files and the recursive rate/sigma/xi model. This directory also
 contains historical scripts and CSVs. Use the explicit entry points below; do not
 assume every old experiment is executable against the present folder layout.
 
@@ -23,34 +23,39 @@ rules and NS/NSS cross-maturity fits. Inspect failed rows and positivity checks
 before rebuilding. The commands can replace their configured output CSVs;
 historical checked-in files are not automatically refreshed by code changes.
 
-## Active endogenous parameter hierarchy
+## Active recursive model
 
 ```bash
 python3 src/RWA/models/parameter_hierarchy/workflow.py \
   --output RWA/Experimental/HIERARCHY/my-run \
-  --yield-window 2520 --parameter-window 252 --recent-rows 3024 \
-  --paths 256 --steps 20 --substeps 4 --noise-replicates 16
+  --yield-window 2520 --parameter-window 252 --history-window 2520 \
+  --years 1 --steps-per-year 252 --substeps 1 --seed 1234
 ```
 
-Choose a new output directory each time. This workflow applies coupled ridge
-stabilization to yield fits and models the histories of **mu, theta and sigma**.
-It produces joint rate/parameter scenarios, RAW/CURVE exports and a completion
-manifest; the optional benchmark evaluates estimation-induced parameter dynamics.
-It uses its own consistent FRED-to-scenarios run and does not read old NSS outputs
-automatically. Optional `--time-basis act365f --missing-policy observed` fits
-genuine common-date quotes with historical calendar gaps, preserving the default
-observation-clock/forward-fill behavior for older comparisons. See the
-[active output-folder guide](HIERARCHY/readme.md) and
-[model and CLI guide](../../src/RWA/models/parameter_hierarchy/readme.md).
-Keep the generated manifest, interval table and audit outputs with the parameter
-and scenario files so the run can be traced to its inputs and settings.
+Choose a new output directory each time. Both historical estimation passes and
+coupled ridge treatment run internally, retaining every mu/theta/sigma branch.
+Initialization requires at least 5,290 common source observations at the defaults
+to retain 2,520 aligned estimate dates after warmup. The historical state families
+are rates, first-pass sigma and the sigma branch's fitted diffusion, xi.
 
-The separate [pipeline configuration](../../pipeline/rwa_hierarchy/config.yaml)
-points to the same `models/parameter_hierarchy/workflow.py` entry point. Set its
-`output_dir` to a new repository-local run directory before execution. Its
-default `noise_replicates` is zero; the explicit CLI example above enables that
-diagnostic with 16 replicates. The main Call Report/JSD configuration does not
-run this workflow automatically.
+Every actual increment, including the first and every numerical substep,
+recomputes three separate cross-maturity dependence structures and refits all
+three state families. It updates xi, then sigma with new xi, then rates with new
+sigma. Subsequent years continue the same history and random stream.
+
+Outputs include historical RAW/CURVE exports plus serial-year trajectories,
+per-increment covariance/shock archives and completion manifests. See the
+[output guide](HIERARCHY/readme.md), [model guide](../../src/RWA/models/parameter_hierarchy/readme.md)
+and [execution map](../../src/RWA/readme.md#execution-order).
+The [existing-input pipeline](../../pipeline/rwa_hierarchy/readme.md) invokes the
+same entry point; the [live pipeline](../../pipeline/rwa_live/readme.md) acquires
+and verifies its inputs first. The Call Report/JSD pipeline remains separate.
+
+Optional `--time-basis act365f --missing-policy observed` uses genuine common-date
+quotes and actual historical gaps. Default historical settings retain the fixed
+observation clock and causal filling. Forecast time is an explicit year fraction;
+windows count estimates/observations. Preserve manifests and historical intervals
+with extracted parameter tables.
 
 ## Historical experiment status
 
@@ -61,11 +66,8 @@ resolve the input and modeling limitations.
 The [MLE VOL guide](MLE%20VOL/readme.md) explains its relationship to current code.
 The runnable source lives in [src/RWA](../../src/RWA/readme.md).
 
-The finite hierarchy is a baseline toward the recursive-model PDF. It does not
-yet provide exposure-level RWA valuation. It does provide pathwise recalibration
-of second-level coefficients and dependence. Repeated
-estimation and regularization can themselves create apparent parameter volatility;
-inspect the estimation-noise diagnostic and calibration audits before interpreting
-it as an additional economic risk factor. The [test guide](../../tests/readme.md)
-describes reproducible implementation checks; these do not establish forecasting
-superiority.
+The recursive model follows the PDF's ordered dependence-to-volatility-to-rate
+updates using the CIR/initialization conventions in the model guide. It does not
+provide exposure-level valuation or a capital/RWA calculation. Repeated
+estimation and regularization can themselves create apparent volatility; a
+completed trajectory does not establish an additional economic risk factor.

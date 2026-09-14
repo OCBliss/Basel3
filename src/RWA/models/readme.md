@@ -1,16 +1,17 @@
 # Interest-rate models
 
-This domain defines joint stochastic state evolution, dependence assumptions and
-scenario-producing workflows. [Data](../data/readme.md) owns observations and
-prepared tables; [calibration](../calibration/readme.md) contains the established
-standalone yield fitting and curve-repair sequence.
+This domain owns recursive state evolution and its numerical/audit interfaces.
+[Data](../data/readme.md) owns observations and prepared tables;
+[calibration](../calibration/readme.md) contains standalone yield fitting and
+NS/NSS repair experiments.
 
-The implemented model is the
-[parameter hierarchy](parameter_hierarchy/readme.md). It fits observed yields,
-stabilizes weak estimates, estimates dynamics for each mu/theta/sigma history,
-and simulates rates and parameters jointly. `workflow.py` provides the CLI and
-file contracts, `core.py` implements numerical operations, and `recursive.py`
-updates coefficients and dependence within each simulated path.
+The [parameter hierarchy](parameter_hierarchy/readme.md) estimates historical
+mu/theta/sigma and every second-pass parameter branch, then initializes three
+state histories: rate, sigma and xi. It recomputes separate family covariances
+and refits all three CIR processes before every actual increment. The dependency
+order is xi → sigma using new xi → rate using new sigma. Rate/sigma drift fits
+condition on known varying higher-state histories; xi retains a free-diffusion
+CIR fit. The archived multiplier identifies which source actually drove each step.
 
 ## Entry points
 
@@ -21,29 +22,31 @@ python3 src/RWA/models/parameter_hierarchy/workflow.py --help
 python3 -m src.RWA.models.parameter_hierarchy.workflow --help
 ```
 
-The [model guide](parameter_hierarchy/readme.md) documents full commands, inputs,
-outputs, mathematical assumptions and diagnostics. The existing
-[local-input pipeline](../../../pipeline/rwa_hierarchy/readme.md) uses this same
-entry point. Choose new run directories and preserve source/provenance records.
+The [model guide](parameter_hierarchy/readme.md) documents initialization, history
+requirements, serial years, output archives, timing and failure handling.
+The [RWA execution map](../readme.md#execution-order) covers the full sequence.
+Existing-input and live pipelines use the same model entry point.
 
-## Implemented boundary
+## Numerical components and boundary
 
-The hierarchy supports a frozen benchmark and a recursive engine that refits
-parameter dynamics and dependence within each simulated path. The pipeline
-configurations select recursive mode. Optional ACT/365F history with genuine
-common-date quotes propagates actual durations through both calibration passes,
-dependence, noise controls and recursive buffers. The default fixed observation
-clock is retained for reproducibility. Exposure pricing and capital mapping are
-subsequent model components.
-Estimated parameter dynamics can include calibration noise; simulation alone
-does not establish an additional economic risk factor or forecasting superiority.
+`workflow.py` coordinates historical calibration and serial simulation;
+`core.py` supplies CIR estimation and coupled ridge treatment. `covariance.py`
+keeps state-level and Brownian covariances distinct for each family, and
+`covariance_archive.py` records every applied matrix, fitted coefficient and shock.
+`verify.py` checks hashes, reconstructs the rolling histories and replays the
+archived updates; its `--recalibrate` option also repeats the fits.
+One package README defines their shared contract.
 
-Run the model checks with repository-local temporary/cache settings from the
-[test guide](../../../tests/readme.md):
+Default initialization retains 2,520 estimate dates after calibration warmups.
+Each subsequent year continues the previous history, random stream and anchors.
+There are no independent ensemble paths, frozen-coefficient mode or skipped
+calibration increments. Optional ACT/365F history propagates actual date gaps;
+future increments use their explicit year fractions.
+
+Estimated dynamics can contain calibration noise. Exposure pricing and a capital
+mapping remain subsequent components. Use the [test guide](../../../tests/readme.md)
+for deterministic numerical, covariance, replay and integration checks:
 
 ```bash
 python3 -B -m unittest discover -s tests -p 'test_rwa_*.py' -v
 ```
-
-The tests cover numerical expectations, causality, scenario dependence, package
-and direct invocation, exported data contracts and the actual pipeline manager.

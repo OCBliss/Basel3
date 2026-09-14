@@ -3,12 +3,12 @@
 import importlib
 import hashlib
 import json
-import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest import mock
 
 import numpy as np
@@ -47,44 +47,6 @@ def stochastic_rates(n=1200, seed=771, dimensions=1):
         x = values[i]
         values[i + 1] = x + 8 * (means - x) * step + .4 * np.sqrt(x * step) * rng.normal(size=dimensions)
     return pd.DataFrame(values, index=dates, columns=range(1, dimensions + 1))
-
-
-def state_fixture(n=8):
-    dates = irregular_dates(n)
-    clock = np.arange(n)[:, None, None]
-    base = np.array([[3.8, 4.2], [3.2, 3.6], [.8, 1.], [.25, .30]])
-    phase = np.arange(8).reshape(1, 4, 2) / 3
-    history = base[None] + .005 * np.sin(clock * .7 + phase) + .001 * clock
-    coeff = np.array([[[.7, .8], [3.2, 3.6], [.015, .017]],
-                      [[.8, .9], [.8, 1.], [.012, .014]],
-                      [[.9, 1.], [.25, .30], [.008, .010]]])
-    first = pd.DataFrame([
-        dict(observation_date=date, maturity=tenor, mu=history[t, 1, j],
-             theta=history[t, 2, j], sigma=history[t, 3, j])
-        for t, date in enumerate(dates) for j, tenor in enumerate((1, 2))])
-    second = pd.DataFrame([
-        dict(observation_date=dates[-1], maturity=tenor, parameter=parameter,
-             theta=coeff[k, 0, j], mu=coeff[k, 1, j], sigma=coeff[k, 2, j])
-        for k, parameter in enumerate(workflow.PARAMETERS)
-        for j, tenor in enumerate((1, 2))])
-    yields = pd.DataFrame(history[:, 0], index=dates, columns=(1, 2))
-    return history, coeff, yields, first, second
-
-
-def independently_standardize(history, coeff, steps):
-    result = np.empty_like(history[:-1])
-    for t, step in enumerate(steps):
-        for j in range(history.shape[2]):
-            x, mu, theta, sigma = history[t, :, j]
-            result[t, 0, j] = ((history[t + 1, 0, j] - x - theta * (mu - x) * step)
-                               / (sigma * np.sqrt(x * step)))
-            for k in range(3):
-                old = history[t, k + 1, j]
-                speed, level, volatility = coeff[k, :, j]
-                result[t, k + 1, j] = ((history[t + 1, k + 1, j] - old
-                                        - speed * (level - old) * step)
-                                       / (volatility * np.sqrt(old * step)))
-    return result
 
 
 def controlled_fit(histories, maturities, dt=1 / 252, nll_budget=2.,
@@ -316,126 +278,73 @@ class ElapsedWorkflowTests(unittest.TestCase):
         pd.testing.assert_frame_equal(early_second, whole_second.loc[
             whole_second.observation_date <= source.index[-6]].reset_index(drop=True))
 
-    def test_joint_dependence_uses_each_actual_elapsed_interval(self):
-        history, coeff, yields, first, second = state_fixture()
-        captured = []
-
-        def capture(values, shrinkage):
-            captured.append(np.asarray(values).copy())
-            return core.innovation_correlation(values, shrinkage)
-
-        with mock.patch.object(workflow, "innovation_correlation", side_effect=capture):
-            initial, actual_coeff, corr, factor, _ = workflow.forecast_inputs(
-                yields, first, second, 6, .02, time_basis="act365f")
-        expected = independently_standardize(history[-6:], coeff, annual_steps(yields.index[-6:]))
-        np.testing.assert_allclose(captured[0], expected.reshape(5, 8), rtol=2e-13, atol=1e-11)
-        np.testing.assert_array_equal(initial, history[-1])
-        np.testing.assert_array_equal(actual_coeff, coeff)
-        np.testing.assert_allclose(factor @ factor.T, corr, atol=1e-14)
-
-    def test_noise_null_simulates_and_replays_the_same_irregular_clock(self):
-        _, _, yields, first, second = state_fixture()
-        latest = first.loc[first.observation_date == yields.index[-1]].sort_values("maturity")
-        base = latest[["theta", "mu", "sigma"]].to_numpy().T
-        draws = np.resize(np.array([.2, -.3, .1, .4]), (len(yields) - 1, 2))
-        captured, clocks = [], []
-
-        class FixedRandom:
-            def normal(self, size):
-                self_shape = draws.shape
-                if size != self_shape:
-                    raise AssertionError((size, self_shape))
-                return draws.copy()
-
-        def first_pass(panel, window, dt, nll_budget, fallback_theta, time_basis="observation"):
-            captured.append(panel.to_numpy().copy())
-            clocks.append(time_basis)
-            return first
-
-        def second_pass(table, window, dt, nll_budget, fallback_theta, time_basis="observation"):
-            clocks.append(time_basis)
-            return second
-
-        with mock.patch.object(workflow, "calibrate_panel", side_effect=first_pass), \
-                mock.patch.object(workflow, "calibrate_parameters", side_effect=second_pass), \
-                mock.patch.object(workflow.np.random, "default_rng", return_value=FixedRandom()):
-            report = workflow.parameter_noise_diagnostic(
-                yields, first, second, 4, 5, replicates=2, dt=.02,
-                shrinkage=1., time_basis="act365f")
-        expected = np.empty_like(yields.to_numpy())
-        expected[0] = yields.iloc[0]
-        for t, step in enumerate(annual_steps(yields.index)):
-            old = expected[t]
-            expected[t + 1] = old + base[0] * (base[1] - old) * step + base[2] * np.sqrt(old * step) * draws[t]
-        self.assertTrue(report["comparable"], report["failures"])
-        self.assertEqual(clocks, ["act365f"] * 4)
-        self.assertEqual(len(captured), 2)
-        for actual in captured:
-            np.testing.assert_allclose(actual, expected, rtol=0, atol=1e-14)
-
-
 class ElapsedRecursiveTests(unittest.TestCase):
-    def test_recursive_rollover_replaces_only_expired_historical_intervals(self):
-        history, coeff, yields, _, _ = state_fixture(n=5)
-        history_steps = annual_steps(yields.index)
-        original = history_steps.copy()
-        forecast_step = .002
-        captured, residuals = [], []
+    def test_every_substep_rolls_the_own_state_and_its_actual_interval_through_complete_expiry(self):
+        dates = irregular_dates(5)
+        clock = np.arange(5)[:, None, None]
+        base = np.array([[3.8, 4.2], [.25, .30], [.012, .014]])
+        phase = np.arange(6).reshape(1, 3, 2) / 3
+        history = base[None] + .001*np.sin(clock*.7 + phase) + .0002*clock
+        original_history = history.copy()
+        history_steps = annual_steps(dates)
+        original_clock = history_steps.copy()
+        forecast_step, substeps = .004, 2
+        delta = forecast_step/substeps
+        fitted, matrix_histories, appended = [], [], []
+        original_covariances = recursive.family_covariances
 
         def capture_fit(values, tenors, dt, *args, **kwargs):
-            captured.append((np.asarray(values).copy(), np.asarray(dt).copy()))
+            fitted.append((np.asarray(values).copy(), np.asarray(dt).copy()))
             return controlled_fit(values, tenors, dt, *args, **kwargs)
 
-        def capture_dependence(values, *args, **kwargs):
-            residuals.append(np.asarray(values).copy())
-            return core.innovation_correlation(values, *args, **kwargs)
+        def capture_covariance(values, *args, **kwargs):
+            matrix_histories.append(np.asarray(values).copy())
+            return original_covariances(values, *args, **kwargs)
 
-        with mock.patch.object(recursive, "stabilize_panel", side_effect=capture_fit), \
-                mock.patch.object(recursive, "innovation_correlation", side_effect=capture_dependence):
-            result, _, diagnostics = recursive.simulate_recursive(
-                history, coeff, np.eye(8), (1, 2), paths=2, steps=7, dt=forecast_step,
-                seed=56, substeps=8, recalibrate_every=1, history_dt=history_steps)
-        self.assertEqual(len(captured), 6 * 2 * 3)
-        self.assertEqual(len(residuals), 6 * 2)
-        for origin in range(1, 7):
-            intervals = np.r_[history_steps, np.full(origin, forecast_step)][-4:]
-            for path in range(2):
-                trailing = np.concatenate([history, result[path, 1:origin + 1]])[-5:]
-                learned = coeff.copy()
-                for branch in range(3):
-                    position = ((origin - 1) * 2 + path) * 3 + branch
-                    values, actual_steps = captured[position]
-                    np.testing.assert_array_equal(values, trailing[:, branch + 1])
-                    np.testing.assert_array_equal(actual_steps, intervals)
-                    learned[branch] = [np.full(2, 1.5), trailing[-1, branch + 1], np.full(2, .01)]
-                expected = independently_standardize(trailing, learned, intervals)
-                np.testing.assert_allclose(residuals[(origin - 1) * 2 + path],
-                                           expected.reshape(4, 8), rtol=2e-13, atol=1e-10)
-        np.testing.assert_array_equal(history_steps, original)
-        self.assertEqual(diagnostics["recalibration_count"], 12)
-        self.assertAlmostEqual(diagnostics["initial_history_elapsed_years"], history_steps.sum())
-        for update in diagnostics["updates"]:
-            origin = update["origin_step"]
-            intervals = np.r_[history_steps, np.full(origin, forecast_step)][-4:]
-            self.assertEqual(update["observed_history_transitions"], max(0, 4 - origin))
-            self.assertEqual(update["simulated_history_transitions"], min(4, origin))
-            self.assertAlmostEqual(update["history_elapsed_years"], intervals.sum())
+        class Archive:
+            def append(self, increment, elapsed_years, dt, matrices, before, after, **metadata):
+                appended.append((increment, elapsed_years, dt, before.copy(), after.copy()))
 
-    def test_historical_clock_does_not_change_forecast_before_first_refit(self):
-        history, coeff, yields, _, _ = state_fixture()
-        options = dict(paths=2, steps=3, dt=.002, seed=57, substeps=8, recalibrate_every=0)
-        old = recursive.simulate_recursive(history, coeff, np.eye(8), (1, 2), **options)
-        elapsed = recursive.simulate_recursive(history, coeff, np.eye(8), (1, 2),
-                                               history_dt=annual_steps(yields.index), **options)
-        np.testing.assert_array_equal(old[0], elapsed[0])
-        np.testing.assert_array_equal(old[1], elapsed[1])
-        with self.assertRaises(ValueError):
-            recursive.simulate_recursive(history, coeff, np.eye(8), (1, 2),
-                                         history_dt=[.1], **options)
+        tape = [(.1*np.sin(np.arange(6).reshape(3,2) + increment*.8)) for increment in range(8)]
+        def capture_conditioned(values, drivers, tenors, dt, *args, **kwargs):
+            return capture_fit(values, tenors, dt, *args, **kwargs)
+
+        with mock.patch.object(recursive, 'stabilize_panel', side_effect=capture_fit), \
+                mock.patch.object(recursive, 'stabilize_conditioned_panel', side_effect=capture_conditioned), \
+                mock.patch.object(recursive, 'family_covariances', side_effect=capture_covariance):
+            result, _, diagnostics, final_history, final_clock = recursive.simulate_walk(
+                history, (1,2), steps=4, dt=forecast_step, substeps=substeps,
+                history_dt=history_steps, normal_shocks=iter(tape), archive=Archive())
+        self.assertEqual(len(fitted), 8*3)
+        self.assertEqual(len(matrix_histories), 8)
+        self.assertEqual(len(appended), 8)
+        for increment in range(8):
+            generated = [record[4] for record in appended[:increment]]
+            expected_history = np.concatenate([original_history, generated])[-5:] if generated else original_history
+            expected_clock = np.r_[original_clock, np.full(increment, delta)][-4:]
+            np.testing.assert_array_equal(matrix_histories[increment], expected_history)
+            for family in range(3):
+                values, intervals = fitted[increment*3+family]
+                np.testing.assert_array_equal(values, expected_history[:,family])
+                np.testing.assert_array_equal(intervals, expected_clock)
+            number, start, interval, before, after = appended[increment]
+            self.assertEqual(number, increment)
+            self.assertEqual(start, increment*delta)
+            self.assertEqual(interval, delta)
+            np.testing.assert_array_equal(before, expected_history[-1])
+            if (increment+1) % substeps == 0:
+                np.testing.assert_array_equal(result[(increment+1)//substeps], after)
+        np.testing.assert_array_equal(final_history, np.array([record[4] for record in appended[-5:]]))
+        np.testing.assert_array_equal(final_clock, np.full(4, delta))
+        np.testing.assert_array_equal(history, original_history)
+        np.testing.assert_array_equal(history_steps, original_clock)
+        self.assertEqual(diagnostics['calibration_count'], 8)
+        self.assertEqual(diagnostics['matrix_refresh_count'], 8)
+        self.assertAlmostEqual(diagnostics['final_history_elapsed_years'], 4*delta)
 
 
 class ElapsedCommandTests(unittest.TestCase):
-    def test_verified_acquisition_snapshot_flows_through_elapsed_cli(self):
+    def test_verified_snapshot_and_actual_historical_clock_reach_serial_year_execution(self):
         with tempfile.TemporaryDirectory(dir=ROOT / "tests") as temporary:
             directory = Path(temporary)
             snapshot = directory / "snapshot"
@@ -445,8 +354,8 @@ class ElapsedCommandTests(unittest.TestCase):
             quotes.iloc[10, 0] = "."
             quotes.iloc[20, 1] = "."
             payload = quotes.to_csv(date_format="%Y-%m-%d").encode("utf-8")
-            # Transport is isolated; real acquisition preparation, snapshot
-            # regeneration verification and the actual child CLI remain active.
+            # Transport and future evolution are isolated; real preparation,
+            # snapshot verification, both historical fits and exports remain active.
             with mock.patch.object(acquisition, "download_yields", return_value=(payload, acquisition.ENDPOINT)):
                 acquired = acquisition.acquire_snapshot(
                     snapshot, str(source.index[0].date()), str(source.index[-1].date()),
@@ -455,14 +364,14 @@ class ElapsedCommandTests(unittest.TestCase):
             original = {str(p.relative_to(snapshot)): p.read_bytes()
                         for p in snapshot.rglob("*") if p.is_file()}
             output = directory / "verified-model"
-            command = [sys.executable, "-B", str(ROOT / "src/RWA/models/parameter_hierarchy/workflow.py"),
-                       "--input", str(snapshot / "series"), "--input-manifest", str(snapshot_manifest),
+            command = ["--input", str(snapshot / "series"), "--input-manifest", str(snapshot_manifest),
                        "--output", str(output), "--maturities", "1", "2", "--yield-window", "32",
-                       "--parameter-window", "16", "--steps", "2", "--paths", "2", "--substeps", "128",
-                       "--forecast-mode", "recursive", "--time-basis", "act365f", "--missing-policy", "observed"]
-            result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                    env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                       "--parameter-window", "16", "--history-window", "12", "--time-basis", "act365f", "--missing-policy", "observed"]
+            with mock.patch.object(workflow, 'run_years', return_value=[{'year': 1}]) as run, \
+                    redirect_stdout(StringIO()):
+                workflow.main(command)
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(run.call_args.args[1].shape, (12,3,2))
             manifest = json.loads((output / "manifest.json").read_text())
             evidence = manifest["yield_acquisition"]
             self.assertEqual(evidence["path"], str(snapshot_manifest.relative_to(ROOT)))
@@ -481,12 +390,12 @@ class ElapsedCommandTests(unittest.TestCase):
             (snapshot / "raw/fred.csv").write_bytes(payload + b"\n")
             rejected_output = directory / "tampered-model"
             command[command.index("--output") + 1] = str(rejected_output)
-            rejected = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                      env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
-            self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+            with self.assertRaises(SystemExit) as rejected, mock.patch('sys.stderr', new_callable=StringIO):
+                workflow.main(command)
+            self.assertEqual(rejected.exception.code, 2)
             self.assertFalse(rejected_output.exists())
 
-    def test_actual_cli_records_missing_policy_and_clock_and_preserves_inputs(self):
+    def test_serial_command_records_missing_policy_clock_and_preserves_inputs(self):
         with tempfile.TemporaryDirectory(dir=ROOT / "tests") as temporary:
             directory = Path(temporary)
             inputs = directory / "quotes"
@@ -501,14 +410,15 @@ class ElapsedCommandTests(unittest.TestCase):
                     inputs / ("DGS%d.csv" % tenor), index=False)
             originals = {p.name: p.read_bytes() for p in inputs.iterdir()}
             output = directory / "elapsed-model"
-            command = [sys.executable, "-B", str(ROOT / "src/RWA/models/parameter_hierarchy/workflow.py"),
-                       "--input", str(inputs), "--output", str(output), "--maturities", "1", "2",
-                       "--yield-window", "32", "--parameter-window", "16", "--steps", "3", "--paths", "2",
-                       "--substeps", "128", "--forecast-mode", "recursive", "--recalibrate-every", "1",
+            command = ["--input", str(inputs), "--output", str(output), "--maturities", "1", "2",
+                       "--yield-window", "32", "--parameter-window", "16", "--history-window", "12",
+                       "--years", "1", "--steps-per-year", "500",
                        "--time-basis", "act365f", "--missing-policy", "observed", "--dt", ".002"]
-            result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                    env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            with mock.patch.object(workflow, 'run_years', return_value=[{'year': 1}]) as run, \
+                    redirect_stdout(StringIO()):
+                workflow.main(command)
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(run.call_args.args[1].shape, (12,3,2))
             manifest = json.loads((output / "manifest.json").read_text())
             self.assertEqual(manifest["status"], "complete")
             self.assertEqual(manifest["settings"]["time_basis"], "act365f")
@@ -529,12 +439,10 @@ class ElapsedCommandTests(unittest.TestCase):
             self.assertEqual(intervals.start_date.tolist(), retained_dates[:-1].tolist())
             self.assertEqual(intervals.end_date.tolist(), retained_dates[1:].tolist())
             np.testing.assert_allclose(intervals.dt_years, expected_steps, atol=1e-16, rtol=1e-13)
-            with np.load(output / "scenarios.npz") as scenarios:
-                self.assertEqual(scenarios["states"].shape, (2, 4, 4, 2))
-                self.assertTrue(np.isfinite(scenarios["states"]).all())
-                np.testing.assert_array_equal(scenarios["elapsed_years"], np.arange(4) * .002)
-            summary = pd.read_csv(output / "scenario_summary.csv")
-            np.testing.assert_allclose(summary.elapsed_years, summary.step * .002, atol=1e-16, rtol=0)
+            self.assertEqual(manifest['schema_version'], 2)
+            self.assertEqual(manifest['state_names'], ['rate', 'sigma', 'xi'])
+            self.assertEqual(run.call_args.args[3:7], (1, 500, .002, 1))
+            np.testing.assert_array_equal(run.call_args.args[8], annual_steps(retained_dates[-12:]))
             exported = pd.read_csv(output / "RAW/DGS1_with_parameters.csv")
             self.assertEqual(len(exported), 98)
             self.assertLess(exported.yield_clean.max(), 10.)
@@ -545,9 +453,9 @@ class ElapsedCommandTests(unittest.TestCase):
             corrupt.to_csv(inputs / "DGS1.csv", index=False)
             rejected_output = directory / "rejected-model"
             command[command.index("--output") + 1] = str(rejected_output)
-            rejected = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                      env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
-            self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+            with self.assertRaises(SystemExit) as rejected, mock.patch('sys.stderr', new_callable=StringIO):
+                workflow.main(command)
+            self.assertEqual(rejected.exception.code, 2)
             self.assertFalse(rejected_output.exists())
 
 

@@ -1,271 +1,293 @@
-"""Path-conditioned rolling recalibration of the finite CIR parameter hierarchy.
+"""One chronological, continuously recalibrated rate/sigma/xi walk.
 
-This adaptive closure evolves X, mu, theta and sigma as states. At a requested
-reported-step cadence, each path learns the three parameter processes and joint
-innovation dependence from its own trailing history. It does not replace the
-simulated parameter states with new yield MLEs or introduce an infinite hierarchy.
+Every actual Euler increment estimates separate family matrices and CIR drift fits
+from the available rolling LEVEL history. Fresh matrices drive xi; updated xi
+drives sigma; updated sigma drives the rate. Append each increment to history.
 """
 
+from copy import deepcopy
+from time import perf_counter
 import numpy as np
 
 if __package__:
     from .core import (integer, positive_number, stabilize_panel,
-                       innovation_correlation, step_hierarchy,
-                       transition_steps, joint_standardized_residuals)
+                       stabilize_conditioned_panel, transition_steps)
+    from .covariance import family_covariances, brownian_increments
 else:
     from core import (integer, positive_number, stabilize_panel,
-                      innovation_correlation, step_hierarchy,
-                      transition_steps, joint_standardized_residuals)
+                      stabilize_conditioned_panel, transition_steps)
+    from covariance import family_covariances, brownian_increments
 
-
-PARAMETERS = ("mu", "theta", "sigma")
+FAMILIES = ("rate", "sigma", "xi")
 MAX_ELEMENTS = 20_000_000
-MAX_WORK_UNITS = 50_000_000
-MAX_SCALAR_FITS = 150_000
-MAX_UPDATE_RECORDS = 10_000
-MAX_PATH_SUBSTEPS = 250_000
+MAX_INCREMENTS = 1_000_000
 
 
-def _mixed_boundaries(history, maturities):
-    """Reject histories needing a boundary-aware likelihood, without clipping."""
-    mixed = (history == 0).any(axis=0) & (history > 0).any(axis=0)
-    if mixed.any():
-        component, tenor = np.argwhere(mixed)[0]
-        raise ValueError("mixed zero/positive " + ("X", *PARAMETERS)[component]
-                         + " history at maturity " + str(maturities[tenor])
-                         + " requires a boundary-aware fit")
-
-
-def _refit(history, coefficients, maturities, dt, nll_budget, fallback_theta,
-           shrinkage):
-    """Fit one ordered path window; supplied coefficients provide causal anchors."""
-    _mixed_boundaries(history, maturities)
-    updated = np.empty_like(coefficients)
-    audits = []
-    for component, name in enumerate(PARAMETERS):
-        try:
-            fits, audit = stabilize_panel(
-                history[:, component + 1], maturities, dt, nll_budget,
-                fallback_theta, prior_thetas=coefficients[component, 0])
-        except ValueError as error:
-            raise ValueError("cannot refit " + name + ": " + str(error)) from error
-        for tenor, (fit, item) in enumerate(zip(fits, audit)):
-            if (not item["usable"] or not np.isfinite([fit.theta, fit.mu, fit.sigma, fit.nll]).all()
-                    or not np.isfinite(item["nll_cost"])
-                    or fit.theta <= 0 or fit.mu < 0 or fit.sigma < 0):
-                raise ValueError("unusable " + name + " fit at maturity "
-                                 + str(maturities[tenor]))
-            updated[component, :, tenor] = fit.theta, fit.mu, fit.sigma
-        audits.extend(audit)
-    residuals = joint_standardized_residuals(history, updated, dt)
-    correlation, factor, dependence = innovation_correlation(
-        residuals.reshape(len(residuals), -1), shrinkage)
-    sources = {}
-    for item in audits:
-        source = item["anchor_source"]
-        sources[source] = sources.get(source, 0) + 1
-    report = {"max_nll_cost": float(max(item["nll_cost"] for item in audits)),
-              "weak_fits": int(sum(item["weak"] for item in audits)),
-              "regularized_fits": int(sum(item["regularized"] for item in audits)),
-              "anchor_sources": sources,
-              "min_correlation_eigenvalue": dependence["min_eigenvalue"],
-              "constant_innovation_columns": dependence["constant_columns"]}
-    return updated, correlation, factor, report
-
-
-def simulate_recursive(history, coefficients, factor, maturities, paths=256,
-                       steps=20, dt=1 / 252, seed=1234, substeps=4,
-                       recalibrate_every=1, nll_budget=2., fallback_theta=.25,
-                       shrinkage=.05, history_dt=None):
-    """Return states, projection counts and JSON-compatible pathwise fit evidence.
-
-    ``history`` has shape (window, 4, maturities), ordered oldest to origin with
-    at least five rows. Coefficients have shape (3, 3, maturities), with parameter
-    branches mu/theta/sigma and coefficient order theta/mu/sigma. ``factor`` is
-    the origin's joint factor in flattened state-major order.
-
-    ``history_dt`` supplies a scalar or one year interval per historical
-    transition; omission uses ``dt`` for compatibility. Future reported steps
-    remain exactly ``dt`` years. Historical intervals leave the window with
-    their state transitions, and each appended forecast state adds one ``dt``.
-
-    Supplied origin coefficients/factor drive the first reported step. Append
-    only reported states to each path's fixed-size buffer. At positive multiples
-    of ``recalibrate_every`` strictly before the final step, refit from the now
-    available window before drawing the next shock. Cadence zero disables refits
-    and exactly reproduces workflow.simulate for the same origin and RNG inputs.
-
-    A run is rejected before allocation above 20 million numeric array elements,
-    50 million window*3*maturities*path-refits work units, 150,000 scalar fits or
-    10,000 path/origin audit records or 250,000 path/substep advances. These are
-    transparent workload ceilings,
-    not wall-clock guarantees. Reduce paths, horizon, window or refit frequency.
-    No failed paths are discarded or replaced; one failure aborts the whole run.
-    """
-    for value, name, minimum in ((paths, "paths", 1), (steps, "steps", 1),
-                                  (seed, "seed", 0), (substeps, "substeps", 1),
-                                  (recalibrate_every, "recalibrate_every", 0)):
+def walk_workload(window, dimensions, steps, substeps):
+    """Reject impossible local allocations before calibration or output creation."""
+    for value, name, minimum in ((window, 'history_window', 4), (dimensions, 'maturities', 1),
+                                 (steps, 'steps', 1), (substeps, 'substeps', 1)):
         integer(value, name, minimum)
-    paths, steps, seed, substeps, recalibrate_every = map(
-        int, (paths, steps, seed, substeps, recalibrate_every))
+    window, dimensions, steps, substeps = map(int, (window, dimensions, steps, substeps))
+    count = steps * substeps
+    scalar_fits = count * 3 * dimensions
+    elements = (steps + 1) * 3 * dimensions + 6 * window * dimensions + 18 * dimensions**2
+    if elements > MAX_ELEMENTS:
+        raise ValueError('walk exceeds the 20-million-element memory bound')
+    if count > MAX_INCREMENTS:
+        raise ValueError('walk exceeds the one-million actual-increment bound')
+    return {'increments': count, 'scalar_fits': scalar_fits,
+            'work_units': scalar_fits * window, 'elements': elements}
+
+
+def _numeric(values, name):
+    try:
+        raw = np.asarray(values)
+    except (TypeError, ValueError) as error:
+        raise ValueError(name + " must contain finite real numeric values") from error
+    if raw.dtype.kind not in "iuf":
+        raise ValueError(name + " must contain real numbers, not strings or booleans")
+    with np.errstate(over="ignore", invalid="ignore"):
+        result = raw.astype(float, copy=True)
+    if not np.isfinite(result).all():
+        raise ValueError(name + " must remain finite in float64 precision")
+    return result
+
+
+def _audit_record(item):
+    """Preserve undefined identification diagnostics without nonstandard JSON."""
+    result, undefined = {}, []
+    for name, value in item.items():
+        if isinstance(value, np.generic):
+            value = value.item()
+        if isinstance(value, float) and not np.isfinite(value):
+            undefined.append(name)
+            value = None
+        result[name] = value
+    if undefined:
+        result["undefined_numeric_fields"] = undefined
+    return result
+
+
+def _calibrate(history, maturities, intervals, nll_budget, fallback_theta, priors):
+    dimensions = history.shape[2]
+    coefficients = np.empty((3, 3, dimensions))
+    audits = []
+    for family, name in enumerate(FAMILIES):
+        try:
+            prior = None if priors is None else priors[family]
+            if family < 2:
+                fits, records = stabilize_conditioned_panel(
+                    history[:, family], history[:, family + 1], maturities,
+                    intervals, nll_budget, fallback_theta, prior_thetas=prior)
+            else:
+                fits, records = stabilize_panel(
+                    history[:, family], maturities, intervals, nll_budget,
+                    fallback_theta, prior_thetas=prior)
+        except ValueError as error:
+            raise ValueError("cannot calibrate " + name + ": " + str(error)) from error
+        if len(fits) != dimensions or len(records) != dimensions:
+            raise ValueError("incomplete " + name + " calibration")
+        for tenor, (fit, record) in enumerate(zip(fits, records)):
+            if (not record["usable"] or not np.isfinite([fit.theta, fit.mu, fit.nll]).all()
+                    or not np.isfinite(record["nll_cost"])
+                    or fit.theta <= 0 or fit.mu < 0):
+                raise ValueError("unusable " + name + " fit at maturity " + str(maturities[tenor]))
+            if family == 2:
+                if not np.isfinite(fit.sigma) or fit.sigma < 0:
+                    raise ValueError("unusable xi diffusion at maturity " + str(maturities[tenor]))
+                diffusion = fit.sigma
+            else:
+                # This is an internal placeholder until the ordered advance
+                # supplies the actual new higher state. It is not a fitted sigma.
+                diffusion = history[-1, family + 1, tenor]
+            coefficients[family, :, tenor] = fit.theta, fit.mu, diffusion
+        source = ("updated sigma state", "updated xi state", "CIR fitted diffusion")[family]
+        audits.append([dict(_audit_record(record), diffusion_source=source) for record in records])
+    return coefficients, audits
+
+
+def _advance(state, coefficients, increments, delta):
+    """Apply the specified xi -> sigma -> rate ordering to one increment."""
+    theta, mean, diffusion = (coefficients[:, index] for index in range(3))
+    candidate = np.empty_like(state)
+    projected = np.zeros_like(state, dtype=bool)
+    with np.errstate(over="ignore", invalid="ignore"):
+        raw_xi = (state[2] + theta[2] * (mean[2] - state[2]) * delta
+                  + diffusion[2] * np.sqrt(state[2]) * increments[2])
+        candidate[2] = np.maximum(raw_xi, 0.)
+        projected[2] = raw_xi < 0.
+        raw_sigma = (state[1] + theta[1] * (mean[1] - state[1]) * delta
+                     + candidate[2] * np.sqrt(state[1]) * increments[1])
+        candidate[1] = np.maximum(raw_sigma, 0.)
+        projected[1] = raw_sigma < 0.
+        raw_rate = (state[0] + theta[0] * (mean[0] - state[0]) * delta
+                    + candidate[1] * np.sqrt(state[0]) * increments[0])
+        candidate[0] = np.maximum(raw_rate, 0.)
+        projected[0] = raw_rate < 0.
+    if not all(np.isfinite(values).all() for values in (raw_xi, raw_sigma, raw_rate, candidate)):
+        raise ValueError("nonfinite updated state; inspect calibration and timestep")
+    return candidate, projected
+
+
+def simulate_walk(history, maturities, *, steps=252, dt=1 / 252, substeps=1,
+                  seed=1234, history_dt=None, nll_budget=2., fallback_theta=.25,
+                  regularization=0., archive=None, normal_shocks=None,
+                  rng_state=None, prior_thetas=None):
+    """Return reported states, projections, diagnostics, final history and clock.
+
+    History is (window,3,maturities), ordered rate/sigma/xi. Its supplied window
+    length is preserved for all three families, including a 2,520-row history.
+    There is one chronological walk and no path axis or frozen mode. Each
+    reported step lasts dt years with substeps increments of delta=dt/substeps.
+    Every increment, including the first, estimates matrices and all CIR fits
+    before drawing; updates xi, sigma, rate; archives; and rolls in the result.
+
+    Coefficients have axes (family, theta/long_run_mean/actual_diffusion, maturity).
+    Rate/sigma drift likelihoods condition on the next higher family's observed
+    right-endpoint history. Only xi fits a free scalar CIR diffusion. Archived
+    rate/sigma diffusion coordinates contain the updated sigma/xi states actually
+    used in that increment. Positive prior_thetas (3,maturities)
+    are only causal ridge anchors. Diagnostics return final anchors and RNG
+    state; pass those with final history/history_dt for exact continuation.
+
+    normal_shocks is optionally an iterator of single (3,maturities) arrays.
+    It replaces random generation and is never read ahead. Its caller maintains
+    iterator position for continuation. archive.append runs per increment;
+    the caller owns archive.finish and publication of the complete run.
+    """
+    started = perf_counter()
+    for value, name, minimum in ((steps, "steps", 1), (substeps, "substeps", 1), (seed, "seed", 0)):
+        integer(value, name, minimum)
+    steps, substeps, seed = int(steps), int(substeps), int(seed)
     positive_number(dt, "dt")
     positive_number(nll_budget, "nll_budget", allow_zero=True)
     positive_number(fallback_theta, "fallback_theta")
-    positive_number(shrinkage, "shrinkage")
-    if shrinkage > 1:
-        raise ValueError("shrinkage must be at most one")
-    h = np.asarray(history, dtype=float)
-    c = np.asarray(coefficients, dtype=float)
-    origin_factor = np.asarray(factor, dtype=float)
-    tenors = np.asarray(maturities, dtype=float)
-    if (h.ndim != 3 or h.shape[0] < 5 or h.shape[1] != 4 or h.shape[2] < 1
-            or not np.isfinite(h).all() or (h < 0).any()):
-        raise ValueError("history needs at least five finite nonnegative (4,maturity) rows")
-    window, _, dimensions = h.shape
-    rolling_intervals = transition_steps(dt if history_dt is None else history_dt,
-                                        window - 1)
-    if (tenors.ndim != 1 or len(tenors) != dimensions or not np.isfinite(tenors).all()
-            or (tenors <= 0).any() or len(np.unique(tenors)) != dimensions):
+    positive_number(regularization, "regularization", allow_zero=True)
+    if regularization > 1:
+        raise ValueError("regularization must be at most one")
+    try:
+        raw_history = np.asarray(history)
+    except (TypeError, ValueError) as error:
+        raise ValueError('history must have shape (window,3,maturity)') from error
+    if (raw_history.ndim != 3 or raw_history.shape[0] < 4
+            or raw_history.shape[1] != 3 or raw_history.shape[2] < 1):
+        raise ValueError('history needs at least four finite nonnegative (3,maturity) rows')
+    window, _, dimensions = raw_history.shape
+    workload = walk_workload(window, dimensions, steps, substeps)
+    # Check a broadcast view's size before materializing its float64 copy.
+    h = _numeric(raw_history, 'history')
+    if (h < 0).any():
+        raise ValueError('history needs nonnegative state values')
+    tenors = _numeric(maturities, "maturities")
+    if (tenors.shape != (dimensions,) or (tenors <= 0).any()
+            or len(np.unique(tenors)) != dimensions):
         raise ValueError("maturities must be distinct positive numbers matching history")
-    initial = h[-1]
-    delta = dt / substeps
-    origin_count = (steps - 1) // recalibrate_every if recalibrate_every else 0
-    update_count = paths * origin_count
-    scalar_fits = update_count * 3 * dimensions
-    work_units = scalar_fits * window
-    path_substeps = paths * steps * substeps
-    # Include returned states, rolling buffers, path coefficients/factors, state
-    # and shock arrays, plus one ordered-window scratch space used by all paths.
-    elements = paths * (steps + 3) * 4 * dimensions + 2 * (4 * dimensions) ** 2
-    elements += window - 1  # one shared chronological transition clock
-    if origin_count:
-        elements += (paths * window * 4 * dimensions + paths * 9 * dimensions
-                     + paths * (4 * dimensions) ** 2 + window * 4 * dimensions)
-    if elements > MAX_ELEMENTS:
-        raise ValueError("recursive simulation exceeds the 20-million-element memory bound")
-    if (work_units > MAX_WORK_UNITS or scalar_fits > MAX_SCALAR_FITS
-            or update_count > MAX_UPDATE_RECORDS):
-        raise ValueError("recursive recalibration exceeds the work bound; reduce paths, horizon or window, or increase recalibrate_every")
-    if path_substeps > MAX_PATH_SUBSTEPS:
-        raise ValueError("simulation exceeds the 250,000 path/substep work bound; reduce paths, horizon or substeps")
-    origins = list(range(recalibrate_every, steps, recalibrate_every)) if origin_count else []
-    # Same shape/value checks as the frozen simulator, after work bounds and
-    # before allocating paths. Factor validation itself multiplies dense arrays.
-    step_hierarchy(initial, c, np.zeros_like(initial), origin_factor, dt)
-    if np.max(c[:, 0]) * delta > 1:
-        raise ValueError("path 0, origin step 0: parameter mean reversion exceeds the step scale; increase substeps")
-    if origins and (c[:, 0] <= 0).any():
-        raise ValueError("path 0, origin step 0: recursive prior speeds must be positive")
-    state = np.broadcast_to(initial, (paths, 4, dimensions)).copy()
-    result = np.empty((paths, steps + 1, 4, dimensions))
-    result[:, 0] = state
-    projections = np.zeros((4, dimensions), dtype=np.int64)
-    origin_correlation = origin_factor @ origin_factor.T
+    intervals = transition_steps(dt if history_dt is None else history_dt, window - 1)
+    delta = float(dt) / substeps
+    positive_number(delta, "increment dt")
+    count = workload['increments']
+    scalar_fits = workload['scalar_fits']
+    work_units = workload['work_units']
+    priors = None if prior_thetas is None else _numeric(prior_thetas, "prior_thetas")
+    if priors is not None and (priors.shape != (3, dimensions) or (priors <= 0).any()):
+        raise ValueError("prior_thetas must contain a positive speed per family and maturity")
+    if normal_shocks is not None and rng_state is not None:
+        raise ValueError("normal_shocks and rng_state are mutually exclusive")
+    tape = None
+    rng = None
+    if normal_shocks is not None:
+        try:
+            tape = iter(normal_shocks)
+        except TypeError as error:
+            raise ValueError("normal_shocks must be an iterator of (3,maturity) increments") from error
+    else:
+        rng = np.random.default_rng(seed)
+        if rng_state is not None:
+            try:
+                rng.bit_generator.state = deepcopy(rng_state)
+            except (TypeError, ValueError, KeyError, OverflowError) as error:
+                raise ValueError("rng_state is not a compatible saved generator state") from error
+    if archive is not None and not callable(getattr(archive, "append", None)):
+        raise ValueError("archive must provide append for each actual increment")
+    state = h[-1].copy()
+    reported = np.empty((steps + 1, 3, dimensions))
+    reported[0] = state
+    projections = np.zeros((3, dimensions), dtype=np.int64)
+    first_coefficients = first_correlation = previous_coefficients = previous_correlation = None
     diagnostics = {
-        "closure": "pathwise rolling finite-depth parameter calibration",
-        "rolling_window": int(window), "recalibrate_every": int(recalibrate_every),
-        "recalibrated_origins": origins, "recalibration_count": 0,
-        "work_units": int(work_units), "scalar_fits": int(scalar_fits),
-        "path_substeps": int(path_substeps),
-        "forecast_step_years": float(dt),
-        "initial_history_elapsed_years": float(rolling_intervals.sum()),
-        "initial_history_min_transition_years": float(rolling_intervals.min()),
-        "initial_history_max_transition_years": float(rolling_intervals.max()),
-        "max_nll_cost": 0., "max_coefficient_change_from_origin": 0.,
-        "max_correlation_change_from_origin": 0., "projection_count": 0,
-        "updates": []}
-    if origins:
-        buffers = np.broadcast_to(h, (paths,) + h.shape).copy()
-        ordered = np.empty_like(h)
-        path_coefficients = np.broadcast_to(c, (paths,) + c.shape).copy()
-        path_factors = np.broadcast_to(origin_factor, (paths,) + origin_factor.shape).copy()
-    cursor = 0
-    adapted = False
-    rng = np.random.default_rng(seed)
-    for step in range(steps):
-        if step and recalibrate_every and step % recalibrate_every == 0:
-            for path in range(paths):
-                # cursor is the oldest row; restore chronological order into a
-                # preallocated scratch buffer, never borrowing another path.
-                tail = window - cursor
-                ordered[:tail] = buffers[path, cursor:]
-                ordered[tail:] = buffers[path, :cursor]
-                try:
-                    updated, correlation, new_factor, report = _refit(
-                        ordered, path_coefficients[path], tenors, rolling_intervals,
-                        nll_budget, fallback_theta, shrinkage)
-                    if np.max(updated[:, 0]) * delta > 1:
-                        raise ValueError("refitted parameter mean reversion exceeds the step scale; increase substeps")
-                except (ValueError, np.linalg.LinAlgError) as error:
-                    raise ValueError("path %d, origin step %d: %s" % (path, step, error)) from error
-                change = np.abs(updated - path_coefficients[path])
-                previous_correlation = path_factors[path] @ path_factors[path].T
-                report.update(
-                    path=int(path), origin_step=int(step),
-                    observed_history_rows=int(max(0, window - step)),
-                    simulated_history_rows=int(min(window, step)),
-                    observed_history_transitions=int(max(0, window - step - 1)),
-                    simulated_history_transitions=int(min(window - 1, step)),
-                    history_elapsed_years=float(rolling_intervals.sum()),
-                    history_min_transition_years=float(rolling_intervals.min()),
-                    history_max_transition_years=float(rolling_intervals.max()),
-                    coefficient_max_change=float(change.max()),
-                    correlation_max_change=float(np.max(np.abs(correlation - previous_correlation))),
-                    coefficient_max_change_from_origin=float(np.max(np.abs(updated - c))),
-                    correlation_max_change_from_origin=float(np.max(np.abs(correlation - origin_correlation))),
-                    parameter_coefficient_max_changes=change.max(axis=(1, 2)).tolist(),
-                    parameter_diffusion_max_changes=change[:, 2].max(axis=1).tolist(),
-                    xi_min=float(updated[2, 2].min()), xi_max=float(updated[2, 2].max()))
-                diagnostics["updates"].append(report)
-                diagnostics["recalibration_count"] += 1
-                diagnostics["max_nll_cost"] = max(diagnostics["max_nll_cost"], report["max_nll_cost"])
-                for name in ("coefficient", "correlation"):
-                    key = "max_" + name + "_change_from_origin"
-                    diagnostics[key] = max(diagnostics[key], report[name + "_max_change_from_origin"])
-                path_coefficients[path] = updated
-                path_factors[path] = new_factor
-            adapted = True
-        for substep in range(substeps):
-            unstable = np.argwhere(state[:, 2] * delta > 1)
-            if len(unstable):
-                raise ValueError("path %d, step %d, substep %d: yield mean reversion exceeds the step scale; increase substeps"
-                                 % (unstable[0, 0], step + 1, substep + 1))
-            # Preserve the frozen simulator's draw shape and ordering, including
-            # when independently applying the learned factor to each path.
-            shocks = rng.standard_normal(state.shape)
-            if not adapted:
-                try:
-                    next_state, hits = step_hierarchy(state, c, shocks, origin_factor, delta)
-                except ValueError as error:
-                    # Re-evaluate the already drawn shocks only to identify the
-                    # failing path; never replace a draw or filter survivors.
-                    for path in range(paths):
-                        try:
-                            step_hierarchy(state[path], c, shocks[path], origin_factor, delta)
-                        except ValueError as cause:
-                            raise ValueError("path %d, step %d, substep %d: %s"
-                                             % (path, step + 1, substep + 1, cause)) from cause
-                    raise ValueError("step %d, substep %d: %s" % (step + 1, substep + 1, error)) from error
-                state = next_state
-                projections += hits.sum(axis=0)
+        "mode": "single chronological rate/sigma/xi walk",
+        "family_order": list(FAMILIES), "update_order": ["xi", "sigma", "rate"],
+        "coefficient_order": ["theta", "long_run_mean", "actual_diffusion"],
+        "diffusion_sources": ["updated sigma state", "updated xi state", "CIR fitted diffusion"],
+        "reported_steps": steps, "substeps": substeps, "increments": count,
+        "calibration_count": 0, "family_fit_count": 0, "scalar_fits": scalar_fits,
+        "estimated_calibration_work_units": work_units,
+        "matrix_refresh_count": 0, "rolling_window": window,
+        "reported_step_years": float(dt), "increment_years": delta,
+        "regularization": float(regularization),
+        "initial_history_elapsed_years": float(intervals.sum()),
+        "max_nll_cost": 0., "weak_fits": 0, "regularized_fits": 0,
+        "max_coefficient_change": 0., "max_correlation_change": 0.,
+        "max_coefficient_change_from_origin": 0., "max_correlation_change_from_origin": 0.}
+    for increment in range(count):
+        try:
+            matrices = family_covariances(h, delta, regularization)
+            coefficients, audits = _calibrate(h, tenors, intervals, nll_budget, fallback_theta, priors)
+            if np.max(coefficients[:, 0]) * delta > 1.:
+                raise ValueError("mean reversion exceeds the increment scale; increase substeps")
+            if tape is None:
+                draws = rng.standard_normal((3, dimensions))
             else:
-                for path in range(paths):
-                    try:
-                        state[path], hits = step_hierarchy(
-                            state[path], path_coefficients[path], shocks[path],
-                            path_factors[path], delta)
-                    except ValueError as error:
-                        raise ValueError("path %d, step %d, substep %d: %s"
-                                         % (path, step + 1, substep + 1, error)) from error
-                    projections += hits
-        result[:, step + 1] = state
-        if origins:
-            buffers[:, cursor] = state
-            cursor = (cursor + 1) % window
-            # The clock is common to all paths, even though their states and
-            # learned coefficients differ. Keep it chronological independently
-            # of the circular state buffer so refits cannot misalign intervals.
-            rolling_intervals[:-1] = rolling_intervals[1:]
-            rolling_intervals[-1] = dt
-    diagnostics["projection_count"] = int(projections.sum())
-    return result, projections, diagnostics
+                try:
+                    draws = next(tape)
+                except StopIteration as error:
+                    raise ValueError("normal_shocks ended before the walk completed") from error
+            draws = _numeric(draws, "normal_shocks increment")
+            dw = brownian_increments(draws, matrices["cholesky"], delta)
+            updated, hits = _advance(state, coefficients, dw, delta)
+            coefficients[0, 2] = updated[1]
+            coefficients[1, 2] = updated[2]
+            if archive is not None:
+                archive.append(increment, increment * delta, delta, matrices, state, updated,
+                               brownian_increments=dw, coefficients=coefficients,
+                               calibration_audit={"family_order": list(FAMILIES), "families": audits},
+                               normal_shocks=draws)
+        except (ValueError, np.linalg.LinAlgError) as error:
+            raise ValueError("increment %d: %s" % (increment, error)) from error
+        corr = matrices["correlation"]
+        if first_coefficients is None:
+            first_coefficients, first_correlation = coefficients.copy(), corr.copy()
+        else:
+            diagnostics["max_coefficient_change"] = max(
+                diagnostics["max_coefficient_change"], float(np.max(np.abs(coefficients - previous_coefficients))))
+            diagnostics["max_correlation_change"] = max(
+                diagnostics["max_correlation_change"], float(np.max(np.abs(corr - previous_correlation))))
+        diagnostics["max_coefficient_change_from_origin"] = max(
+            diagnostics["max_coefficient_change_from_origin"], float(np.max(np.abs(coefficients - first_coefficients))))
+        diagnostics["max_correlation_change_from_origin"] = max(
+            diagnostics["max_correlation_change_from_origin"], float(np.max(np.abs(corr - first_correlation))))
+        previous_coefficients, previous_correlation = coefficients, corr
+        for family_records in audits:
+            for record in family_records:
+                diagnostics["max_nll_cost"] = max(diagnostics["max_nll_cost"], record["nll_cost"])
+                diagnostics["weak_fits"] += int(record["weak"])
+                diagnostics["regularized_fits"] += int(record["regularized"])
+        diagnostics["calibration_count"] += 1
+        diagnostics["family_fit_count"] += 3
+        diagnostics["matrix_refresh_count"] += 1
+        state = updated
+        projections += hits
+        h[:-1] = h[1:]
+        h[-1] = state
+        intervals[:-1] = intervals[1:]
+        intervals[-1] = delta
+        priors = coefficients[:, 0].copy()
+        if (increment + 1) % substeps == 0:
+            reported[(increment + 1) // substeps] = state
+    diagnostics.update(projection_count=int(projections.sum()),
+                       final_history_elapsed_years=float(intervals.sum()),
+                       prior_thetas=priors.tolist(),
+                       rng_state=None if rng is None else deepcopy(rng.bit_generator.state),
+                       elapsed_seconds=float(perf_counter() - started))
+    return reported, projections, diagnostics, h, intervals

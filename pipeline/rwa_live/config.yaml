@@ -1,86 +1,89 @@
-# Acquire and verify current yields, then calibrate/simulate from that snapshot.
-# Choose new snapshot_dir and output_dir values for each complete run.
+# One continuing trajectory; every actual increment recalibrates. Choose new output directories.
 parameters:
   snapshot_dir: RWA/FRED/snapshots/run
   output_dir: RWA/Experimental/HIERARCHY/live-run
-  start: "2010-01-01"
+  start: '2000-01-01'
   max_fill_days: 7
   max_age_days: 7
   yield_window: 2520
   parameter_window: 252
-  recent_rows: 3024
-  paths: 256
-  steps: 20
-  substeps: 4
+  recent_rows: 0
+  substeps: 1
   seed: 1234
   time_basis: observation
   missing_policy: forward-fill
   dt: 0.003968253968253968
-  forecast_mode: recursive
-  recalibrate_every: 1
-
+  history_window: 2520
+  years: 1
+  steps_per_year: 252
+  correlation_regularization: 0.0
 scripts:
   acquire_yields:
     path: RWA/data/yields/acquire.py
     args:
-      - --output
-      - "{snapshot_dir}"
-      - --start
-      - "{start}"
-      - --max-fill-days
-      - "{max_fill_days}"
-      - --max-age-days
-      - "{max_age_days}"
+    - --output
+    - '{snapshot_dir}'
+    - --start
+    - '{start}'
+    - --max-fill-days
+    - '{max_fill_days}'
+    - --max-age-days
+    - '{max_age_days}'
     outputs:
-      - "{snapshot_dir}/snapshot.json"
-      - "{snapshot_dir}/raw/fred.csv"
-      - "{snapshot_dir}/series/DGS*.csv"
+    - '{snapshot_dir}/snapshot.json'
+    - '{snapshot_dir}/raw/fred.csv'
+    - '{snapshot_dir}/series/DGS*.csv'
   rwa_hierarchy:
     path: RWA/models/parameter_hierarchy/workflow.py
     args:
-      - --input
-      - "{snapshot_dir}/series"
-      - --input-manifest
-      - "{snapshot_dir}/snapshot.json"
-      - --output
-      - "{output_dir}"
-      - --yield-window
-      - "{yield_window}"
-      - --parameter-window
-      - "{parameter_window}"
-      - --recent-rows
-      - "{recent_rows}"
-      - --paths
-      - "{paths}"
-      - --steps
-      - "{steps}"
-      - --substeps
-      - "{substeps}"
-      - --seed
-      - "{seed}"
-      - --time-basis
-      - "{time_basis}"
-      - --missing-policy
-      - "{missing_policy}"
-      - --dt
-      - "{dt}"
-      - --forecast-mode
-      - "{forecast_mode}"
-      - --recalibrate-every
-      - "{recalibrate_every}"
+    - --input
+    - '{snapshot_dir}/series'
+    - --input-manifest
+    - '{snapshot_dir}/snapshot.json'
+    - --output
+    - '{output_dir}'
+    - --yield-window
+    - '{yield_window}'
+    - --parameter-window
+    - '{parameter_window}'
+    - --recent-rows
+    - '{recent_rows}'
+    - --substeps
+    - '{substeps}'
+    - --seed
+    - '{seed}'
+    - --time-basis
+    - '{time_basis}'
+    - --missing-policy
+    - '{missing_policy}'
+    - --dt
+    - '{dt}'
+    - --history-window
+    - '{history_window}'
+    - --years
+    - '{years}'
+    - --steps-per-year
+    - '{steps_per_year}'
+    - --correlation-regularization
+    - '{correlation_regularization}'
     inputs:
-      - "{snapshot_dir}/snapshot.json"
-      - "{snapshot_dir}/series/DGS*.csv"
+    - '{snapshot_dir}/snapshot.json'
+    - '{snapshot_dir}/series/DGS*.csv'
     outputs:
-      - "{output_dir}/manifest.json"
-      - "{output_dir}/yield_parameters.csv"
-      - "{output_dir}/parameter_dynamics.csv"
-      - "{output_dir}/transition_intervals.csv"
-      - "{output_dir}/scenario_summary.csv"
-      - "{output_dir}/scenarios.npz"
-
+    - '{output_dir}/manifest.json'
+    - '{output_dir}/yield_parameters.csv'
+    - '{output_dir}/parameter_dynamics.csv'
+    - '{output_dir}/transition_intervals.csv'
+    - '{output_dir}/initial_history.npz'
+    - '{output_dir}/year_*/manifest.json'
+    - '{output_dir}/year_*/trajectory.npz'
+    - '{output_dir}/year_*/trajectory.csv'
+    - '{output_dir}/year_*/restart.npz'
+    - '{output_dir}/year_*/covariance/manifest.json'
 dependencies:
-  acquire_yields: [rwa_hierarchy]
-
+  acquire_yields:
+  - rwa_hierarchy
 execution:
-  - sequential: [acquire_yields, rwa_hierarchy]
+- sequential:
+  - acquire_yields
+  - rwa_hierarchy
