@@ -396,4 +396,4 @@ See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI]
     - `intergroup/`:
       - `JSD_intergroup_call_reports.py`
 
-The old root-level `Call Report/`, `JSD/` and `Variables/` directories are not part of a fresh clone. Call Report data is downloaded into `data/`; new JSD results are written under `Material Events/`; the [ratio catalogue](src/ratios/variables.md) is kept beside the ratio code. Historical CSVs and saved sample results remain available in [commit 176c8db](https://github.com/OCBliss/Basel3/tree/176c8dbca40050f8a69155f7339ad75ca2d85ac1). Existing local copies are retained and ignored by Git.
+
