@@ -9,7 +9,7 @@
 
 This project implements a data pipeline used to test key assumptions of the Basel III regulatory framework, specifically the belief that regulatory capital adequacy and liquidity classifications (e.g., HQLA, NML stability) correspond to reduced failure risk.
 
-Using FFIEC Call Report data, the system constructs bank cohorts (Failures, Mergers, Survivors) and evaluates their distributional behavior across multiple horizons (T+1–T+4). Jensen-Shannon Divergence (JSD) is used to measure whether regulatory-compliant institutions exhibit statistically distinct (and safer) profiles relative to failing banks.
+Using FFIEC Call Report data, the system constructs bank cohorts (Failures, Mergers, Survivors) and evaluates their distributional behavior across multiple horizons (T+1–T+4). Jensen-Shannon Distance (JSD) is used to measure whether regulatory-compliant institutions exhibit statistically distinct (and safer) profiles relative to failing banks.
 
 Results suggest that:
 - Regulatory classifications fail to preserve monotonic risk ordering
@@ -45,7 +45,7 @@ The pipeline implements a class-conditional transformation approach:
 - Each cohort undergoes independent preprocessing to preserve class-specific characteristics.
 - Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation out-of-sample, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
 
-This design ensures that divergence metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
+This design ensures that JSD metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
 
 ### Forecast Horizons
 
@@ -66,9 +66,9 @@ back in time.
 
 ---
 
-### Jensen-Shannon Divergence Matrices
+### Jensen-Shannon Distance Matrices
 
-Each matrix reports the Jensen-Shannon divergence for a single regulatory
+Each matrix reports the Jensen-Shannon distance for a single regulatory
 variable (for example **RCE-HK07-Saving+**).
 * Item Number HK09
 * * MATURITY AND REPRICING DATA FOR TIME DEPOITS OF 250000 OR LESS, TIME DEPOSITS OF 250000 OR LESS WITH A REMAINING MATURITY OR NEXT REPRICING DATE OF THREE MONTHS OR LESS
@@ -76,7 +76,7 @@ variable (for example **RCE-HK07-Saving+**).
 * Item Number 2385 (Savings)
 * * TOTAL NONTRANSACTION ACCOUNTS (INCLUDING MMDA'S)
 
-Rows represent the information used to compute the divergence.
+Rows represent the information used to compute the distance.
 
 | Row | Meaning |
 |------|---------|
@@ -104,11 +104,11 @@ For a bank failing during **2023 Q1**, the temporal alignment is:
 | 2021 Q2 | 2021 Q3 | 2021 Q4 | 2022 Q1 | T+4 | 2023 Q1 |
 
 Thus, the value in **q0q1 × BASEL III T+1** measures the Jensen-Shannon
-divergence computed from the one-quarter change in the regulatory ratio
+distance computed from the one-quarter change in the regulatory ratio
 (**2022 Q3 → 2022 Q4**), evaluated one quarter before the structural event.
 
 **Conclusion**
-Across all forecast horizons, the divergence associated with quarter-over-quarter changes exceeds the divergence obtained from contemporaneous observations alone. This suggests that temporal dynamics provide greater discriminatory power than static balance-sheet measurements.
+Across all forecast horizons, the JSD associated with quarter-over-quarter changes exceeds the distance obtained from contemporaneous observations alone. This suggests that temporal dynamics provide greater discriminatory power than static balance-sheet measurements.
 
 ### Why Multiple Horizons?
 
@@ -121,15 +121,15 @@ Evaluating multiple horizons allows the framework to distinguish between:
 - variables that retain predictive information several quarters in advance,
 - variables whose predictive content decays through time.
 
-The evolution of divergence across T+1–T+4 therefore becomes an empirical
+The evolution of JSD across T+1–T+4 therefore becomes an empirical
 measure of the temporal stability of regulatory classifications.
 
-### Dynamic Divergence
+### Dynamic JSD
 
-The framework evaluates not only divergence at individual horizons but also
-the evolution of divergence between successive horizons.
+The framework evaluates not only JSD at individual horizons but also
+the evolution of distance between successive horizons.
 
-Traditional analyses often evaluate regulatory variables independently at each reporting period. This framework instead evaluates the evolution of distributional separation across successive forecast horizons. The objective is to determine whether the trajectory of divergence contains predictive information beyond that available from any single quarterly observation.
+Traditional analyses often evaluate regulatory variables independently at each reporting period. This framework instead evaluates the evolution of distributional separation across successive forecast horizons. The objective is to determine whether the trajectory of distance contains predictive information beyond that available from any single quarterly observation.
 
 Rather than asking only,
 
@@ -152,7 +152,7 @@ For example:
 Traditional liquidity assumptions often model depositor behavior as relatively
 stable through time.
 
-If divergence changes abruptly between adjacent horizons, this suggests that
+If the JSD changes abruptly between adjacent horizons, this suggests that
 depositor responses may occur in rapid, heterogeneous repricing episodes
 rather than as smooth, memoryless processes.
 
@@ -163,7 +163,7 @@ timing of distributional changes itself contains economically meaningful
 
 [Here](https://github.com/OCBliss/Basel3/tree/refactor/pipeline)
 
-The configured Basel III pipeline runs 20 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon divergence analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
+The configured Basel III pipeline runs 20 tasks from raw FFIEC Call Reports through peer-group construction, Jensen-Shannon distance analysis, and the final column filter. Duration-sensitive RWA modeling remains a separate module under active development, described below.
 
 Rather than implementing the workflow as a single monolithic script, the pipeline decomposes the research process into independent analytical stages connected through explicit dependency graphs.
 
@@ -197,7 +197,7 @@ cross-sectional, and distributional analysis.
 
 [Binning, PMF and calculation guide](src/readme.md)
 
-Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon divergence was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
+Basel III makes claims about classification: that regulatory categories such as capital adequacy and liquidity distinguish safer institutions from riskier ones. The objective is therefore to evaluate whether these classifications remain statistically separable over future horizons. Jensen-Shannon distance was selected because it compares entire probability distributions rather than only summary statistics, allowing the framework to detect changes in distributional shape, overlap, and multimodality that moment-based measures may miss.
 
 ### Material Events
 
