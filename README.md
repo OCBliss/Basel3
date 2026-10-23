@@ -37,6 +37,83 @@ regulatory risk weights?
 
 ---
 
+# How to Run It
+
+### OS Compatibility Note
+- The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.
+
+### Performance Note
+- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation. The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
+
+### How It Works
+1. Install the dependencies from the repository root:
+
+   ```sh
+   python3 -m pip install -r requirements.txt
+   ```
+
+   The pipeline's first task downloads FFIEC **Call Reports — Single Period**, in tab-delimited format. It reads the material-event date ranges in the active YAML, includes three earlier quarters for the dynamic ratios, validates the ZIPs, and extracts them under `data/TXT/`. The current settings require 47 quarters, from 2013Q2 through 2024Q4. No bulk data needs to be copied from another checkout. See the [preparation and rerun instructions](src/readme.md).
+2. `Basel3_Global_Filepath.py`:
+   - Finds the `Basel3/` root directory dynamically from its own location, then;
+   - Resolves `src/`, `data/` and `Material Events/` within that checkout.
+3. Run the manager from the repository root:
+
+   ```sh
+   python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
+   python3 pipeline/Task_manager_Global_yaml_driven.py
+   ```
+
+   The dry run shows the expanded arguments and artifact paths without running scripts or creating logs. Use `--config path/to/config.yaml` for another configuration, or `--list` to list its tasks.
+
+4. `pipeline/pipeline_config_dynamic.yaml` defines:
+   - `parameters`: Shared horizon and bin selections.
+   - `scripts`: Paths relative to `src/`, argument lists, inputs, outputs and directories to create.
+   - `dependencies`: Prerequisites that must complete before a task runs.
+   - `execution`: An ordered list of sequential or concurrent phases. Each phase completes before the next begins.
+
+   The manager expands parameter placeholders in both arguments and artifact paths, validates the plan, and runs each declared task once. Per-task logs are saved under `pipeline_logs/<run-id>/` by default.
+
+### Select Horizons and Bins
+
+Edit this block at the top of the YAML configuration:
+
+```yaml
+parameters:
+  horizons: [1, 2, 3, 4]
+  bins1: [20, 30, 50, 100]
+  bins2: 5
+  bins3: 1
+```
+
+The default runs all four horizons and all four central bin counts. For an optional subset, `horizons: [1, 3]` and `bins1: [20, 50]` select only T+1/T+3 and those two central bin counts. The same selection reaches peer-group creation, calendar concatenation, binning, PMFs, JSD comparisons and the final filter. Expected input/output paths expand to that selection as well; no separate horizon scripts or duplicated YAML branches are needed.
+
+`bins1` supplies the counts across −1 to 1, `bins2` supplies the count across 1 to 2, and `bins3` is the single unbounded upper bin. Thus `20 + 5 + 1` produces 26 bins. `bins1` accepts positive counts, `bins2` is a positive count, and `bins3` currently accepts only `1`. Output filenames retain the central count, such as `_binned_20.csv`; changing `bins2` updates that specification's outputs.
+
+### Current Workflow
+
+The current configuration has **20 tasks**:
+
+| Tasks | Processing |
+| --- | --- |
+| `0.0` | Download and verify all required FFIEC reporting quarters before conversion |
+| `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
+| `3.0`, `4.0` | Build current-quarter ratios and dynamic ratios using historical rows joined by `CERT` |
+| `6.0.1`–`6.0.3` | Call `Material_events_download.py` concurrently for de novo, failures and mergers |
+| `6.1`, `6.1.1` | Clean the downloads, then remove matching RAW download files |
+| `6.2`–`6.4` | Call `Material_events_flag.py` in de novo → failures → mergers order |
+| `7.0` | Call `peer groups/base/Material_events_peer_group_basel3.py` for selected horizons |
+| `7.1` | Call `peer groups/horizons/Material_events_peer_group_basel3.py` to select calendar files and concatenate each group/horizon |
+| `8.0` | Call `Material_events_JSD_binning_basel3.py` for selected horizons and bin specifications |
+| `8.1.1` | Normalize selected histograms with `Material_events_JSD_probabilities_basel3.py` |
+| `8.2` | Calculate the three comparisons with `Material_events_JSD_basel3.py` |
+| `8.3.0.1` | Apply `JSD_intragroup_filter.py` to selected results; the configured threshold is `0.3` |
+
+The eight material-event tasks use four direct scripts. Their YAML `args` lists supply event selections and paths. The six subsequent tasks use two peer-group scripts, one binning script, one PMF script, one calculation script and one filter script. Each selected group/horizon retains its own output files.
+
+See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI](src/material%20events/readme.md), [peer-group CLI](src/peer%20groups/base/readme.md), [binning CLI](src/jsd/binning/readme.md), and [JSD calculation CLI](src/jsd/calculation/readme.md).
+
+---
+
 ## Conceptual Framework
 
 The pipeline implements a class-conditional transformation approach:
@@ -256,144 +333,6 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
       using recursive Cholesky decomposition.
 
 
----
 
-# How to Run It
-
-### Requirements
-  - `pyyaml`
-  - `pandas`
-  - `numpy`
-  - `requests`
-
-
-### OS Compatibility Note
-- The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.
-
-### Performance Note
-- The pipeline prioritizes reproducibility, modularity, and transparent workflow execution over low-level optimization. Many stages are embarrassingly parallel and can benefit from additional CPU resources when processing large historical FFIEC datasets. This pipeline was developed and tested on a high-memory multi-core workstation. The pipeline is compatible with smaller systems, but execution times will increase as available CPU, memory, and storage bandwidth decrease. Large historical datasets may benefit from additional memory or processing cores.
-
-### How It Works
-1. Install the dependencies from the repository root:
-
-   ```sh
-   python3 -m pip install -r requirements.txt
-   ```
-
-   The pipeline's first task downloads FFIEC **Call Reports — Single Period**, in tab-delimited format. It reads the material-event date ranges in the active YAML, includes three earlier quarters for the dynamic ratios, validates the ZIPs, and extracts them under `data/TXT/`. The current settings require 47 quarters, from 2013Q2 through 2024Q4. No bulk data needs to be copied from another checkout. See the [preparation and rerun instructions](src/readme.md).
-2. `Basel3_Global_Filepath.py`:
-   - Finds the `Basel3/` root directory dynamically from its own location, then;
-   - Resolves `src/`, `data/` and `Material Events/` within that checkout.
-3. Run the manager from the repository root:
-
-   ```sh
-   python3 pipeline/Task_manager_Global_yaml_driven.py --dry-run
-   python3 pipeline/Task_manager_Global_yaml_driven.py
-   ```
-
-   The dry run shows the expanded arguments and artifact paths without running scripts or creating logs. Use `--config path/to/config.yaml` for another configuration, or `--list` to list its tasks.
-
-4. `pipeline/pipeline_config_dynamic.yaml` defines:
-   - `parameters`: Shared horizon and bin selections.
-   - `scripts`: Paths relative to `src/`, argument lists, inputs, outputs and directories to create.
-   - `dependencies`: Prerequisites that must complete before a task runs.
-   - `execution`: An ordered list of sequential or concurrent phases. Each phase completes before the next begins.
-
-   The manager expands parameter placeholders in both arguments and artifact paths, validates the plan, and runs each declared task once. Per-task logs are saved under `pipeline_logs/<run-id>/` by default.
-
-### Select Horizons and Bins
-
-Edit this block at the top of the YAML configuration:
-
-```yaml
-parameters:
-  horizons: [1, 2, 3, 4]
-  bins1: [20, 30, 50, 100]
-  bins2: 5
-  bins3: 1
-```
-
-The default runs all four horizons and all four central bin counts. For an optional subset, `horizons: [1, 3]` and `bins1: [20, 50]` select only T+1/T+3 and those two central bin counts. The same selection reaches peer-group creation, calendar concatenation, binning, PMFs, JSD comparisons and the final filter. Expected input/output paths expand to that selection as well; no separate horizon scripts or duplicated YAML branches are needed.
-
-`bins1` supplies the counts across −1 to 1, `bins2` supplies the count across 1 to 2, and `bins3` is the single unbounded upper bin. Thus `20 + 5 + 1` produces 26 bins. `bins1` accepts positive counts, `bins2` is a positive count, and `bins3` currently accepts only `1`. Output filenames retain the central count, such as `_binned_20.csv`; changing `bins2` updates that specification's outputs.
-
-### Current Workflow
-
-The current configuration has **20 tasks**:
-
-| Tasks | Processing |
-| --- | --- |
-| `0.0` | Download and verify all required FFIEC reporting quarters before conversion |
-| `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
-| `3.0`, `4.0` | Build current-quarter ratios and dynamic ratios using historical rows joined by `CERT` |
-| `6.0.1`–`6.0.3` | Call `Material_events_download.py` concurrently for de novo, failures and mergers |
-| `6.1`, `6.1.1` | Clean the downloads, then remove matching RAW download files |
-| `6.2`–`6.4` | Call `Material_events_flag.py` in de novo → failures → mergers order |
-| `7.0` | Call `peer groups/base/Material_events_peer_group_basel3.py` for selected horizons |
-| `7.1` | Call `peer groups/horizons/Material_events_peer_group_basel3.py` to select calendar files and concatenate each group/horizon |
-| `8.0` | Call `Material_events_JSD_binning_basel3.py` for selected horizons and bin specifications |
-| `8.1.1` | Normalize selected histograms with `Material_events_JSD_probabilities_basel3.py` |
-| `8.2` | Calculate the three comparisons with `Material_events_JSD_basel3.py` |
-| `8.3.0.1` | Apply `JSD_intragroup_filter.py` to selected results; the configured threshold is `0.3` |
-
-The eight material-event tasks use four direct scripts. Their YAML `args` lists supply event selections and paths. The six subsequent tasks use two peer-group scripts, one binning script, one PMF script, one calculation script and one filter script. Each selected group/horizon retains its own output files.
-
-See the [pipeline configuration guide](pipeline/readme.md), [material-event CLI](src/material%20events/readme.md), [peer-group CLI](src/peer%20groups/base/readme.md), [binning CLI](src/jsd/binning/readme.md), and [JSD calculation CLI](src/jsd/calculation/readme.md).
-
-### Directory Structure
-- `pipeline/`:
-  - `Task_manager_Global_yaml_driven.py`
-  - `pipeline_config_dynamic.yaml`
-- `data/`:
-  - `CSV/`:
-    - `Schedules/`:
-      - `20240630/`:
-        - `FFIEC CDR Call Schedule RC 06302024.csv`
-    - `Cleaned/`:
-      - `Cleaned_Call_Report_20240630.csv`
-    - `Interleaved/`:
-      - `Cleaned_Call_Report_20240630.csv`
-    - `Dynamic_Lag/`:
-      - `Cleaned/`:
-        - `Dynamic_Cleaned_Call_Report_20240630.csv`
-  - `TXT/`: downloaded quarterly schedules, stored locally.
-  - `FFIEC/`: validated ZIP cache and preparation records, stored locally.
-- `Material Events/`: tracked quarter tables and reference CSVs. The pipeline creates event, peer-group, JSD and filtered-output subfolders when it runs.
-- `PDF/`: research models and the archived bank-report PDFs in `Call Reports/`.
-- `RWA/`: source data and separate RWA research work.
-- `src/`: subroot directory containing all scripts.
-  - `call reports/`:
-    - `prepare_call_reports.py`
-    - `call_reports_mkdir_txt_csvs_global.py`
-    - `Call_Report_Merged_Cleaned_Global.py`
-    - `numeric_only.py`
-    - `Call_Report.py`
-    - `Call_Reports_v4_0.py`
-  - `ratios/`:
-    - `Dynamic_Ratios.py`
-    - `variables.md`: ratio definitions.
-  - `material events/`:
-    - `FDIC API/`:
-      - `Material_events_download.py`
-      - `Material_events_cleaned.py`
-      - `Material_events_delete_api.py`
-    - `Material_events_flag.py`
-  - `peer groups/`:
-    - `base/`:
-      - `Material_events_peer_group_basel3.py`
-    - `horizons/`:
-      - `Material_events_peer_group_basel3.py`
-  - `jsd/`:
-    - `binning/`:
-      - `Material_events_JSD_binning_basel3.py`
-    - `pmf/`:
-      - `Material_events_JSD_probabilities_basel3.py`
-    - `calculation/`:
-      - `Material_events_JSD_basel3.py`
-  - `measures/`:
-    - `intragroup/`:
-      - `JSD_intragroup_filter.py`
-    - `intergroup/`:
-      - `JSD_intergroup_call_reports.py`
 
 
