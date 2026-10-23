@@ -43,7 +43,7 @@ The pipeline implements a class-conditional transformation approach:
 
 - Failures, Mergers, and Survivors are treated as structurally distinct states, not simple partitions of a common dataset.
 - Each cohort undergoes independent preprocessing to preserve class-specific characteristics.
-- Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation out-of-sample, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
+- Distributional comparisons (JSD) are performed across cohorts using multiple horizons (T+1–T+4) to evaluate whether regulatory classifications retain predictive separation, mitigating endogeneity concerns such as window dressing, simultaneity, and reverse causality.
 
 This design ensures that JSD metrics reflect underlying economic differences rather than artifacts of shared preprocessing.
 
