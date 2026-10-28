@@ -5,6 +5,9 @@ runs the independent package tests on the installed wheel, and uploads the
 validated artifacts to PyPI. The publishing job uses PyPI Trusted Publishing;
 no persistent PyPI token is stored in this repository.
 
+Relevant package changes on `main` run the build checks without publishing.
+Only a version tag or explicit manual dispatch enables the publishing job.
+
 The package owner's PyPI account must configure this pending publisher before
 the first upload, or the corresponding project publisher after creation:
 

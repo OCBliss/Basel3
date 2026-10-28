@@ -3,8 +3,16 @@ name: Publish CallReports
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "callreports-v*"
+    paths:
+      - ".github/workflows/publish-callreports.yml"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "src/callreports/**"
+      - "tests/test_callreports_package.py"
 
 permissions: {}
 
@@ -51,6 +59,7 @@ jobs:
 
   publish:
     needs: build
+    if: startsWith(github.ref, 'refs/tags/callreports-v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

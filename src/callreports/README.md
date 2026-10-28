@@ -8,7 +8,13 @@ ratios without running Basel3's research pipeline.
 ## Installation
 
 Python 3.8 or later is required, with compatible pandas and NumPy releases.
-From the repository root, install this library alone:
+Published releases install from PyPI:
+
+```sh
+python3 -m pip install CallReports
+```
+
+To install the current source directly, run this from the repository root:
 
 ```sh
 python3 -m pip install .
@@ -16,10 +22,9 @@ python3 -m pip install .
 
 For development, use `python3 -m pip install -e .`. The distribution is named
 `CallReports`; the Python import and installed command are named `callreports`.
-The package builds from this repository; a PyPI release is a separate operation.
-A bare `pip install CallReports` must only be advertised after publication under
-that name. The repository's `requirements.txt` installs this local library along
-with the additional dependencies needed by Basel3.
+The repository's `requirements.txt` installs this local library along with the
+additional dependencies needed by Basel3. Bank data is supplied separately and is
+not downloaded during installation.
 
 ## Use an existing structured CSV
 
