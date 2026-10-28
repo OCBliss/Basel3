@@ -78,8 +78,8 @@ def extract_archive(archive_path, output_dir):
                 raise ValueError("Duplicate ZIP member: " + member.filename)
             names.add(member.filename.casefold())
         output_dir.parent.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir()
         try:
-            output_dir.mkdir()
             for member in members:
                 destination = output_dir.joinpath(*PurePosixPath(member.filename).parts)
                 if member.is_dir():
@@ -141,10 +141,11 @@ def convert_txt_to_csv(input_dir, output_dir, delimiter="\t", encoding="utf-8-si
                 raise ValueError("Schedule requires unique headers beginning with IDRSSD: " + schedule.name)
             if "FDIC Certificate Number" in header:
                 raise ValueError("TXT schedule already contains a certificate column: " + schedule.name)
-            with tempfile.NamedTemporaryFile(mode="w", newline="", encoding="utf-8",
-                                             dir=output_dir, delete=False) as target:
-                temporary = Path(target.name)
-                try:
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", newline="", encoding="utf-8",
+                                                 dir=output_dir, delete=False) as target:
+                    temporary = Path(target.name)
                     writer = csv.writer(target)
                     writer.writerow(header[:1] + ["FDIC Certificate Number"] + header[1:])
                     for row in reader:
@@ -156,10 +157,11 @@ def convert_txt_to_csv(input_dir, output_dir, delimiter="\t", encoding="utf-8-si
                         row = row[:len(header)] + [""] * max(0, len(header) - len(row))
                         row[0] = identifier
                         writer.writerow(row[:1] + [certificates.get(identifier, "")] + row[1:])
-                except Exception:
-                    temporary.unlink()
-                    raise
-        temporary.replace(destination)
+                temporary.replace(destination)
+            except Exception:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+                raise
         written.append(destination)
     return written
 

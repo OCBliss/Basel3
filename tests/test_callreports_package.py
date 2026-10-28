@@ -170,6 +170,16 @@ class LocalBulkPreparationTests(unittest.TestCase):
         result = pd.read_csv(completed.stdout.strip())
         self.assertEqual([500, 100], result["RCON2170"].tolist())
 
+    def test_corrupt_zip_fails_without_publishing_a_quarter(self):
+        payload = bytearray(self.archive.read_bytes())
+        position = payload.index(b"IDRSSD\tFDIC Certificate Number")
+        payload[position] ^= 1
+        self.archive.write_bytes(payload)
+        destination = self.root / "corrupt"
+        with self.assertRaises(zipfile.BadZipFile):
+            prepare_archive(self.archive, destination)
+        self.assertEqual([], list(destination.iterdir()))
+
     def test_basel3_conversion_merge_and_cleanup_delegate_without_changing_selection(self):
         inputs = self.root / "TXT" / "FFIEC CDR Call Bulk All Schedules 20240331"
         inputs.mkdir(parents=True)
