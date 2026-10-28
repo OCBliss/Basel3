@@ -16,6 +16,10 @@ All commands below run from the repository root after installing
 [requirements](../requirements.txt). Configure input selections and output locations
 before a real run; use a dry run to inspect the resolved execution plan.
 
+The requirements install the local [CallReports library](../src/callreports/README.md).
+Its definitions, TXT conversion and schedule merge can also be used independently
+of these research workflows.
+
 ## Run the Configured Pipeline
 
 The current YAML contains **20 tasks**, covering Call Reports through the final JSD column filter. RWA components remain separate from this execution list.
@@ -102,7 +106,7 @@ Script paths are relative to `src/`. Artifact paths and the default working dire
 | --- | --- |
 | `0.0` | Download, validate and extract the required FFIEC quarters from the active material-event date ranges |
 | `1.0`, `2.0`, `2.1` | Convert, merge and numerically clean Call Reports |
-| `3.0` | `call reports/Call_Reports_v4_0.py`: two explicit ratio entries using the separate `Call_Report.py` API |
+| `3.0` | `call reports/Call_Reports_v4_0.py`: two explicit ratio entries using the installed `callreports` API |
 | `4.0` | `ratios/Dynamic_Ratios.py`: current and three historical-quarter changes through the v4 caller |
 | `6.0.1`, `6.0.2`, `6.0.3` | Concurrent calls to `Material_events_download.py`, with separate event arguments |
 | `6.1`, `6.1.1` | Clean material events, then remove matching RAW downloads |

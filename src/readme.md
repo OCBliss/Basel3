@@ -77,7 +77,7 @@ The default configuration contains **20 tasks**. Several tasks call the same pro
 | `1.0` | `call reports/call_reports_mkdir_txt_csvs_global.py` | Convert TXT schedules to CSV; use POR to attach the FDIC certificate to each bank's schedule rows |
 | `2.0` | `call reports/Call_Report_Merged_Cleaned_Global.py` | Merge the schedules selected for each reporting period |
 | `2.1` | `call reports/numeric_only.py` | Apply the numeric cleaning step |
-| `3.0` | `call reports/Call_Reports_v4_0.py` | Calculate current-quarter ratios using the domain methods in `Call_Report.py` |
+| `3.0` | `call reports/Call_Reports_v4_0.py` | Calculate current-quarter ratios using the installed `callreports` domain methods |
 | `4.0` | `ratios/Dynamic_Ratios.py` | Calculate P1Q/P2Q/P3Q ratios and their changes relative to the current quarter, matching banks by `CERT` |
 | `6.0.1`–`6.0.3` | `material events/FDIC API/Material_events_download.py` | Download de novo, failure and merger records in three concurrent tasks |
 | `6.1` | `material events/FDIC API/Material_events_cleaned.py` | Clean the selected material-event downloads |
