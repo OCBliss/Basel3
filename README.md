@@ -1,9 +1,9 @@
 ## Basel III Regulatory Analytics Pipeline
 
-**Author:** Jonathan Waller  
-**GitHub:** github.com/OCBLISS  
-**Contact:** johnny.waller.nb@gmail.com  
-**Affiliation:** Independent Researcher  
+**Author:** Jonathan Waller\
+**GitHub:** github.com/OCBLISS\
+**Contact:** johnny.waller.nb@gmail.com\
+**Affiliation:** Independent Researcher\
 
 ## Basel III Under Strain: Empirical Evidence from Call Report Data
 
@@ -354,8 +354,3 @@ Explanation of the RWA module mathematical foundation [Here](https://github.com/
     - Maximum-likelihood estimation of time-varying correlation matrices
       (`ΣX(t)`, `Σν(t)`, `Σξ(t)`)
       using recursive Cholesky decomposition.
-
-
-
-
-
