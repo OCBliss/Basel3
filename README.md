@@ -24,12 +24,19 @@ git clone git@github.com:OCBliss/Basel3.git
 cd Basel3
 python3 -m venv .venv
 source .venv/bin/activate
+python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
 Python 3.8 or later is required; dependency versions must support the selected
 interpreter. The activation command above is for POSIX shells. On Windows,
 activate the environment with `.venv\Scripts\Activate.ps1` in PowerShell.
+
+The requirements install the local **CallReports** library as an editable
+dependency. To use its FFIEC schedule definitions and local ZIP/TXT preparation
+without the research pipeline, install only `python3 -m pip install .` and import
+`callreports`. See the [independent library guide](src/callreports/README.md) for
+CSV headers, user-defined ratios, historical dates and the `callreports` command.
 
 All commands below run from the **repository root**, the directory containing
 `requirements.txt`, `src/` and `pipeline/`. The checkout may have any directory

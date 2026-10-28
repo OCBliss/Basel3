@@ -35,3 +35,8 @@ data/.ffiec-*/
 /AGENTS.md
 /.codex-engineering/
 /.cache/
+
+# Python package builds; source remains under src/callreports/.
+/build/
+/dist/
+*.egg-info/

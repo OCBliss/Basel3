@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from Call_Report import CallReport_031, CallReport_051, QuarterCache, safe_divide
+from callreports import CallReport_031, CallReport_051, QuarterCache, safe_divide
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 

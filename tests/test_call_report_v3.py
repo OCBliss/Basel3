@@ -174,7 +174,7 @@ class CallReportSourceAuditTests(unittest.TestCase):
         )
 
     def test_every_domain_method_has_the_date_contract(self):
-        tree = ast.parse((CALL_REPORT_DIR / "Call_Report.py").read_text())
+        tree = ast.parse((PROJECT_ROOT / "src/callreports/definitions.py").read_text())
         classes = self.domain_classes(tree)
         methods = [
             method
@@ -223,7 +223,7 @@ class CallReportSourceAuditTests(unittest.TestCase):
         self.assertEqual([], failures)
 
     def test_domain_values_do_not_read_a_bound_row_directly(self):
-        tree = ast.parse((CALL_REPORT_DIR / "Call_Report.py").read_text())
+        tree = ast.parse((PROJECT_ROOT / "src/callreports/definitions.py").read_text())
         failures = []
         for class_name, class_node in self.domain_classes(tree):
             for method in class_node.body:
@@ -254,7 +254,7 @@ class CallReportSourceAuditTests(unittest.TestCase):
         self.assertEqual([], failures)
 
     def test_internal_domain_calls_forward_the_active_date(self):
-        tree = ast.parse((CALL_REPORT_DIR / "Call_Report.py").read_text())
+        tree = ast.parse((PROJECT_ROOT / "src/callreports/definitions.py").read_text())
         classes = self.domain_classes(tree)
         method_names = {
             method.name
@@ -360,14 +360,14 @@ class CallReportSourceAuditTests(unittest.TestCase):
                     modules.add(node.module.split(".")[0])
             return modules
 
-        domain_imports = imported_modules(CALL_REPORT_DIR / "Call_Report.py")
+        domain_imports = imported_modules(PROJECT_ROOT / "src/callreports/definitions.py")
         caller_imports = imported_modules(
             CALL_REPORT_DIR / "Call_Reports_v4_0.py"
         )
 
         self.assertTrue(forbidden.isdisjoint(domain_imports))
         self.assertTrue(forbidden.isdisjoint(caller_imports))
-        self.assertIn("Call_Report", caller_imports)
+        self.assertIn("callreports", caller_imports)
 
 
 class DatedCallReportTests(DatedCallReportFixture):

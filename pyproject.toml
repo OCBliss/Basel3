@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "CallReports"
+version = "0.1.0"
+description = "Date-aware FFIEC Call Report definitions and bulk-file preparation"
+readme = "src/callreports/README.md"
+requires-python = ">=3.8"
+authors = [{name = "Jonathan Waller"}]
+dependencies = ["numpy>=1.24", "pandas>=2.0"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial",
+]
+
+[project.urls]
+Repository = "https://github.com/OCBliss/Basel3"
+
+[project.scripts]
+callreports = "callreports.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["callreports"]
+include-package-data = false

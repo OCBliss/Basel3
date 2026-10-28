@@ -1,0 +1,4 @@
+include pyproject.toml
+include src/callreports/README.md
+recursive-include src/callreports *.py
+prune tests

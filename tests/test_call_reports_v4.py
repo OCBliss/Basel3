@@ -142,11 +142,11 @@ class ExplicitV4SourceTests(unittest.TestCase):
         imported_api = {
             alias.name
             for node in ast.walk(self.tree)
-            if isinstance(node, ast.ImportFrom) and node.module == "Call_Report"
+            if isinstance(node, ast.ImportFrom) and node.module == "callreports"
             for alias in node.names
         }
         self.assertTrue({"CallReport_031", "CallReport_051", "QuarterCache", "safe_divide"}.issubset(imported_api))
-        allowed = {"argparse", "pathlib", "sys", "pandas", "Call_Report", "__future__"}
+        allowed = {"argparse", "pathlib", "sys", "pandas", "callreports", "__future__"}
         for node in ast.walk(self.tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
@@ -157,8 +157,8 @@ class ExplicitV4SourceTests(unittest.TestCase):
             elif isinstance(node, ast.FunctionDef):
                 self.assertNotIn("dynamic", node.name.lower())
                 self.assertNotIn(node.name, {"safe_divide", "_row_value", "_init_lags", "get_row"})
-        api = sys.modules["Call_Report"]
-        self.assertEqual(SCRIPT.with_name("Call_Report.py").resolve(), Path(api.__file__).resolve())
+        api = sys.modules["callreports"]
+        self.assertEqual("callreports.definitions", api.CallReport_031.__module__)
         self.assertIs(api.CallReport_031, v4.CallReport_031)
         self.assertIs(api.CallReport_051, v4.CallReport_051)
         self.assertIs(api.QuarterCache, v4.QuarterCache)

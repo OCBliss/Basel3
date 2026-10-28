@@ -52,7 +52,7 @@ class ImportedRatioCreatorTests(unittest.TestCase):
         imported_names = {
             alias.name
             for node in ast.walk(tree)
-            if isinstance(node, ast.ImportFrom) and node.module == "Call_Report"
+            if isinstance(node, ast.ImportFrom) and node.module == "callreports"
             for alias in node.names
         }
 
