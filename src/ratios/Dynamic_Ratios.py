@@ -7,6 +7,8 @@ import sys
 
 import pandas as pd
 
+from callreports import QuarterCache
+
 
 SRC_DIR = Path(__file__).resolve().parents[1]
 CALL_REPORT_DIR = SRC_DIR / "call reports"
@@ -15,7 +17,6 @@ for import_path in (CALL_REPORT_DIR, SRC_DIR):
         sys.path.insert(0, str(import_path))
 
 import Basel3_Global_Filepath as paths  # noqa: E402
-from callreports import QuarterCache  # noqa: E402
 from Call_Reports_v4_0 import FEATURE_COLUMNS, process_dataframe  # noqa: E402
 
 

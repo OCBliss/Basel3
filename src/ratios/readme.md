@@ -16,7 +16,7 @@ The current values come from the Interleaved file. The explicit entries in
 `Call_Reports_v4_0.py`, using the installed `callreports` API, calculate `P1Q`, `P2Q`, and `P3Q`. Lag results merge on
 `CERT`, matching the original distributed-lag pipeline.
 
-Install the project requirements first; they include the local
+Install the project requirements first; they include the published
 [CallReports library](../callreports/README.md). That library supplies the
 form definitions and historical data lookup, while Basel3 defines these 76 ratios
 and the certificate-based comparison rules.

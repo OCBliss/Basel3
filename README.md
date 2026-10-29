@@ -41,11 +41,12 @@ regulatory risk weights?
 
 ### Independent CallReports library
 
-The reusable CallReports definitions and local ZIP/TXT preparation can be used
-without running the Basel3 research pipeline. From the repository root:
+The reusable [CallReports package](https://pypi.org/project/CallReports/) provides
+definitions and local ZIP/TXT preparation without running the Basel3 research
+pipeline. Install it independently:
 
 ```sh
-python3 -m pip install .
+pip install CallReports
 ```
 
 ```python
@@ -58,8 +59,9 @@ Supply a bank row with the method's FFIEC headers. The library is built on panda
 and NumPy and retains the existing adjusted asset definitions and historical-date
 behavior. The [CallReports guide](src/callreports/README.md) documents CSV inputs,
 user-defined ratios, prior quarters and the `callreports prepare` command for local
-FFIEC ZIPs. `requirements.txt` installs the local library as an editable dependency
-along with Basel3's additional requirements. A PyPI release is separate.
+FFIEC ZIPs. `requirements.txt` installs CallReports 0.1.0 from PyPI along with
+Basel3's additional requirements. To develop the library from this checkout,
+install it with `python3 -m pip install -e .` after installing those requirements.
 
 ### OS Compatibility Note
 - The pipeline was developed on macOS. Most scripts are platform-independent, although some file path handling and directory conventions may require minor adjustments on Windows.

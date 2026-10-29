@@ -1,7 +1,7 @@
 """Compatibility import for the independently installed CallReports library.
 
-Install Basel3 requirements, or install CallReports with ``python3 -m pip install .``
-from the repository root. New code should import from ``callreports``.
+Install Basel3 requirements, or install CallReports with ``pip install CallReports``.
+New code should import from ``callreports``.
 """
 
 from callreports import (
