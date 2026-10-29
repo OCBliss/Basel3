@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "CallReports"
-version = "0.1.1"
-description = "Date-aware FFIEC Call Report definitions and bulk-file preparation"
+version = "0.1.2"
+description = "Banking concepts for FFIEC Call Reports, with reporting-date field mappings and calculations"
 keywords = ["FFIEC", "Call Reports", "banking", "regulatory reporting"]
 readme = "src/callreports/README.md"
 requires-python = ">=3.8"

@@ -1,13 +1,31 @@
 # CallReports
 
-CallReports provides date-aware FFIEC Call Report definitions and local bulk-file
-preparation. It uses pandas and NumPy for structured data handling. Its schedule
-methods expose the reporting fields and calculations; users can choose their own
-ratios without running Basel3's research pipeline.
+**Banking concepts, with reporting-date logic built in.**
+
+Work with total assets, held-to-maturity securities, deposits and other FFIEC
+Call Report concepts through named Python methods. CallReports keeps the
+MDRM field mappings, reporting-date changes and adjusted formulas
+inside the library, so your analysis can express the ratio you want to study:
+
+```python
+assets = report.BalanceSheet.TotalAssets(date="P0")
+htm_share = report.BalanceSheet.HTMSecurities(date="P0") / assets
+```
+
+Once a report is bound to a bank row, these calls use that row's
+reporting date to select fields and calculations. The same method
+names work for earlier quarters through `date="P1Q"`, `"P2Q"`, `"P3Q"` or
+`"P1Y"` when you supply the bank's historical data. Your ratio code does not need
+to repeat those field mappings or date branches.
+
+Use your own structured Call Report CSVs, or prepare downloaded FFIEC ZIP/TXT
+files with the included tools. The library builds on pandas and NumPy and runs
+independently of Basel3's research pipeline.
 
 The guide includes the public API, with exact signatures for all 573 report
 methods and the shared preparation and historical-data helpers:
 
+- [One method across reporting dates](#one-method-across-reporting-dates)
 - [Method arguments and returned values](#method-arguments-and-returned-values)
 - [Historical dates](#historical-dates)
 - [Shared classes and functions](#shared-classes-and-functions)
@@ -58,25 +76,62 @@ trading_share = safe_divide(
 ```
 
 This example requires `IDRSSD`, `RCON9999`, `RCON2170`, `RCONJA22`,
-`RCON3123` and `RCON3545`. `TotalAssets` retains the existing adjusted definition:
-`RCON2170 - RCONJA22 + RCON3123` from 2018Q1 onward, and `RCON2170 + RCON3123`
-earlier. For the raw reported field, use `report.Value("RCON2170", date=date)`.
+`RCON3123` and `RCON3545`. Keep the original FFIEC headers in the input; the
+conceptual methods handle their implemented mappings and formulas internally.
 Other methods require their own reporting fields. `Certificate()` additionally
 requires `FDIC Certificate Number`. Pass numeric observations; pandas' CSV reader
 usually infers these from FFIEC numeric columns. A dictionary or pandas Series
 with the same headers can also supply a bank row. Missing current-quarter headers
 raise `KeyError`; installing the library does not supply bank data.
 
-`CallReport_051` uses domestic reporting fields. `CallReport_031` exposes its
-separate consolidated form definitions, including `RCFD` fields. Choose the form
-appropriate to the supplied data; this library does not automatically infer or
-substitute reporting forms. FFIEC 041 is not a separate implemented class.
+`CallReport_051` provides domestic definitions, primarily from `RCON` fields,
+including the shared MDRM definitions used by FFIEC 041 and 051 data.
+`CallReport_031` also exposes consolidated `RCFD` fields. Use the definitions for
+the reporting scope you are measuring; shared 041/051 fields use the same methods.
+Method availability depends on the supplied fields. The library does not
+automatically substitute domestic and consolidated values when a required field
+is missing.
 
 Methods retain the existing definitions, historical field changes, missing-value
 behavior and implemented `name=True` labels. Label support varies by method, as
 described below. `safe_divide` preserves missing observations and
 returns zero for a known numerator divided by zero, matching the existing API.
 Ordinary Python `/` uses the operands' own division behavior instead.
+
+## One method across reporting dates
+
+The requested date selects both the bank observation and the definition used to
+calculate it. For example, the existing balance-sheet methods implement these
+rules:
+
+| Conceptual method | Reporting-date behavior |
+| --- | --- |
+| `BalanceSheet.TotalAssets(date=...)` | Before 2018Q1, reported assets plus the loan-loss allowance; from 2018Q1, also subtract the implemented securities adjustment. |
+| `BalanceSheet.HTMSecurities(date=...)` | Uses the earlier HTM field before 2019Q1 and its implemented replacement from 2019Q1. |
+| `BalanceSheet.TotalSecurities(date=...)` | Before 2019Q1, sums the earlier HTM field and AFS securities; from 2019Q1, uses the replacement HTM field, AFS securities and the implemented adjustment. |
+
+The call stays the same across those boundaries. With a report anchored in
+2019Q1 and history supplied for 2018Q4:
+
+```python
+current_htm = report.BalanceSheet.HTMSecurities(date="P0")
+previous_htm = report.BalanceSheet.HTMSecurities(date="P1Q")
+```
+
+CallReports selects the current and prior rows for the same `IDRSSD`, then applies
+each row's reporting-date rule. For a 051 report, these calls read `RCONJJ34`
+and `RCON1754`, respectively; the corresponding 031 methods use `RCFDJJ34`
+and `RCFD1754`. The application makes neither field-selection decision.
+
+These are the library's implemented definitions. In particular, `TotalAssets`
+returns an adjusted measure: for 051, `RCON2170 + RCON3123` before 2018Q1 and
+`RCON2170 - RCONJA22 + RCON3123` from 2018Q1; 031 uses the corresponding `RCFD`
+fields. To read the unadjusted reported field explicitly, use
+`report.Value("RCON2170", date=...)` for 051 or `"RCFD2170"` for 031. The
+[complete method index](#complete-report-method-index) makes source fields and
+argument choices inspectable. The abstraction covers the implemented definitions
+and date rules; it does not infer missing fields or implement every historical
+reporting revision.
 
 ## Method arguments and returned values
 

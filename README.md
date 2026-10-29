@@ -3,9 +3,13 @@
 ### CallReports: Python library for FFIEC bank Call Report data
 
 [CallReports on PyPI](https://pypi.org/project/CallReports/) is the independently
-installable library developed in this repository. It provides FFIEC 031 and 051
-definitions, historical reporting-date support, and ZIP/TXT preparation using
-pandas and NumPy. Install it with `pip install CallReports` and use
+installable library developed in this repository. It provides shared FFIEC MDRM
+definitions through banking concepts such as
+`report.BalanceSheet.TotalAssets(date="P0")`. Its methods handle implemented
+MDRM field mappings, reporting-date changes and adjusted formulas internally,
+so ratio code can use the same method names across quarters. It also provides
+ZIP/TXT preparation using pandas and NumPy. Install it with
+`pip install CallReports` and use
 `from callreports import CallReport_031, CallReport_051` with your own structured
 Call Report CSVs. See the [CSV and ratio examples and complete API reference](src/callreports/README.md).
 
@@ -64,9 +68,11 @@ report = CallReport_051(bank_row)
 assets = report.BalanceSheet.TotalAssets(date="P0")
 ```
 
-Supply a bank row with the method's FFIEC headers. The library is built on pandas
-and NumPy and retains the existing adjusted asset definitions and historical-date
-behavior. The [CallReports guide](src/callreports/README.md) documents CSV inputs,
+Supply a bank row with the original FFIEC headers and use the definitions for
+the reporting scope being measured. Shared 041/051 fields use the existing
+domestic methods. The conceptual methods select the implemented fields and
+formulas for the requested reporting quarter, including historical rows you supply. The
+[CallReports guide](src/callreports/README.md) documents CSV inputs,
 user-defined ratios, prior quarters and the `callreports prepare` command for local
 FFIEC ZIPs. `requirements.txt` installs CallReports 0.1.0 from PyPI along with
 Basel3's additional requirements. To develop the library from this checkout,
