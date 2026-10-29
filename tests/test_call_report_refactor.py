@@ -9,12 +9,13 @@ from pathlib import Path
 
 import pandas as pd
 
+import callreports as functions
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
-import Call_Report as functions  # noqa: E402
 import Call_Reports_v4_0 as ratios  # noqa: E402
 
 

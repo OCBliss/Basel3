@@ -16,7 +16,7 @@ All commands below run from the repository root after installing
 [requirements](../requirements.txt). Configure input selections and output locations
 before a real run; use a dry run to inspect the resolved execution plan.
 
-The requirements install the local [CallReports library](../src/callreports/README.md).
+The requirements install the published [CallReports library](../src/callreports/README.md) from PyPI.
 Its definitions, TXT conversion and schedule merge can also be used independently
 of these research workflows.
 
@@ -123,6 +123,21 @@ There are two direct peer-group programs, one binning program, one PMF program, 
 The `execution` section is an ordered list. Each phase completes before the next begins. `sequential` and `intermediate_steps` run tasks in order; `concurrent_groups` runs independent tasks together; `concurrent_branches` can describe independent nested workflows. The current configuration runs only the three FDIC downloads concurrently.
 
 Dependencies validate prerequisites without automatically adding omitted tasks. Every configured task must appear once in the execution plan. The manager checks script locations, artifact declarations and process exit codes, and stops on a failed task. It executes each configured task once per run; it does not skip work based on input hashes.
+
+## Verify the complete Call Report pipeline
+
+After installing the requirements, run:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_complete_pipeline.py' -v
+```
+
+This check executes all 20 default stages in a temporary checkout with 15 small
+quarterly ZIP fixtures and offline FDIC responses. The runnable checkout excludes
+the PyPI package source, so the ratio stages use the installed CallReports
+dependency. It checks source-to-ratio values, three-quarter changes, event
+membership, all four horizons and bin selections, normalized probabilities and
+final comparison files. It preserves the repository's existing data and outputs.
 
 ## Further Customization
 

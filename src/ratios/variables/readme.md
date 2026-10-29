@@ -4,7 +4,7 @@ This catalogue lists the 76 ratio columns produced by
 [Call_Reports_v4_0.py](../../call%20reports/Call_Reports_v4_0.py). The names match
 `FEATURE_COLUMNS`; the calculations below follow the two explicit entries
 in `create_ratio_entries()` and the separate API methods in
-[Call_Report.py](../../call%20reports/Call_Report.py).
+[CallReports definitions](../../callreports/definitions.py).
 
 The caller evaluates the `CallReport_031` and `CallReport_051` implementations
 and keeps the row with fewer missing values for each `IDRSSD`. Their field

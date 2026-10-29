@@ -2,12 +2,6 @@
 
 The pipeline reads the tab-delimited FFIEC schedules under `data/TXT/`. The older root-level `Call Report/` directory and the PDF reference reports are not inputs.
 
-The reusable definitions, TXT conversion and schedule merge are provided by the
-independently installable [CallReports library](../callreports/README.md).
-Install the repository requirements before running these Basel3 entry points.
-For existing structured CSVs or local ZIPs, the library can be used directly
-without the Basel3 pipeline, its ratio selections or its YAML downloader.
-
 ## Prepare the required quarters
 
 Task `0.0` runs `prepare_call_reports.py`. It reads the material-event download date ranges from the active YAML, adds the three previous quarters required for ratio changes, and downloads **Call Reports — Single Period** ZIPs. It validates and extracts them before conversion starts.
@@ -29,28 +23,13 @@ Task `1.0` runs `call_reports_mkdir_txt_csvs_global.py`. For each quarterly fold
 3. Inserts `FDIC Certificate Number` after `IDRSSD` and drops rows whose first field is blank, including schedule-description rows.
 4. Writes the files under `data/CSV/Schedules/YYYYMMDD/`.
 
-The POR file supplies identifiers; it is not itself exported as a schedule CSV.
-Default paths resolve from this checkout. `--txt-dir` and `--output-dir` accept
-explicit paths. Conversion delegates to `callreports.convert_txt_to_csv`.
+The POR file supplies identifiers; it is not itself exported as a schedule CSV. All paths resolve from this checkout through `src/Basel3_Global_Filepath.py`.
 
-A quarter without a usable POR mapping now fails the conversion stage instead of
-silently skipping its data. The normal pipeline first validates the archives and
-required source files in task `0.0`.
+A direct conversion run prints an error and skips a quarter without a usable POR mapping. The normal pipeline first validates the archives and required source files in task `0.0`.
 
 ## Continue processing
 
-The YAML then merges each quarter's selected schedules, removes the `RCON9224`
-text field, sets `RCON9999` from the file's quarter, calculates current-quarter
-ratios, and runs the dynamic-ratio stage. Other fields and missing values are
-preserved. Their files are under `data/CSV/Cleaned/`, `data/CSV/Interleaved/` and
-`data/CSV/Dynamic_Lag/Cleaned/`. The lag lookup is the tracked
-`data/CSV/quarter_flag.csv`.
-
-The merge and cleanup wrappers call `callreports.merge_schedule_files` and
-`callreports.clean_report`. They accept `--input-dir`; the merge also accepts
-`--output-dir`. Importing these wrappers does not execute processing. Basel3
-retains its date-dependent schedule subset, while standalone
-`callreports.merge_schedules` merges every supplied schedule for the quarter.
+The YAML then merges each quarter's schedules, removes the `RCON9224` text column and sets `RCON9999` from the filename, calculates current-quarter ratios, and runs the dynamic-ratio stage. Their files are under `data/CSV/Cleaned/`, `data/CSV/Interleaved/` and `data/CSV/Dynamic_Lag/Cleaned/`. The lag lookup is the tracked `data/CSV/quarter_flag.csv`.
 
 Run the configured sequence from the repository root:
 
@@ -63,13 +42,7 @@ The [pipeline guide](../../pipeline/readme.md) describes the execution order. Th
 
 ## Ratio API and caller
 
-The `callreports` dependency defines `CallReport_031`, `CallReport_051`, their
-schedule methods, historical-quarter lookup and division behavior.
-`Call_Report.py` preserves the legacy imports by re-exporting the same classes.
-`Call_Reports_v4_0.py` imports `callreports` and constructs `report_051` and
-`report_031` for each bank row. Each of its two entries contains all 76 ratios
-plus `IDRSSD`, `RCON9999` and `CERT`, with the full form and method path written
-in every expression.
+The installed [CallReports package](../callreports/README.md) provides `CallReport_031`, `CallReport_051`, their schedule methods, historical-quarter lookup and division behavior. `Call_Reports_v4_0.py` imports that package and constructs `report_051` and `report_031` for each bank row. Each of its two entries contains all 76 ratios plus `IDRSSD`, `RCON9999` and `CERT`, with the full form and method path written in every expression.
 
 The 031 entry uses 051 domestic-deposit calls for all 17 `RCE-*` ratios. Its `RC-2200-Item21` numerator also uses 051 domestic deposits; the denominator uses 031 liabilities. The remaining 031 expressions call the 031 instance. Both entries are written out separately, including repeated expressions.
 
@@ -81,10 +54,6 @@ To run the current-ratio stage after source cleaning:
 python3 "src/call reports/Call_Reports_v4_0.py" --input-dir data/CSV/Cleaned --output-dir data/CSV/Interleaved --quarter-map data/CSV/quarter_flag.csv --date P0
 ```
 
-The same paths are defaults resolved from the caller's location, so a normal
-Python build from an editor or another working directory can run it without
-arguments after installing the requirements. `--date` also accepts `P1Q`, `P2Q`,
-`P3Q` and `P1Y`. The caller requires the installed `callreports` package rather
-than a copy of the definitions beside it.
+The same paths are defaults resolved from the caller's location, so a normal Python build from an editor or another working directory can run it without arguments. `--date` also accepts `P1Q`, `P2Q`, `P3Q` and `P1Y`. Install the project requirements first; the caller imports the installed `callreports` package directly.
 
 The downloaded 2013 files omit six capital columns: `RCOAA223`, `RCOAP840`, `RCOAP859`, `RCFAA223`, `RCFAP840` and `RCFAP859`. Before passing a pre-2014 row to the API, the caller supplies missing values for absent columns in that list. It preserves supplied values and leaves the input row unchanged. This keeps unavailable capital ratios missing without substituting another form's fields.

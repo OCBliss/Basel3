@@ -1,6 +1,5 @@
 """Independent structured-data use and ZIP-to-schedule preparation contracts."""
 
-import importlib.util
 from pathlib import Path
 import stat
 import subprocess
@@ -16,8 +15,6 @@ from callreports import (
     CallReport_031, CallReport_051, QuarterCache,
     convert_txt_to_csv, merge_schedules, prepare_archive,
 )
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def quarter_files(stamp="03312024"):
@@ -80,14 +77,6 @@ class StructuredCallReportTests(unittest.TestCase):
                                      "RCONJA22": 0, "RCON3123": 0},
                                     QuarterCache(data_dir=root))
             self.assertEqual(80, report.BalanceSheet.TotalAssets(date="P1Q"))
-
-    def test_legacy_import_reexports_the_same_classes(self):
-        path = ROOT / "src/call reports/Call_Report.py"
-        spec = importlib.util.spec_from_file_location("legacy_callreport_fixture", path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        self.assertIs(CallReport_031, module.CallReport_031)
-        self.assertIs(CallReport_051, module.CallReport_051)
 
 
 class LocalBulkPreparationTests(unittest.TestCase):
@@ -180,34 +169,6 @@ class LocalBulkPreparationTests(unittest.TestCase):
             prepare_archive(self.archive, destination)
         self.assertEqual([], list(destination.iterdir()))
 
-    def test_basel3_conversion_merge_and_cleanup_delegate_without_changing_selection(self):
-        inputs = self.root / "TXT" / "FFIEC CDR Call Bulk All Schedules 20240331"
-        inputs.mkdir(parents=True)
-        for name, value in quarter_files().items():
-            (inputs / name).write_text(value)
-        schedules, reports = self.root / "Schedules", self.root / "Reports"
-        commands = [
-            ("call_reports_mkdir_txt_csvs_global.py", ["--txt-dir", str(inputs.parent), "--output-dir", str(schedules)]),
-            ("Call_Report_Merged_Cleaned_Global.py", ["--input-dir", str(schedules), "--output-dir", str(reports)]),
-            ("numeric_only.py", ["--input-dir", str(reports)]),
-        ]
-        for name, arguments in commands:
-            completed = subprocess.run([sys.executable, "-I", str(ROOT / "src/call reports" / name)] + arguments,
-                                       cwd=self.root, capture_output=True, text=True, timeout=30)
-            self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
-        table = pd.read_csv(reports / "Cleaned_Call_Report_20240331.csv")
-        self.assertEqual([500, 100], table["RCON2170"].tolist())
-        self.assertNotIn("RCONEXTRA", table)  # Basel3 retains its selected schedules.
-        self.assertNotIn("RCON9224", table)
-
-    def test_importing_basel3_preparation_wrappers_does_not_execute_a_pipeline(self):
-        for filename in ["call_reports_mkdir_txt_csvs_global.py", "Call_Report_Merged_Cleaned_Global.py", "numeric_only.py"]:
-            source = ROOT / "src/call reports" / filename
-            spec = importlib.util.spec_from_file_location("isolated_preparation_wrapper", source)
-            module = importlib.util.module_from_spec(spec)
-            with mock.patch("pathlib.Path.mkdir", side_effect=AssertionError("import wrote directories")), \
-                    mock.patch("pandas.read_csv", side_effect=AssertionError("import read input data")):
-                spec.loader.exec_module(module)
 
 
 if __name__ == "__main__":

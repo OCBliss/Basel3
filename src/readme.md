@@ -118,7 +118,7 @@ The processing programs are listed in the table above. The remaining source comp
 
 - `Basel3_Global_Filepath.py`: shared paths rooted at this repository.
 - `callreports/`: the independently installable CallReports definitions and local ZIP/TXT conversion and merging library. See its [usage guide](callreports/README.md).
-- `call reports/Call_Report.py`: compatibility imports for the CallReports dependency; the ratio stages import `callreports` directly.
+- `call reports/Call_Reports_v4_0.py`: Basel3's 76 ratio calculations, using the installed `callreports` definitions directly.
 - `measures/intergroup/JSD_intergroup_call_reports.py`: intergroup analysis, not scheduled in the current YAML.
 - `RWA/`: interest-rate research organized under stable `data/`, `calibration/` and `models/` domains. See the [RWA domain map](RWA/readme.md) for their components, entry points and data flow.
 

@@ -1,4 +1,4 @@
-"""Regression tests for the two-module, date-aware Call Report API."""
+"""Regression tests for the installed, date-aware CallReports API and ratios."""
 
 import ast
 import sys
@@ -9,12 +9,13 @@ from pathlib import Path
 
 import pandas as pd
 
+import callreports as dated
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CALL_REPORT_DIR = PROJECT_ROOT / "src" / "call reports"
 sys.path.insert(0, str(CALL_REPORT_DIR))
 
-import Call_Report as dated  # noqa: E402
 import Call_Reports_v4_0 as dated_ratios  # noqa: E402
 
 
@@ -345,7 +346,7 @@ class CallReportSourceAuditTests(unittest.TestCase):
         self.assertNotIn("build_entry", function_names)
         self.assertTrue({"use_031", "use_051"}.isdisjoint(loaded_names))
 
-    def test_only_the_two_public_modules_are_dependencies(self):
+    def test_domain_and_caller_do_not_import_obsolete_versions(self):
         forbidden = {"Call_Report_v2_1", "Call_Report_v3", "Call_Reports_v3_1"}
 
         def imported_modules(source_path):

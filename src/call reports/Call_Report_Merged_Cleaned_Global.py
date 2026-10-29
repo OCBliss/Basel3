@@ -1,21 +1,62 @@
-"""Merge Basel3's selected FFIEC schedules through the CallReports library."""
-
-import argparse
+import sys
+sys.stdout.reconfigure(line_buffering=True)
 import os
-from pathlib import Path
+import sys
+import pandas as pd
+import csv
+# import importlib.util
 
-from callreports import merge_schedule_files
+# Step 1: Locate CODE directory FIRST
+def find_code_dir():
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    while current_dir and os.path.basename(current_dir) != "src":
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir == current_dir:
+            raise FileNotFoundError("Could not locate 'src' directory.")
+        current_dir = parent_dir
+    return current_dir
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-schedules_directory = PROJECT_ROOT / "data/CSV/Schedules"
-output_directory = PROJECT_ROOT / "data/CSV/Cleaned"
+CODE_DIR = find_code_dir()
+sys.path.append(CODE_DIR)
 
+# NOW import
+import Basel3_Global_Filepath as paths
 
+ROOT_DIR = paths.BASEL3_ROOT
+CALL_DIR = paths.CALL_DIR
+
+TXT_DIR = paths.TXT_DIR
+CSV_DIR = paths.CSV_DIR
+schedules_directory = paths.SCHEDULES_DIR
+output_directory = paths.CLEANED_DIR
+
+# Ensure the output directory exists
+os.makedirs(output_directory, exist_ok=True)
+
+# Function to merge files and skip duplicate columns
 def merge_files_sequentially(base_file_path, files_to_append, output_path):
-    """Retain the historical selection and first-column-wins join contract."""
-    return merge_schedule_files(base_file_path, files_to_append, output_path)
+    """
+    Sequentially append columns from a list of files to a base file.
+    Parameters:
+        base_file_path (str): Path to the base file.
+        files_to_append (list): List of file paths to append to the base file.
+        output_path (str): Path to save the final merged output file.
+    """
+    base_df = pd.read_csv(base_file_path, low_memory=False)
+    seen_columns = set(base_df.columns)
 
+    for file_path in files_to_append:
+        if os.path.exists(file_path):
+            append_df = pd.read_csv(file_path, low_memory=False)
+            columns_to_add = [col for col in append_df.columns if col not in seen_columns or col == 'IDRSSD']
+            append_df = append_df[columns_to_add]
+            base_df = pd.merge(base_df, append_df, on='IDRSSD', how='left')
+            seen_columns.update(columns_to_add)
 
+    base_df.to_csv(output_path, index=False)
+    print(f"Processed and saved: {output_path}")
+
+# Helper function to determine files to append
 def determine_files_to_append(input_directory, subfolder):
     folder_date = int(subfolder)  # Convert folder name to an integer for comparison
     mmddyyyy = convert_to_mmddyyyy(subfolder)
@@ -76,26 +117,25 @@ def determine_files_to_append(input_directory, subfolder):
 
     return files_to_append
 
+# Helper function to convert YYYYMMDD to MMDDYYYY
 def convert_to_mmddyyyy(yyyymmdd):
     return f"{yyyymmdd[4:6]}{yyyymmdd[6:]}{yyyymmdd[:4]}"
 
+# Process subfolders
+for subfolder in sorted(os.listdir(schedules_directory)):
+    subfolder_path = os.path.join(schedules_directory, subfolder)
+    if os.path.isdir(subfolder_path):
+        try:
+            input_directory = subfolder_path
+            base_file_name = f"FFIEC CDR Call Schedule ENT {convert_to_mmddyyyy(subfolder)}.csv"
+            base_file_path = os.path.join(input_directory, base_file_name)
+            output_file_name = f"Cleaned_Call_Report_{subfolder}.csv"
+            output_file_path = os.path.join(output_directory, output_file_name)
+            files_to_append = determine_files_to_append(input_directory, subfolder)
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input-dir", type=Path, default=schedules_directory)
-    parser.add_argument("--output-dir", type=Path, default=output_directory)
-    args = parser.parse_args(argv)
-    for folder in sorted(args.input_dir.iterdir()):
-        if not folder.is_dir():
-            continue
-        base = folder / ("FFIEC CDR Call Schedule ENT " + convert_to_mmddyyyy(folder.name) + ".csv")
-        if not base.is_file():
-            raise FileNotFoundError("Base file not found: " + str(base))
-        output = args.output_dir / ("Cleaned_Call_Report_" + folder.name + ".csv")
-        merge_files_sequentially(base, determine_files_to_append(str(folder), folder.name), output)
-        print(output)
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+            if os.path.exists(base_file_path):
+                merge_files_sequentially(base_file_path, files_to_append, output_file_path)
+            else:
+                print(f"Base file not found: {base_file_path}")
+        except Exception as e:
+            print(f"Error processing folder {subfolder}: {e}")

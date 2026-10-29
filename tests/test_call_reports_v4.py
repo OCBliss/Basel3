@@ -1,4 +1,4 @@
-"""Explicit v4 ratio calls through the existing Call_Report API."""
+"""Explicit v4 ratio calls through the installed CallReports API."""
 
 import ast
 import importlib.util
@@ -235,14 +235,12 @@ class V4NumericalTests(unittest.TestCase):
         self.assertEqual(0.0, entries[0]["RCB-0211-1754"])
         self.assertTrue(pd.isna(entries[1]["RCB-0211-1754"]))
 
-    def test_copied_caller_and_api_run_without_the_old_runner(self):
+    def test_copied_caller_runs_with_the_installed_package_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             script = root / "src/call reports/Call_Reports_v4_0.py"
             script.parent.mkdir(parents=True)
             shutil.copyfile(SCRIPT, script)
-            api = script.with_name("Call_Report.py")
-            shutil.copyfile(SCRIPT.with_name("Call_Report.py"), api)
             inputs = root / "input"
             outputs = root / "output"
             elsewhere = root / "elsewhere"
@@ -261,7 +259,7 @@ class V4NumericalTests(unittest.TestCase):
             calendar = root / "quarter_flag.csv"
             pd.DataFrame([{"P0": 20241231, "P1Q": 20240930, "Quarter": 4}]).to_csv(calendar, index=False)
             completed = subprocess.run(
-                [sys.executable, "-E", "-s", str(script), "--input-dir", str(inputs),
+                [sys.executable, "-I", str(script), "--input-dir", str(inputs),
                  "--output-dir", str(outputs), "--quarter-map", str(calendar)],
                 cwd=elsewhere, capture_output=True, text=True, timeout=60,
             )
@@ -279,7 +277,7 @@ class V4NumericalTests(unittest.TestCase):
             self.assertEqual(68, len(other_ratios))
             self.assertTrue(pre2014_result[other_ratios].notna().all().all())
             self.assertEqual(original_input, (inputs / pre2014_name).read_bytes())
-            self.assertEqual({script, api}, set(root.rglob("*.py")))
+            self.assertEqual({script}, set(root.rglob("*.py")))
 
 
 if __name__ == "__main__":

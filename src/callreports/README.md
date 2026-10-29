@@ -1,5 +1,8 @@
 # CallReports
 
+This directory contains the source used to build the CallReports PyPI package.
+Basel3 installs its released version through `requirements.txt`.
+
 CallReports provides date-aware FFIEC Call Report definitions and local bulk-file
 preparation. It uses pandas and NumPy for structured data handling. Its schedule
 methods expose the reporting fields and calculations; users can choose their own
@@ -158,11 +161,10 @@ the merged DataFrame without applying the reporting-date cleanup.
 
 ## Basel3 integration and limits
 
-Basel3 imports these definitions as a dependency. Its existing conversion and
-merge entry points delegate to this library, while its selected schedule list,
-76 research ratios, cohort definitions and distribution comparisons remain in
-Basel3. The compatibility module `src/call reports/Call_Report.py` re-exports the
-public definitions for existing callers.
+Basel3 imports the report definitions as a dependency. Its conversion and merge
+scripts, selected schedule list, 76 research ratios, cohort definitions and
+distribution comparisons remain in Basel3. Consumers import the public definitions
+directly from `callreports`.
 
 The standalone merge includes all available schedules; Basel3 intentionally
 retains its historical schedule selection. Local ZIP preparation does not include
