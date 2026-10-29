@@ -1,5 +1,14 @@
 ## Basel III Regulatory Analytics Pipeline
 
+### CallReports: Python library for FFIEC bank Call Report data
+
+[CallReports on PyPI](https://pypi.org/project/CallReports/) is the independently
+installable library developed in this repository. It provides FFIEC 031 and 051
+definitions, historical reporting-date support, and ZIP/TXT preparation using
+pandas and NumPy. Install it with `pip install CallReports` and use
+`from callreports import CallReport_031, CallReport_051` with your own structured
+Call Report CSVs. See the [CSV and ratio examples and complete API reference](src/callreports/README.md).
+
 **Author:** Jonathan Waller\
 **GitHub:** github.com/OCBLISS\
 **Contact:** johnny.waller.nb@gmail.com\
